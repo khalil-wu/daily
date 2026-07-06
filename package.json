@@ -1,22 +1,56 @@
 {
   "name": "remember-diary",
   "version": "1.0.0",
-  "main": "index.ts",
+  "main": "expo-router/entry",
   "dependencies": {
+    "@expo/ngrok": "^4.1.3",
+    "@expo/vector-icons": "^15.0.2",
+    "babel-preset-expo": "~57.0.0",
     "expo": "~57.0.2",
+    "expo-audio": "~57.0.0",
+    "expo-blur": "~57.0.0",
+    "expo-constants": "~57.0.3",
+    "expo-crypto": "~57.0.0",
+    "expo-dev-client": "~57.0.5",
+    "expo-document-picker": "~57.0.0",
+    "expo-file-system": "~57.0.0",
+    "expo-haptics": "~57.0.0",
+    "expo-image-picker": "~57.0.2",
+    "expo-linear-gradient": "~57.0.0",
+    "expo-linking": "~57.0.1",
+    "expo-local-authentication": "~57.0.0",
+    "expo-location": "~57.0.2",
+    "expo-router": "~57.0.3",
+    "expo-sharing": "~57.0.2",
+    "expo-sqlite": "~57.0.0",
     "expo-status-bar": "~57.0.0",
-    "react": "19.2.3",
-    "react-native": "0.86.0"
+    "expo-system-ui": "~57.0.0",
+    "lucide-react-native": "^0.542.0",
+    "react": "^19.2.3",
+    "react-native": "0.86.0",
+    "react-native-safe-area-context": "~5.7.0",
+    "react-native-screens": "4.25.2",
+    "react-native-svg": "15.15.4",
+    "react-native-web": "^0.21.2",
+    "zustand": "^5.0.8"
   },
   "devDependencies": {
+    "@types/node": "^26.1.0",
     "@types/react": "~19.2.2",
+    "eas-cli": "^20.5.1",
+    "react-dom": "^19.2.3",
+    "tsx": "^4.23.0",
     "typescript": "~6.0.3"
   },
   "scripts": {
     "start": "expo start",
     "android": "expo start --android",
     "ios": "expo start --ios",
-    "web": "expo start --web"
+    "web": "expo start --web",
+    "test": "node --import tsx --test tests/core.test.ts tests/diaryStore.test.ts",
+    "typecheck": "node --stack_size=8192 node_modules/typescript/lib/tsc.js --noEmit",
+    "audit:interactions": "node scripts/audit-interactions.js",
+    "verify": "npm test && npm run typecheck && npm run audit:interactions"
   },
   "private": true
 }

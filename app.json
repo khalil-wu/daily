@@ -1,25 +1,71 @@
 {
   "expo": {
-    "name": "remember-diary",
+    "name": "记得日记",
     "slug": "remember-diary",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
-    "userInterfaceStyle": "light",
+    "userInterfaceStyle": "automatic",
     "ios": {
       "supportsTablet": true
     },
     "android": {
+      "package": "com.ago.rememberdiary",
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
         "foregroundImage": "./assets/android-icon-foreground.png",
         "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
       },
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "permissions": [
+        "android.permission.READ_EXTERNAL_STORAGE",
+        "android.permission.WRITE_EXTERNAL_STORAGE",
+        "android.permission.INTERNET",
+        "android.permission.USE_BIOMETRIC",
+        "android.permission.USE_FINGERPRINT",
+        "android.permission.MODIFY_AUDIO_SETTINGS",
+        "android.permission.FOREGROUND_SERVICE",
+        "android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK",
+        "android.permission.RECORD_AUDIO"
+      ]
     },
     "web": {
+      "bundler": "metro",
       "favicon": "./assets/favicon.png"
-    }
+    },
+    "plugins": [
+      "expo-router",
+      "expo-sqlite",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "记得日记需要访问照片，用来把画面留在你的记忆里。",
+          "cameraPermission": "记得日记需要使用相机，用来拍下你想留下的瞬间。",
+          "microphonePermission": false
+        }
+      ],
+      "expo-file-system",
+      "expo-sharing",
+      [
+        "expo-local-authentication",
+        {
+          "faceIDPermission": "记得日记需要确认是你本人，才能打开应用锁。"
+        }
+      ],
+      [
+        "expo-audio",
+        {
+          "microphonePermission": "记得日记需要使用麦克风，用来把声音也记进这段记忆。"
+        }
+      ]
+    ],
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "1a74f71c-02f4-4600-b9fa-1d8886a04497"
+      }
+    },
+    "owner": "singy"
   }
 }

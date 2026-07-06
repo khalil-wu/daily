@@ -39,3 +39,14 @@ yarn-error.*
 # generated native folders
 /ios
 /android
+
+.build artifacts & temp
+*.tar.gz
+.verify-dist/
+.expo/
+serve-*.log
+expo-web*.log
+create-white-check*.png
+timeline-white-check*.png
+mobile-layout-check.png
+font-graph-check.png
