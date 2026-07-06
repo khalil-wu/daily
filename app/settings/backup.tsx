@@ -341,6 +341,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: colors.bgSecondary,
+    borderWidth: strokeWidth.input,
+    borderColor: colors.stroke,
   },
   header: {
     gap: spacing.sm,
@@ -355,8 +357,10 @@ const styles = StyleSheet.create({
   },
   subtitle: {
     color: colors.textSecondary,
+    fontFamily: typography.fontFamily.display,
     fontSize: typography.body,
     lineHeight: typography.lineHeights.body,
+    includeFontPadding: false,
   },
   statsRow: {
     flexDirection: 'row',
@@ -377,7 +381,10 @@ const styles = StyleSheet.create({
   },
   statLabel: {
     color: colors.textSecondary,
+    fontFamily: typography.fontFamily.display,
     fontSize: typography.caption,
+    lineHeight: typography.lineHeights.caption,
+    includeFontPadding: false,
   },
   estimateRow: {
     flexDirection: 'row',
@@ -398,16 +405,24 @@ const styles = StyleSheet.create({
   },
   estimateDesc: {
     color: colors.textSecondary,
+    fontFamily: typography.fontFamily.display,
     fontSize: typography.caption,
     lineHeight: typography.lineHeights.caption,
+    includeFontPadding: false,
   },
   estimateSubtle: {
     color: colors.textTertiary,
+    fontFamily: typography.fontFamily.display,
     fontSize: typography.caption,
     lineHeight: typography.lineHeights.caption,
+    includeFontPadding: false,
   },
   warningText: {
     color: colors.danger,
+    fontFamily: typography.fontFamily.display,
+    fontSize: typography.caption,
+    lineHeight: typography.lineHeights.caption,
+    includeFontPadding: false,
   },
   actions: {
     gap: spacing.md,
@@ -447,14 +462,18 @@ const styles = StyleSheet.create({
   noteText: {
     flex: 1,
     color: colors.textSecondary,
+    fontFamily: typography.fontFamily.display,
     fontSize: typography.caption,
     lineHeight: typography.lineHeights.caption,
+    includeFontPadding: false,
   },
   message: {
     color: colors.textSecondary,
+    fontFamily: typography.fontFamily.display,
     fontSize: typography.caption,
     lineHeight: typography.lineHeights.caption,
     textAlign: 'center',
+    includeFontPadding: false,
   },
   previewHeader: {
     flexDirection: 'row',
@@ -496,13 +515,18 @@ const styles = StyleSheet.create({
   },
   previewLabel: {
     color: colors.textSecondary,
+    fontFamily: typography.fontFamily.display,
     fontSize: typography.caption,
+    lineHeight: typography.lineHeights.caption,
+    includeFontPadding: false,
   },
   previewNote: {
     color: colors.textSecondary,
+    fontFamily: typography.fontFamily.display,
     fontSize: typography.caption,
     lineHeight: typography.lineHeights.caption,
     marginTop: spacing.lg,
+    includeFontPadding: false,
   },
   conflictBlock: {
     gap: spacing.xs,
@@ -513,8 +537,10 @@ const styles = StyleSheet.create({
   },
   conflictText: {
     color: colors.textSecondary,
+    fontFamily: typography.fontFamily.display,
     fontSize: typography.caption,
     lineHeight: typography.lineHeights.caption,
+    includeFontPadding: false,
   },
   previewActions: {
     gap: spacing.md,
@@ -526,8 +552,8 @@ const styles = StyleSheet.create({
   replaceButton: {
     height: 52,
     borderRadius: radius.button,
-    borderWidth: 1,
-    borderColor: alpha.danger34,
+    borderWidth: strokeWidth.input,
+    borderColor: colors.danger,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -563,12 +589,17 @@ const styles = StyleSheet.create({
   },
   cancelImportButton: {
     alignSelf: 'center',
+    minHeight: 44,
     paddingHorizontal: spacing.lg,
     paddingVertical: spacing.sm,
+    justifyContent: 'center',
   },
   cancelImportText: {
     color: colors.textSecondary,
+    fontFamily: typography.fontFamily.display,
     fontSize: typography.caption,
+    lineHeight: typography.lineHeights.caption,
     fontWeight: '500',
+    includeFontPadding: false,
   },
 });

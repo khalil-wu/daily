@@ -25,7 +25,38 @@ export function pickPlaceholder(): string {
   return writingPlaceholders[Math.floor(Math.random() * writingPlaceholders.length)];
 }
 
-export const moods = ['平静', '开心', '想家', '难过', '温暖', '疲惫', '感动', '怀念', '说不清'];
+export type MoodDef = {
+  id: string;
+  emoji: string;
+  label: string;
+  custom?: boolean;
+};
+
+// 默认心情集（id 与 label 同值，旧数据存的 label 可直接命中）
+export const defaultMoods: MoodDef[] = [
+  { id: '平静', emoji: '😌', label: '平静' },
+  { id: '开心', emoji: '😊', label: '开心' },
+  { id: '想家', emoji: '🥺', label: '想家' },
+  { id: '难过', emoji: '😢', label: '难过' },
+  { id: '温暖', emoji: '🤗', label: '温暖' },
+  { id: '疲惫', emoji: '😮‍💨', label: '疲惫' },
+  { id: '感动', emoji: '🥹', label: '感动' },
+  { id: '怀念', emoji: '🌸', label: '怀念' },
+  { id: '说不清', emoji: '🌀', label: '说不清' },
+];
+
+// 兼容旧版 moods 字符串数组的引用（已迁移到 defaultMoods，保留导出避免破坏）
+export const moods = defaultMoods.map((m) => m.label);
+
+// 按值（id 或 label）从注册表解析出 {emoji, label}；找不到时回退为纯文字无表情。
+export function resolveMood(value: string | null | undefined, registry: MoodDef[]): { emoji: string; label: string } | null {
+  if (!value) return null;
+  const byId = registry.find((m) => m.id === value);
+  if (byId) return { emoji: byId.emoji, label: byId.label };
+  const byLabel = registry.find((m) => m.label === value);
+  if (byLabel) return { emoji: byLabel.emoji, label: byLabel.label };
+  return { emoji: '', label: value };
+}
 
 export const emptyStates = {
   home: '先记住一个重要的人吧。',

@@ -1,20 +1,31 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { router } from 'expo-router';
 import { Camera, LockKeyhole, Plus, Search, UsersRound } from 'lucide-react-native';
-import { Pressable, ScrollView, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
+import { Animated, Platform, Pressable, RefreshControl, ScrollView, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 
 import { PersonSheet } from '@/src/components/person/PersonSheet';
 import { StarMap } from '@/src/components/stargraph/StarMap';
 import { PrimaryButton } from '@/src/components/ui/PrimaryButton';
 import { Screen } from '@/src/components/ui/Screen';
+import { Halftone } from '@/src/components/ui/Halftone';
+import { HomeSkeleton } from '@/src/components/ui/Skeleton';
+import { StreakCard } from '@/src/components/memory/StreakCard';
+import { ThrowbackCard } from '@/src/components/memory/ThrowbackCard';
+import { WritingPromptCard } from '@/src/components/memory/WritingPromptCard';
+import { pickContextualPrompt } from '@/src/data/writingPrompts';
 import { PersonSummary } from '@/src/data/mock';
 import { getHomeHeadline } from '@/src/i18n/copy';
 import { useVisibleDiaryData } from '@/src/privacy/useVisibleDiaryData';
+import { useDiaryStore } from '@/src/stores/useDiaryStore';
 import { colors, getContentWidth, getResponsiveColumnWidth, radius, shadows, spacing, strokeWidth, typography } from '@/src/theme';
 
 export default function HomeScreen() {
   const { people, visibleMemories, visiblePeople } = useVisibleDiaryData();
+  const hydrated = useDiaryStore((state) => state.hydrated);
+  const hydrate = useDiaryStore((state) => state.hydrate);
   const [selected, setSelected] = useState<PersonSummary | null>(null);
+  const [refreshing, setRefreshing] = useState(false);
+  const refreshProgress = useRef(new Animated.Value(0)).current;
   const { width } = useWindowDimensions();
   const photoCount = visibleMemories.filter((memory) => memory.hasMedia).length;
   const privateCount = visibleMemories.filter((memory) => memory.isPrivate).length;
@@ -25,9 +36,53 @@ export default function HomeScreen() {
     [contentWidth],
   );
 
+  // 按时间段选择写作提示
+  const initialPrompt = useMemo(() => pickContextualPrompt(), []);
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    try {
+      await hydrate();
+    } catch {
+      // refresh failure is non-blocking
+    }
+    // 短暂展示动画后关闭
+    setTimeout(() => setRefreshing(false), 600);
+  };
+
+  // 骨架屏：数据未 hydrate 时展示
+  if (!hydrated) {
+    return (
+      <Screen>
+        <ScrollView showsVerticalScrollIndicator={false} scrollEnabled={false}>
+          <HomeSkeleton />
+        </ScrollView>
+      </Screen>
+    );
+  }
+
   return (
     <Screen>
-      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        contentContainerStyle={styles.content}
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          Platform.OS === 'web' ? undefined : (
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={onRefresh}
+              tintColor={colors.accent}
+              colors={[colors.accent]}
+              titleColor={colors.textSecondary}
+            />
+          )
+        }
+        onScroll={Platform.OS === 'web' ? (e) => {
+          const offsetY = e.nativeEvent.contentOffset.y;
+          refreshProgress.setValue(Math.max(0, Math.min(1, -offsetY / 80)));
+        } : undefined}
+        scrollEventThrottle={16}
+      >
         <View style={styles.headerRow}>
           <Text style={styles.title}>{getHomeHeadline()}</Text>
           <Pressable
@@ -40,7 +95,11 @@ export default function HomeScreen() {
           </Pressable>
         </View>
 
+        {/* 连续记录天数 + 统计 */}
+        <StreakCard memories={visibleMemories} />
+
         <View style={styles.heroCard}>
+          <Halftone intensity={0.06} />
           <View style={styles.heroTop}>
             <Text style={styles.heroHint}>点一颗星，回到那个人身边</Text>
             <Pressable
@@ -49,7 +108,7 @@ export default function HomeScreen() {
               onPress={() => router.push('/memory/create')}
               style={({ pressed }) => [styles.addButton, pressed && styles.addButtonPressed]}
             >
-              <Plus color={colors.bgPaper} size={22} strokeWidth={2.4} />
+              <Plus color={colors.textPrimary} size={22} strokeWidth={2.4} />
             </Pressable>
           </View>
           <StarMap
@@ -60,6 +119,12 @@ export default function HomeScreen() {
             entering={selected !== null}
           />
         </View>
+
+        {/* 那年今日 */}
+        <ThrowbackCard memories={visibleMemories} people={people} />
+
+        {/* 写作提示 */}
+        <WritingPromptCard initialPrompt={initialPrompt} />
 
         <View style={styles.metricRow}>
           <Pressable
@@ -174,13 +239,14 @@ const styles = StyleSheet.create({
   },
   heroCard: {
     width: '100%',
-    borderRadius: radius.card,
-    borderWidth: strokeWidth.card,
+    borderRadius: radius.card + 4,
+    borderWidth: strokeWidth.heavy,
     borderColor: colors.stroke,
     backgroundColor: colors.surfaceMint,
     padding: spacing.lg,
     paddingTop: spacing.lg,
-    ...shadows.card,
+    overflow: 'hidden',
+    ...shadows.accent,
   },
   heroTop: {
     flexDirection: 'row',

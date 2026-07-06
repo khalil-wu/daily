@@ -2,6 +2,8 @@ import { Fragment, memo, useEffect, useMemo, useRef, useState } from 'react';
 import { Animated, Easing, PanResponder, Pressable, StyleSheet, Text, View } from 'react-native';
 import Svg, { Circle, Defs, Line, RadialGradient, Rect, Stop } from 'react-native-svg';
 
+const AnimatedCircle = Animated.createAnimatedComponent(Circle);
+
 import { PersonSummary } from '@/src/data/mock';
 import { motion, useReducedMotion } from '@/src/motion';
 import { colors, spacing, typography } from '@/src/theme';
@@ -149,6 +151,79 @@ function BreathingGlow({ size }: { size: number }) {
   );
 }
 
+/**
+ * TwinkleDot — 星点闪烁动画组件（SVG 层）。
+ * 使用 sin 缓动循环，不同 delay 制造自然闪烁错落感。
+ */
+function TwinkleDot({ x, y, r = 3.4, delay = 0, dim = false }: { x: number; y: number; r?: number; delay?: number; dim?: boolean }) {
+  const reducedMotion = useReducedMotion();
+  const opacityRef = useRef(new Animated.Value(dim ? 0.3 : 0.6)).current;
+  const radiusRef = useRef(new Animated.Value(r)).current;
+
+  useEffect(() => {
+    if (reducedMotion) {
+      opacityRef.setValue(dim ? 0.3 : 0.8);
+      return;
+    }
+    const duration = 2000 + (delay % 3) * 500;
+    const loop = Animated.loop(
+      Animated.sequence([
+        Animated.timing(opacityRef, {
+          toValue: dim ? 0.1 : 0.25,
+          duration,
+          easing: Easing.inOut(Easing.sin),
+          useNativeDriver: false,
+          delay,
+        }),
+        Animated.timing(opacityRef, {
+          toValue: dim ? 0.3 : 0.85,
+          duration,
+          easing: Easing.inOut(Easing.sin),
+          useNativeDriver: false,
+        }),
+      ]),
+    );
+    loop.start();
+    return () => loop.stop();
+  }, [opacityRef, delay, dim, reducedMotion]);
+
+  useEffect(() => {
+    if (reducedMotion || dim) return;
+    const duration = 2000 + (delay % 4) * 400;
+    const loop = Animated.loop(
+      Animated.sequence([
+        Animated.timing(radiusRef, {
+          toValue: r * 0.7,
+          duration,
+          easing: Easing.inOut(Easing.sin),
+          useNativeDriver: false,
+          delay,
+        }),
+        Animated.timing(radiusRef, {
+          toValue: r,
+          duration,
+          easing: Easing.inOut(Easing.sin),
+          useNativeDriver: false,
+        }),
+      ]),
+    );
+    loop.start();
+    return () => loop.stop();
+  }, [radiusRef, r, delay, dim, reducedMotion]);
+
+  return (
+    <AnimatedCircle
+      cx={x}
+      cy={y}
+      r={radiusRef}
+      fill={dim ? colors.strokeSoft : colors.secondary}
+      stroke={dim ? 'none' : colors.stroke}
+      strokeWidth={dim ? 0 : 1.2}
+      opacity={opacityRef}
+    />
+  );
+}
+
 export const StarMap = memo(function StarMap({ people, onPressPerson, onPressSelf, focusedId, entering }: Props) {
   const [width, setWidth] = useState(0);
   const reducedMotion = useReducedMotion();
@@ -255,18 +330,35 @@ export const StarMap = memo(function StarMap({ people, onPressPerson, onPressSel
             })}
 
             {layout.nodes.flatMap(({ person, x, y, size }) =>
-              Array.from({ length: Math.min(person.stars, 2) }).map((_, index) => (
-                <Circle
-                  key={`${person.id}-dot-${index}`}
-                  cx={x + (size / 2 + 10) * Math.cos(-0.7 - index * 1.1)}
-                  cy={y + (size / 2 + 10) * Math.sin(-0.7 - index * 1.1)}
-                  r={3.4}
-                  fill={colors.secondary}
-                  stroke={colors.stroke}
-                  strokeWidth={1.2}
-                  opacity={0.95}
-                />
-              )),
+              Array.from({ length: Math.min(person.stars, 2) }).map((_, index) => {
+                const dotX = x + (size / 2 + 10) * Math.cos(-0.7 - index * 1.1);
+                const dotY = y + (size / 2 + 10) * Math.sin(-0.7 - index * 1.1);
+                const twinkleDelay = (index * 600 + (person.id.charCodeAt(0) % 5) * 400) % 3000;
+                return (
+                  <TwinkleDot key={`${person.id}-dot-${index}`} x={dotX} y={dotY} delay={twinkleDelay} />
+                );
+              }),
+            )}
+
+            {/* 背景装饰小星点 */}
+            {layout.nodes.flatMap(({ person, x, y, size }, nodeIndex) =>
+              Array.from({ length: 3 }).map((_, i) => {
+                const angle = (i * 2.1 + nodeIndex * 0.7) % (Math.PI * 2);
+                const dist = size / 2 + 20 + i * 15;
+                const sx = x + Math.cos(angle) * dist;
+                const sy = y + Math.sin(angle) * dist;
+                if (sx < 0 || sx > layout.width || sy < 0 || sy > layout.height) return null;
+                return (
+                  <TwinkleDot
+                    key={`${person.id}-bgstar-${i}`}
+                    x={sx}
+                    y={sy}
+                    r={1.5}
+                    delay={(i * 800 + nodeIndex * 500) % 4000}
+                    dim
+                  />
+                );
+              }),
             )}
           </Svg>
 

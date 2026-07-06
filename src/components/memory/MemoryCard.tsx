@@ -5,7 +5,9 @@ import { Animated, Image, Pressable, StyleSheet, Text, useWindowDimensions, View
 
 import { Avatar } from '@/src/components/person/Avatar';
 import { MemorySummary, PersonSummary } from '@/src/data/mock';
+import { resolveMood } from '@/src/i18n/copy';
 import { motion, selectionFeedback, useReducedMotion } from '@/src/motion';
+import { useMoodStore } from '@/src/stores/useMoodStore';
 import { colors, getContentWidth, radius, shadows, spacing, strokeWidth, typography } from '@/src/theme';
 
 type Props = {
@@ -23,6 +25,7 @@ export function MemoryCard({ memory, people = [], entranceDelay }: Props) {
   const relationLabel = primaryPerson ? `${primaryPerson.relation} · ${memory.date}` : memory.date;
   const targetLabel = primaryPerson ? `${primaryPerson.name}的时间线` : '我的时间线';
   const reducedMotion = useReducedMotion();
+  const moodRegistry = useMoodStore((state) => state.moods);
   const scale = useRef(new Animated.Value(1)).current;
   const entranceOpacity = useRef(new Animated.Value(entranceDelay === undefined ? 1 : 0)).current;
   const entranceOffset = useRef(new Animated.Value(entranceDelay === undefined ? 0 : 8)).current;
@@ -124,12 +127,15 @@ export function MemoryCard({ memory, people = [], entranceDelay }: Props) {
               <Text style={styles.targetText}>{memory.date}</Text>
               <Text style={styles.metaDot}>·</Text>
               <Text style={styles.targetText}>{targetLabel}</Text>
-              {memory.mood ? (
-                <>
-                  <Text style={styles.metaDot}>·</Text>
-                  <Text style={styles.mood}>{memory.mood}</Text>
-                </>
-              ) : null}
+              {(() => {
+                const mood = resolveMood(memory.mood, moodRegistry);
+                return mood ? (
+                  <>
+                    <Text style={styles.metaDot}>·</Text>
+                    <Text style={styles.mood}>{mood.emoji} {mood.label}</Text>
+                  </>
+                ) : null;
+              })()}
               {memory.location ? (
                 <>
                   <Text style={styles.metaDot}>·</Text>
@@ -138,7 +144,7 @@ export function MemoryCard({ memory, people = [], entranceDelay }: Props) {
               ) : null}
               {memory.isPrivate ? (
                 <View style={styles.privatePill}>
-                  <LockKeyhole size={11} color={colors.accent} />
+                  <LockKeyhole size={12} color={colors.accent} />
                   <Text style={styles.privateText}>私密</Text>
                 </View>
               ) : null}

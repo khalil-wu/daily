@@ -14,6 +14,14 @@ export const stickerCard: ViewStyle = {
   ...shadows.card,
 };
 
+// 漫画分镜面板级：加重描边 + 更大圆角 + 强投影，用于 hero / 强调区块。
+export const stickerPanel: ViewStyle = {
+  borderWidth: strokeWidth.heavy,
+  borderColor: colors.stroke,
+  borderRadius: radius.card + 4,
+  ...shadows.accent,
+};
+
 // chip/小按钮级：中等描边 + 按钮圆角 + 轻投影。用于 pill、筛选 chip、次级按钮。
 export const stickerChip: ViewStyle = {
   borderWidth: strokeWidth.input,
@@ -29,7 +37,7 @@ export const stickerInset: ViewStyle = {
   borderRadius: radius.input,
 };
 
-// chip 选中态：accent 实底 + 深棕描边 + 白字（配合上面预设使用）。
+// chip 选中态：accent 实底 + 墨线描边。文字应使用 textPrimary 而非白色以保证对比度。
 export const stickerChipActive: ViewStyle = {
   backgroundColor: colors.accent,
   borderColor: colors.stroke,
@@ -37,6 +45,7 @@ export const stickerChipActive: ViewStyle = {
 
 export const surfaces = StyleSheet.create({
   stickerCard,
+  stickerPanel,
   stickerChip,
   stickerInset,
   stickerChipActive,

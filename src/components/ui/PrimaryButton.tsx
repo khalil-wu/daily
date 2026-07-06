@@ -1,10 +1,10 @@
 import { Animated, Pressable, StyleSheet, Text, ViewStyle } from 'react-native';
 import { useRef } from 'react';
 
-import { motion, useReducedMotion } from '@/src/motion';
+import { lightImpactFeedback, motion, useReducedMotion } from '@/src/motion';
 import { colors, radius, shadows, spacing, strokeWidth, typography } from '@/src/theme';
 
-type Variant = 'primary' | 'warm' | 'ghost';
+type Variant = 'primary' | 'warm' | 'ghost' | 'pop';
 
 type Props = {
   label: string;
@@ -17,12 +17,14 @@ type Props = {
 const variantBg: Record<Variant, string> = {
   primary: colors.accent,
   warm: colors.secondary,
+  pop: colors.accentPop,
   ghost: 'transparent',
 };
 
 const variantPressedBg: Record<Variant, string> = {
   primary: colors.accentDim,
   warm: colors.accentDim,
+  pop: colors.accentDim,
   ghost: colors.bgWash,
 };
 
@@ -49,7 +51,7 @@ export function PrimaryButton({ label, onPress, style, disabled, variant = 'prim
       accessibilityState={{ disabled: Boolean(disabled) }}
       onPress={onPress}
       disabled={disabled}
-      onPressIn={() => animateScale(motion.pressScale)}
+      onPressIn={() => { void lightImpactFeedback(); animateScale(motion.pressScale); }}
       onPressOut={() => animateScale(1)}
       style={({ pressed }) => [
         styles.button,
@@ -89,8 +91,9 @@ const styles = StyleSheet.create({
   buttonDisabled: {
     opacity: 0.4,
   },
+  // 漫画风按钮文字用深色（accent/secondary/pop 均为浅色底，深字对比度更高）
   label: {
-    color: colors.bgPaper,
+    color: colors.textPrimary,
     fontFamily: typography.fontFamily.display,
     fontSize: typography.title,
     fontWeight: '700',
@@ -101,6 +104,6 @@ const styles = StyleSheet.create({
     color: colors.textPrimary,
   },
   labelDisabled: {
-    color: colors.bgPaper,
+    color: colors.textTertiary,
   },
 });

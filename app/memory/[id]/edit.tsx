@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { router, useLocalSearchParams } from 'expo-router';
 import { Bold, Camera, CheckSquare, Heading1, Heading2, Image as ImageIcon, List, Mic, Quote, SeparatorHorizontal, Square, Tag, X } from 'lucide-react-native';
 import {
@@ -20,8 +20,8 @@ import { useMemoryEditor } from '@/src/components/memory/useMemoryEditor';
 import { Avatar } from '@/src/components/person/Avatar';
 import { PrimaryButton } from '@/src/components/ui/PrimaryButton';
 import { Screen } from '@/src/components/ui/Screen';
-import { moods } from '@/src/i18n/copy';
 import { selectionFeedback } from '@/src/motion';
+import { useMoodStore } from '@/src/stores/useMoodStore';
 import { useVisibleDiaryData } from '@/src/privacy/useVisibleDiaryData';
 import { useDiaryStore } from '@/src/stores/useDiaryStore';
 import { colors, getContentWidth, radius, shadows, spacing, strokeWidth, typography } from '@/src/theme';
@@ -58,6 +58,15 @@ export default function EditMemoryScreen() {
   );
   const { width } = useWindowDimensions();
   const contentWidth = useMemo(() => getContentWidth(width, { maxWidth: 680 }), [width]);
+  const moodList = useMoodStore((state) => state.moods);
+  const moodHydrated = useMoodStore((state) => state.hydrated);
+  const hydrateMoods = useMoodStore((state) => state.hydrate);
+  const addMood = useMoodStore((state) => state.addMood);
+  const removeMood = useMoodStore((state) => state.removeMood);
+  const [moodAddOpen, setMoodAddOpen] = useState(false);
+  const [moodEmoji, setMoodEmoji] = useState('⭐');
+  const [moodLabel, setMoodLabel] = useState('');
+  useEffect(() => { void hydrateMoods(); }, [hydrateMoods]);
   const composerPerson = editor.people.find((person) => editor.selectedPersonIds.includes(person.id));
   const composerName = composerPerson?.name ?? '我';
   const composerSubline = memory
@@ -295,27 +304,91 @@ export default function EditMemoryScreen() {
 
             {editor.activeSheet === 'mood' ? (
               <View style={styles.moodGrid}>
-                {moods.map((item) => {
-                  const selected = editor.mood === item;
+                {moodList.map((item) => {
+                  const selected = editor.mood === item.id;
                   return (
                     <Pressable
-                      key={item}
+                      key={item.id}
                       accessibilityRole="button"
-                      accessibilityLabel={`${selected ? '取消选择' : '选择'}${item}心情`}
+                      accessibilityLabel={`${selected ? '取消选择' : '选择'}${item.label}心情${item.custom ? '，长按删除' : ''}`}
                       accessibilityState={{ selected }}
                       onPress={() => {
                         void selectionFeedback();
-                        editor.setMood(selected ? null : item);
+                        editor.setMood(selected ? null : item.id);
                         editor.setActiveSheet(null);
                       }}
+                      onLongPress={item.custom ? () => {
+                        void selectionFeedback();
+                        removeMood(item.id);
+                      } : undefined}
                       style={[styles.moodPill, selected && styles.moodPillActive]}
                     >
-                      <Text style={[styles.moodText, selected && styles.moodTextActive]}>{item}</Text>
+                      <Text style={styles.moodEmoji}>{item.emoji}</Text>
+                      <Text style={[styles.moodText, selected && styles.moodTextActive]}>{item.label}</Text>
                     </Pressable>
                   );
                 })}
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel="添加自定义心情"
+                  onPress={() => { void selectionFeedback(); setMoodAddOpen(true); }}
+                  style={styles.moodPill}
+                >
+                  <Text style={styles.moodEmoji}>＋</Text>
+                  <Text style={styles.moodText}>自定义</Text>
+                </Pressable>
               </View>
             ) : null}
+          </Pressable>
+        </Pressable>
+      </Modal>
+
+      <Modal visible={moodAddOpen} transparent animationType="fade" onRequestClose={() => setMoodAddOpen(false)}>
+        <Pressable style={styles.moodAddBackdrop} onPress={() => setMoodAddOpen(false)}>
+          <Pressable style={[styles.moodAddSheet, { width: contentWidth }]} onPress={(event) => event.stopPropagation()}>
+            <View style={styles.sheetHeader}>
+              <Text style={styles.sheetTitle}>添加心情</Text>
+              <Pressable accessibilityRole="button" accessibilityLabel="关闭" onPress={() => setMoodAddOpen(false)} style={styles.sheetClose}>
+                <X size={18} color={colors.textSecondary} />
+              </Pressable>
+            </View>
+            <View style={styles.moodAddRow}>
+              <TextInput
+                accessibilityLabel="心情表情"
+                value={moodEmoji}
+                onChangeText={setMoodEmoji}
+                maxLength={4}
+                style={styles.moodAddEmoji}
+              />
+              <TextInput
+                accessibilityLabel="心情名字"
+                value={moodLabel}
+                onChangeText={setMoodLabel}
+                placeholder="给心情起个名字"
+                placeholderTextColor={colors.textTertiary}
+                maxLength={8}
+                style={styles.moodAddLabel}
+              />
+            </View>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="保存这个心情"
+              disabled={!moodLabel.trim()}
+              onPress={() => {
+                const created = addMood(moodEmoji, moodLabel);
+                if (created) {
+                  void selectionFeedback();
+                  editor.setMood(created.id);
+                  setMoodEmoji('⭐');
+                  setMoodLabel('');
+                  setMoodAddOpen(false);
+                  editor.setActiveSheet(null);
+                }
+              }}
+              style={({ pressed }) => [styles.pickerConfirm, pressed && styles.pickerConfirmPressed, !moodLabel.trim() && { opacity: 0.4 }]}
+            >
+              <Text style={styles.pickerConfirmText}>记下这个心情</Text>
+            </Pressable>
           </Pressable>
         </Pressable>
       </Modal>
@@ -521,14 +594,14 @@ const styles = StyleSheet.create({
     paddingVertical: 0,
   },
   tagAddButton: {
-    minHeight: 36,
+    minHeight: 44,
     justifyContent: 'center',
     borderRadius: radius.button,
     backgroundColor: colors.accent,
     paddingHorizontal: spacing.md,
   },
   tagAddText: {
-    color: colors.bgPaper,
+    color: colors.textPrimary,
     fontFamily: typography.fontFamily.display,
     fontSize: typography.caption,
     lineHeight: typography.lineHeights.caption,
@@ -590,27 +663,107 @@ const styles = StyleSheet.create({
     color: colors.accent,
   },
   moodPill: {
-    minHeight: 44,
+    flexDirection: 'column',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.xs,
+    minWidth: 72,
+    minHeight: 64,
     borderRadius: radius.button,
     backgroundColor: colors.bgWash,
     borderWidth: strokeWidth.input,
     borderColor: colors.stroke,
-    paddingHorizontal: spacing.lg,
+    paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,
   },
   moodPillActive: {
     backgroundColor: colors.surfaceMint,
-    borderColor: colors.surfaceMint,
+    borderColor: colors.stroke,
+  },
+  moodEmoji: {
+    fontSize: 22,
+    includeFontPadding: false,
   },
   moodText: {
     color: colors.textSecondary,
     fontFamily: typography.fontFamily.display,
     fontSize: typography.caption,
     lineHeight: typography.lineHeights.caption,
+    fontWeight: '600',
     includeFontPadding: false,
   },
   moodTextActive: {
     color: colors.textPrimary,
+  },
+  moodAddBackdrop: {
+    flex: 1,
+    justifyContent: 'flex-end',
+    alignItems: 'center',
+    backgroundColor: colors.scrim,
+    padding: spacing.lg,
+  },
+  moodAddSheet: {
+    maxWidth: 680,
+    borderRadius: radius.card,
+    borderWidth: strokeWidth.card,
+    borderColor: colors.stroke,
+    backgroundColor: colors.bgPaper,
+    padding: spacing.lg,
+    gap: spacing.lg,
+    ...shadows.sheet,
+  },
+  moodAddRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+  },
+  moodAddEmoji: {
+    width: 64,
+    height: 56,
+    fontSize: 28,
+    textAlign: 'center',
+    color: colors.textPrimary,
+    borderRadius: radius.input,
+    borderWidth: strokeWidth.input,
+    borderColor: colors.stroke,
+    backgroundColor: colors.bgWash,
+    includeFontPadding: false,
+  },
+  moodAddLabel: {
+    flex: 1,
+    height: 56,
+    fontSize: typography.body,
+    color: colors.textPrimary,
+    fontFamily: typography.fontFamily.display,
+    borderRadius: radius.input,
+    borderWidth: strokeWidth.input,
+    borderColor: colors.stroke,
+    backgroundColor: colors.bgWash,
+    paddingHorizontal: spacing.md,
+    includeFontPadding: false,
+  },
+  pickerConfirm: {
+    minHeight: 52,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.sm,
+    borderRadius: radius.button,
+    borderWidth: strokeWidth.button,
+    borderColor: colors.stroke,
+    backgroundColor: colors.accent,
+    ...shadows.accent,
+  },
+  pickerConfirmPressed: {
+    backgroundColor: colors.accentDim,
+  },
+  pickerConfirmText: {
+    color: colors.bgPaper,
+    fontFamily: typography.fontFamily.display,
+    fontSize: typography.title,
+    lineHeight: typography.lineHeights.title,
+    fontWeight: '700',
+    includeFontPadding: false,
   },
   notFound: {
     flex: 1,

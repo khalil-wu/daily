@@ -1,4 +1,4 @@
-import { useRef } from 'react';
+import { useMemo, useRef } from 'react';
 import { router } from 'expo-router';
 import { Plus } from 'lucide-react-native';
 import { Animated, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
@@ -60,8 +60,26 @@ function PersonListItem({ person }: PersonListItemProps) {
   );
 }
 
+const RELATION_ORDER = ['母亲', '父亲', '朋友', '恋人', '亲人', '宠物', '自己', '其他'];
+
 export default function PeopleScreen() {
   const { visiblePeople } = useVisibleDiaryData();
+
+  const grouped = useMemo(() => {
+    const map = new Map<string, PersonSummary[]>();
+    for (const person of visiblePeople) {
+      const key = RELATION_ORDER.includes(person.relation) ? person.relation : '其他';
+      const list = map.get(key);
+      if (list) list.push(person);
+      else map.set(key, [person]);
+    }
+    return RELATION_ORDER
+      .filter((relation) => map.has(relation))
+      .map((relation) => ({
+        relation,
+        people: map.get(relation)!.slice().sort((a, b) => b.memoryCount - a.memoryCount || (a.recent === b.recent ? 0 : a.recent ? -1 : 1)),
+      }));
+  }, [visiblePeople]);
 
   return (
     <Screen>
@@ -80,7 +98,7 @@ export default function PeopleScreen() {
               router.push('/person/create');
             }}
           >
-            <Plus color={colors.bgPaper} size={18} strokeWidth={2.4} />
+            <Plus color={colors.textPrimary} size={18} strokeWidth={2.4} />
           </Pressable>
         </View>
 
@@ -91,8 +109,13 @@ export default function PeopleScreen() {
             <PrimaryButton label="记住一个人" onPress={() => router.push('/person/create')} />
           </View>
         ) : (
-          visiblePeople.map((person) => (
-            <PersonListItem key={person.id} person={person} />
+          grouped.map((group) => (
+            <View key={group.relation} style={styles.groupBlock}>
+              <Text style={styles.groupTitle}>{group.relation}</Text>
+              {group.people.map((person) => (
+                <PersonListItem key={person.id} person={person} />
+              ))}
+            </View>
           ))
         )}
       </ScrollView>
@@ -104,6 +127,19 @@ const styles = StyleSheet.create({
   content: {
     padding: spacing.xl,
     gap: spacing.md,
+  },
+  groupBlock: {
+    gap: spacing.sm,
+  },
+  groupTitle: {
+    color: colors.accent,
+    fontFamily: typography.fontFamily.display,
+    fontSize: typography.caption,
+    lineHeight: typography.lineHeights.caption,
+    fontWeight: '700',
+    letterSpacing: 1,
+    includeFontPadding: false,
+    marginTop: spacing.sm,
   },
   headerRow: {
     flexDirection: 'row',
@@ -122,7 +158,10 @@ const styles = StyleSheet.create({
   subtitle: {
     marginTop: spacing.xs,
     color: colors.textSecondary,
+    fontFamily: typography.fontFamily.display,
     fontSize: typography.caption,
+    lineHeight: typography.lineHeights.caption,
+    includeFontPadding: false,
   },
   addButton: {
     width: 44,
@@ -160,12 +199,17 @@ const styles = StyleSheet.create({
   },
   personMeta: {
     color: colors.textSecondary,
+    fontFamily: typography.fontFamily.display,
     fontSize: typography.caption,
+    lineHeight: typography.lineHeights.caption,
+    includeFontPadding: false,
   },
   personNote: {
     color: colors.textSecondary,
+    fontFamily: typography.fontFamily.display,
     fontSize: typography.body,
     lineHeight: typography.lineHeights.body,
+    includeFontPadding: false,
   },
   emptyBlock: {
     alignItems: 'center',

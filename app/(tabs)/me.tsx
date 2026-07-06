@@ -4,12 +4,14 @@ import { ChevronRight } from 'lucide-react-native';
 import { Modal, Pressable, ScrollView, StyleSheet, Switch, Text, TextInput, View } from 'react-native';
 
 import { Avatar } from '@/src/components/person/Avatar';
+import { WritingFootprint } from '@/src/components/memory/WritingFootprint';
 import { PrimaryButton } from '@/src/components/ui/PrimaryButton';
 import { Screen } from '@/src/components/ui/Screen';
 import { SectionCard } from '@/src/components/ui/SectionCard';
 import { selectionFeedback } from '@/src/motion';
 import { useAppLockStore } from '@/src/stores/useAppLockStore';
 import { useDiaryStore } from '@/src/stores/useDiaryStore';
+import { useVisibleDiaryData } from '@/src/privacy/useVisibleDiaryData';
 import { alpha, colors, radius, shadows, spacing, strokeWidth, typography } from '@/src/theme';
 
 export default function MeScreen() {
@@ -25,6 +27,8 @@ export default function MeScreen() {
   const [confirmPin, setConfirmPin] = useState('');
   const [pinError, setPinError] = useState<string | null>(null);
   const [lockBusy, setLockBusy] = useState(false);
+
+  const { visibleMemories, visiblePeople } = useVisibleDiaryData();
 
   const closePinModal = () => {
     if (lockBusy) return;
@@ -75,6 +79,8 @@ export default function MeScreen() {
             <Text style={styles.subtitle}>你的记忆只存在这台设备上。</Text>
           </View>
         </View>
+
+        <WritingFootprint memories={visibleMemories} people={visiblePeople} />
 
         <SectionCard>
           <View style={styles.settingRow}>
@@ -239,8 +245,10 @@ const styles = StyleSheet.create({
   },
   subtitle: {
     color: colors.textSecondary,
+    fontFamily: typography.fontFamily.display,
     fontSize: typography.body,
     lineHeight: typography.lineHeights.body,
+    includeFontPadding: false,
   },
   settingRow: {
     flexDirection: 'row',
@@ -262,11 +270,14 @@ const styles = StyleSheet.create({
   },
   settingDesc: {
     color: colors.textSecondary,
+    fontFamily: typography.fontFamily.display,
     fontSize: typography.caption,
     lineHeight: typography.lineHeights.caption,
+    includeFontPadding: false,
   },
   errorText: {
     color: colors.danger,
+    fontFamily: typography.fontFamily.display,
   },
   modalBackdrop: {
     flex: 1,
@@ -310,8 +321,11 @@ const styles = StyleSheet.create({
   },
   modalError: {
     color: colors.danger,
+    fontFamily: typography.fontFamily.display,
     fontSize: typography.caption,
+    lineHeight: typography.lineHeights.caption,
     textAlign: 'center',
+    includeFontPadding: false,
   },
   modalActions: {
     flexDirection: 'row',

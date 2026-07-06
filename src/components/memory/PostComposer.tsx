@@ -1,6 +1,6 @@
 import { AtSign, ChevronRight, Eye, Image as ImageIcon, LockKeyhole, MapPin, Mic, Plus, SmilePlus, Tag, TextCursorInput, UsersRound, X } from 'lucide-react-native';
-import { useMemo } from 'react';
-import { Image, Pressable, StyleSheet, Text, TextInput, useWindowDimensions, View } from 'react-native';
+import { useEffect, useMemo, useRef } from 'react';
+import { Animated, Easing, Image, Pressable, StyleSheet, Text, TextInput, useWindowDimensions, View } from 'react-native';
 
 import { Avatar } from '@/src/components/person/Avatar';
 import { MemoryAttachment, MemoryLocation, MemoryVoiceNote } from '@/src/data/mock';
@@ -44,6 +44,8 @@ type Props = {
   onPressMention?: () => void;
   onPressMood?: () => void;
   onTogglePrivacy?: () => void;
+  saveStatus?: 'idle' | 'saving' | 'saved';
+  durationLabel?: string;
 };
 
 export function PostComposer({
@@ -76,6 +78,8 @@ export function PostComposer({
   onPressMention,
   onPressMood,
   onTogglePrivacy,
+  saveStatus = 'idle',
+  durationLabel,
 }: Props) {
   const { width } = useWindowDimensions();
   const surfaceWidth = useMemo(() => getContentWidth(width, { maxWidth: 680 }), [width]);
@@ -85,6 +89,30 @@ export function PostComposer({
   }, [surfaceWidth]);
   const hasContext = selectedPeople.length > 0;
   const visibilityLabel = privacyLabel ?? '公开';
+  const charCount = useMemo(() => {
+    const stripped = value.replace(/\s/g, '');
+    return stripped.length;
+  }, [value]);
+  const pulseAnim = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    if (saveStatus === 'saving') {
+      const loop = Animated.loop(
+        Animated.sequence([
+          Animated.timing(pulseAnim, { toValue: 0.25, duration: 500, easing: Easing.inOut(Easing.ease), useNativeDriver: true }),
+          Animated.timing(pulseAnim, { toValue: 1, duration: 500, easing: Easing.inOut(Easing.ease), useNativeDriver: true }),
+        ]),
+      );
+      loop.start();
+      return () => loop.stop();
+    }
+    if (saveStatus === 'saved') {
+      pulseAnim.setValue(0.5);
+    } else {
+      pulseAnim.setValue(0);
+    }
+    return undefined;
+  }, [saveStatus, pulseAnim]);
 
   const renderSettingRow = ({
     label,
@@ -305,6 +333,30 @@ export function PostComposer({
         <Text style={styles.authorFootnoteText}>{authorName}</Text>
         <Text style={styles.authorFootnoteMeta}>{meta}</Text>
       </View>
+
+      {/* 写作状态栏：字数 + 时长 + 自动保存指示 */}
+      <View style={styles.statusBar}>
+        <View style={styles.statusGroup}>
+          <Text style={styles.statusText}>{charCount} 字</Text>
+          {durationLabel ? (
+            <>
+              <Text style={styles.statusDot}>·</Text>
+              <Text style={styles.statusText}>{durationLabel}</Text>
+            </>
+          ) : null}
+        </View>
+        {saveStatus !== 'idle' ? (
+          <View style={styles.saveIndicator}>
+            <Animated.View
+              style={[
+                styles.saveDot,
+                { opacity: saveStatus === 'saving' ? pulseAnim : 0.5, backgroundColor: saveStatus === 'saving' ? colors.accent : colors.textTertiary },
+              ]}
+            />
+            <Text style={styles.saveText}>{saveStatus === 'saving' ? '正在保存' : '已保存'}</Text>
+          </View>
+        ) : null}
+      </View>
     </View>
   );
 }
@@ -334,7 +386,7 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
   },
   toolPill: {
-    minHeight: 36,
+    minHeight: 44,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
@@ -411,14 +463,16 @@ const styles = StyleSheet.create({
   },
   removeAttachment: {
     position: 'absolute',
-    top: 5,
-    right: 5,
-    width: 22,
-    height: 22,
+    top: 4,
+    right: 4,
+    width: 28,
+    height: 28,
     borderRadius: radius.circle,
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: alpha.scrim,
+    borderWidth: 1,
+    borderColor: colors.bgPaper,
   },
   settingsList: {
     backgroundColor: colors.bgPaper,
@@ -435,7 +489,7 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
   },
   tagChip: {
-    minHeight: 36,
+    minHeight: 44,
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.xs,
@@ -516,7 +570,7 @@ const styles = StyleSheet.create({
     borderColor: colors.stroke,
     paddingLeft: 4,
     paddingRight: spacing.md,
-    paddingVertical: 4,
+    paddingVertical: 8,
   },
   selectedName: {
     color: colors.textSecondary,
@@ -538,6 +592,47 @@ const styles = StyleSheet.create({
     includeFontPadding: false,
   },
   authorFootnoteMeta: {
+    color: colors.textTertiary,
+    fontFamily: typography.fontFamily.display,
+    fontSize: typography.micro,
+    lineHeight: typography.lineHeights.micro,
+    includeFontPadding: false,
+  },
+  statusBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
+  },
+  statusGroup: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+  },
+  statusText: {
+    color: colors.textTertiary,
+    fontFamily: typography.fontFamily.display,
+    fontSize: typography.micro,
+    lineHeight: typography.lineHeights.micro,
+    includeFontPadding: false,
+  },
+  statusDot: {
+    color: colors.textTertiary,
+    fontSize: typography.micro,
+    includeFontPadding: false,
+  },
+  saveIndicator: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  saveDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+  },
+  saveText: {
     color: colors.textTertiary,
     fontFamily: typography.fontFamily.display,
     fontSize: typography.micro,

@@ -365,7 +365,7 @@ const styles = StyleSheet.create({
   },
   filterChip: {
     minWidth: 74,
-    minHeight: 42,
+    minHeight: 44,
     alignItems: 'center',
     justifyContent: 'center',
     borderRadius: radius.button,
@@ -388,7 +388,8 @@ const styles = StyleSheet.create({
     includeFontPadding: false,
   },
   filterTextActive: {
-    color: colors.bgPaper,
+    color: colors.textPrimary,
+    fontWeight: '700',
   },
   empty: {
     color: colors.textTertiary,

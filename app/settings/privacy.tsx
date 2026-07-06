@@ -225,6 +225,7 @@ const styles = StyleSheet.create({
   },
   subtitle: {
     color: colors.textSecondary,
+    fontFamily: typography.fontFamily.display,
     fontSize: typography.body,
     lineHeight: typography.lineHeights.body,
   },
@@ -246,7 +247,10 @@ const styles = StyleSheet.create({
   },
   statLabel: {
     color: colors.textSecondary,
+    fontFamily: typography.fontFamily.display,
     fontSize: typography.caption,
+    lineHeight: typography.lineHeights.caption,
+    includeFontPadding: false,
   },
   warningRow: {
     flexDirection: 'row',
@@ -256,8 +260,10 @@ const styles = StyleSheet.create({
   warningText: {
     flex: 1,
     color: colors.danger,
+    fontFamily: typography.fontFamily.display,
     fontSize: typography.caption,
     lineHeight: typography.lineHeights.caption,
+    includeFontPadding: false,
   },
   bulkActions: {
     gap: spacing.md,
@@ -288,10 +294,12 @@ const styles = StyleSheet.create({
   },
   empty: {
     color: colors.textTertiary,
+    fontFamily: typography.fontFamily.display,
     fontSize: typography.body,
     lineHeight: typography.lineHeights.body,
     textAlign: 'center',
     marginTop: spacing.xxxl,
+    includeFontPadding: false,
   },
   memoryHeader: {
     flexDirection: 'row',
@@ -312,8 +320,10 @@ const styles = StyleSheet.create({
   },
   memoryMeta: {
     color: colors.textSecondary,
+    fontFamily: typography.fontFamily.display,
     fontSize: typography.caption,
     lineHeight: typography.lineHeights.caption,
+    includeFontPadding: false,
   },
   modePill: {
     flexDirection: 'row',
@@ -339,11 +349,13 @@ const styles = StyleSheet.create({
     marginTop: spacing.lg,
   },
   itemButton: {
-    minHeight: 40,
+    minHeight: 44,
     borderRadius: radius.button,
     justifyContent: 'center',
     paddingHorizontal: spacing.md,
     backgroundColor: colors.bgElevated,
+    borderWidth: strokeWidth.input,
+    borderColor: colors.strokeSoft,
   },
   itemButtonActive: {
     backgroundColor: colors.accent,
@@ -352,25 +364,33 @@ const styles = StyleSheet.create({
   },
   itemButtonText: {
     color: colors.textSecondary,
+    fontFamily: typography.fontFamily.display,
     fontSize: typography.caption,
+    lineHeight: typography.lineHeights.caption,
     fontWeight: '500',
+    includeFontPadding: false,
   },
   itemButtonTextActive: {
-    color: colors.bgPaper,
+    color: colors.textPrimary,
     fontWeight: '700',
   },
   unlockButton: {
-    minHeight: 40,
+    minHeight: 44,
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.xs,
     borderRadius: radius.button,
     paddingHorizontal: spacing.md,
     backgroundColor: alpha.danger10,
+    borderWidth: strokeWidth.input,
+    borderColor: colors.strokeSoft,
   },
   unlockText: {
     color: colors.danger,
+    fontFamily: typography.fontFamily.display,
     fontSize: typography.caption,
+    lineHeight: typography.lineHeights.caption,
     fontWeight: '500',
+    includeFontPadding: false,
   },
 });

@@ -9,7 +9,7 @@ import { Screen } from '@/src/components/ui/Screen';
 import { selectionFeedback } from '@/src/motion';
 import { persistPickedAvatar } from '@/src/storage/mediaStorage';
 import { useDiaryStore } from '@/src/stores/useDiaryStore';
-import { alpha, colors, radius, spacing, typography } from '@/src/theme';
+import { alpha, colors, radius, spacing, strokeWidth, typography } from '@/src/theme';
 
 const relations = ['母亲', '父亲', '朋友', '恋人', '亲人', '宠物', '自己', '其他'];
 
@@ -169,8 +169,8 @@ const styles = StyleSheet.create({
     includeFontPadding: false,
   },
   input: {
-    borderBottomWidth: 1,
-    borderBottomColor: colors.divider,
+    borderBottomWidth: strokeWidth.input,
+    borderBottomColor: colors.stroke,
     color: colors.textPrimary,
     fontFamily: typography.fontFamily.display,
     fontSize: typography.body,
@@ -188,10 +188,15 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
   },
   relationPill: {
+    minHeight: 44,
     borderRadius: radius.pill,
     backgroundColor: colors.bgSecondary,
+    borderWidth: strokeWidth.input,
+    borderColor: colors.stroke,
     paddingHorizontal: spacing.lg,
     paddingVertical: spacing.sm,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   relationPillActive: {
     backgroundColor: alpha.accent10,

@@ -250,7 +250,7 @@ export default function CalendarScreen() {
               onPress={confirmPicker}
               style={({ pressed }) => [styles.pickerConfirm, pressed && styles.pickerConfirmPressed]}
             >
-              <Check size={18} color={colors.bgPaper} strokeWidth={2.4} />
+              <Check size={18} color={colors.textPrimary} strokeWidth={2.4} />
               <Text style={styles.pickerConfirmText}>就这个月</Text>
             </Pressable>
           </Pressable>
@@ -389,7 +389,7 @@ const styles = StyleSheet.create({
     includeFontPadding: false,
   },
   dayTextSelected: {
-    color: colors.bgPaper,
+    color: colors.textPrimary,
     fontWeight: '700',
   },
   memoryDot: {
@@ -514,7 +514,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.accentDim,
   },
   pickerConfirmText: {
-    color: colors.bgPaper,
+    color: colors.textPrimary,
     fontFamily: typography.fontFamily.display,
     fontSize: typography.title,
     lineHeight: typography.lineHeights.title,

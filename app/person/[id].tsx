@@ -230,7 +230,7 @@ const styles = StyleSheet.create({
   },
   tabChip: {
     minWidth: 74,
-    height: 40,
+    minHeight: 44,
     alignItems: 'center',
     justifyContent: 'center',
     borderRadius: radius.button,
@@ -252,7 +252,7 @@ const styles = StyleSheet.create({
     includeFontPadding: false,
   },
   tabTextActive: {
-    color: colors.bgPaper,
+    color: colors.textPrimary,
     fontWeight: '700',
   },
   timelineBlock: {

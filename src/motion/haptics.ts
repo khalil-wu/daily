@@ -18,3 +18,31 @@ export function selectionFeedback() {
 export function successFeedback() {
   return runNativeHaptic(() => Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success));
 }
+
+export function warningFeedback() {
+  return runNativeHaptic(() => Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning));
+}
+
+export function errorFeedback() {
+  return runNativeHaptic(() => Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error));
+}
+
+export function lightImpactFeedback() {
+  return runNativeHaptic(() => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light));
+}
+
+export function mediumImpactFeedback() {
+  return runNativeHaptic(() => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium));
+}
+
+export function heavyImpactFeedback() {
+  return runNativeHaptic(() => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy));
+}
+
+export function rigidImpactFeedback() {
+  return runNativeHaptic(() => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Rigid));
+}
+
+export function softImpactFeedback() {
+  return runNativeHaptic(() => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Soft));
+}

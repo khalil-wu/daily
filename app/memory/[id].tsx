@@ -11,6 +11,8 @@ import { WritingPreview } from '@/src/markdown/renderMarkdown';
 import { selectionFeedback } from '@/src/motion';
 import { useVisibleDiaryData } from '@/src/privacy/useVisibleDiaryData';
 import { useDiaryStore } from '@/src/stores/useDiaryStore';
+import { useMoodStore } from '@/src/stores/useMoodStore';
+import { resolveMood } from '@/src/i18n/copy';
 import { alpha, colors, getContentWidth, radius, shadows, spacing, strokeWidth, typography } from '@/src/theme';
 import type { MemoryVoiceNote } from '@/src/data/mock';
 
@@ -42,8 +44,8 @@ function VoiceNotePlayer({ voice, index }: { voice: MemoryVoiceNote; index: numb
 
   return (
     <View style={styles.voiceItem}>
-      <Pressable accessibilityRole="button" accessibilityLabel={status.playing ? `暂停语音${index + 1}` : `播放语音${index + 1}`} onPress={toggle} style={styles.voiceButton}>
-        {status.playing ? <Pause size={15} color={colors.bgPaper} /> : <Play size={15} color={colors.bgPaper} />}
+      <Pressable accessibilityRole="button" accessibilityLabel={status.playing ? `暂停语音${index + 1}` : `播放语音${index + 1}`} onPress={toggle} hitSlop={6} style={styles.voiceButton}>
+        {status.playing ? <Pause size={16} color={colors.textPrimary} /> : <Play size={16} color={colors.textPrimary} />}
       </Pressable>
       <Mic size={16} color={colors.accent} strokeWidth={1.8} />
       <View style={styles.voiceProgressWrap}>
@@ -70,6 +72,7 @@ export default function MemoryDetailScreen() {
     return Math.max(76, Math.min(128, Math.floor(available / 3)));
   }, [width]);
   const [viewerIndex, setViewerIndex] = useState<number | null>(null);
+  const moodRegistry = useMoodStore((state) => state.moods);
 
   if (!memory) {
     return (
@@ -182,12 +185,15 @@ export default function MemoryDetailScreen() {
                 <Text style={styles.metaText}>{memory.date}</Text>
                 <Text style={styles.metaDot}>·</Text>
                 <Text style={styles.metaText}>{targetLabel}</Text>
-                {memory.mood ? (
-                  <>
-                    <Text style={styles.metaDot}>·</Text>
-                    <Text style={styles.mood}>{memory.mood}</Text>
-                  </>
-                ) : null}
+                {(() => {
+                  const mood = resolveMood(memory.mood, moodRegistry);
+                  return mood ? (
+                    <>
+                      <Text style={styles.metaDot}>·</Text>
+                      <Text style={styles.mood}>{mood.emoji} {mood.label}</Text>
+                    </>
+                  ) : null;
+                })()}
                 {memory.location ? (
                   <>
                     <Text style={styles.metaDot}>·</Text>
@@ -418,7 +424,7 @@ const styles = StyleSheet.create({
     borderColor: colors.stroke,
     paddingLeft: 4,
     paddingRight: spacing.md,
-    paddingVertical: 4,
+    paddingVertical: 8,
   },
   personName: {
     color: colors.textSecondary,
@@ -443,8 +449,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.md,
   },
   voiceButton: {
-    width: 30,
-    height: 30,
+    width: 36,
+    height: 36,
     borderRadius: radius.circle,
     alignItems: 'center',
     justifyContent: 'center',
