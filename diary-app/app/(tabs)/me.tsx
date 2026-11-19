@@ -39,7 +39,12 @@ export default function MeScreen() {
   const draftCount = useMemo(() => entries.filter(e => !e.deletedAt && e.status === 'draft').length, [entries]);
   const favCount = useMemo(() => entries.filter(e => !e.deletedAt && e.favorite).length, [entries]);
   const trashCount = useMemo(() => entries.filter(e => !!e.deletedAt).length, [entries]);
-  const companionDays = Math.max(1, daysBetween(firstUseAt, Date.now()) + 1);
+  // 从「开始使用」和「最早一篇日记」里取更早的那天算起：恢复或导入的旧日记也算陪伴的日子
+  const companionDays = useMemo(() => {
+    let start = firstUseAt;
+    for (const e of entries) if (!e.deletedAt && e.createdAt < start) start = e.createdAt;
+    return Math.max(1, daysBetween(start, Date.now()) + 1);
+  }, [entries, firstUseAt]);
 
   const openProfileEdit = () => {
     setNameInput(profile.name);

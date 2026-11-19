@@ -53,10 +53,19 @@ export function excerpt(body: string, max = 60) {
 }
 
 /** 字数（中文按字，英文按词） */
+// 统计、热力图、年度报告会对同一篇正文反复计数：按原文缓存结果（有上限，满了整体清空）
+const WC_CACHE = new Map<string, number>();
+const WC_MAX = 6000;
+
 export function wordCount(text: string) {
+  if (!text) return 0;
+  const hit = WC_CACHE.get(text);
+  if (hit !== undefined) return hit;
   const t = plainText(text);
   const cjk = (t.match(/[\u4e00-\u9fa5\u3040-\u30ff]/g) || []).length;
   const words = (t.replace(/[\u4e00-\u9fa5\u3040-\u30ff]/g, ' ').match(/[A-Za-z0-9]+/g) || []).length;
+  if (WC_CACHE.size >= WC_MAX) WC_CACHE.clear();
+  WC_CACHE.set(text, cjk + words);
   return cjk + words;
 }
 
