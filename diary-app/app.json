@@ -1,0 +1,140 @@
+{
+  "expo": {
+    "name": "记得日记",
+    "slug": "jide-diary",
+    "version": "1.0.0",
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "scheme": "jidediary",
+    "icon": "./assets/images/app-icon.png",
+    "orientation": "portrait",
+    "userInterfaceStyle": "automatic",
+    "backgroundColor": "#F8F5EF",
+    "splash": {
+      "image": "./assets/images/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#F8F5EF"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "app.jide.diary",
+      "buildNumber": "1",
+      "infoPlist": {
+        "NSFaceIDUsageDescription": "使用 Face ID 解锁记得日记，保护你的隐私。",
+        "NSLocationWhenInUseUsageDescription": "用于为日记添加当前所在的地点。"
+      }
+    },
+    "android": {
+      "package": "app.jide.diary",
+      "versionCode": 1,
+      "softwareKeyboardLayoutMode": "resize",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/images/adaptive-icon.png",
+        "backgroundColor": "#FCF0DD"
+      },
+      "permissions": [
+        "android.permission.RECORD_AUDIO",
+        "android.permission.USE_BIOMETRIC",
+        "android.permission.USE_FINGERPRINT",
+        "android.permission.ACCESS_COARSE_LOCATION",
+        "android.permission.ACCESS_FINE_LOCATION",
+        "android.permission.POST_NOTIFICATIONS",
+        "android.permission.SCHEDULE_EXACT_ALARM",
+        "android.permission.CAMERA",
+        "android.permission.READ_MEDIA_IMAGES",
+        "android.permission.READ_MEDIA_VIDEO",
+        "android.permission.READ_EXTERNAL_STORAGE"
+      ]
+    },
+    "web": {
+      "bundler": "metro",
+      "output": "single",
+      "name": "记得日记",
+      "favicon": "./assets/images/app-icon.png"
+    },
+    "plugins": [
+      "expo-router",
+      [
+        "expo-font",
+        {
+          "android": {
+            "fonts": [
+              {
+                "fontFamily": "NotoSerifSC",
+                "fontDefinitions": [
+                  {
+                    "path": "./assets/fonts/NotoSerifSC-Regular.otf",
+                    "weight": 400,
+                    "style": "normal"
+                  },
+                  {
+                    "path": "./assets/fonts/NotoSerifSC-SemiBold.otf",
+                    "weight": 600,
+                    "style": "normal"
+                  }
+                ]
+              },
+              {
+                "fontFamily": "NotoSerifSC-SemiBold",
+                "fontDefinitions": [
+                  {
+                    "path": "./assets/fonts/NotoSerifSC-SemiBold.otf",
+                    "weight": 400,
+                    "style": "normal"
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "用于把照片插入到你的日记中。",
+          "cameraPermission": "用于拍照记录生活中的瞬间。",
+          "microphonePermission": false
+        }
+      ],
+      [
+        "expo-audio",
+        {
+          "microphonePermission": "用于录制语音日记。"
+        }
+      ],
+      [
+        "expo-local-authentication",
+        {
+          "faceIDPermission": "使用 Face ID 解锁记得日记，保护你的隐私。"
+        }
+      ],
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "用于为日记添加当前所在的地点。"
+        }
+      ],
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/images/notification-icon.png",
+          "color": "#B79276"
+        }
+      ],
+      "expo-sharing",
+      "expo-file-system",
+      "expo-video",
+      [
+        "expo-speech-recognition",
+        {
+          "microphonePermission": "用于把你说的话转成文字（语音听写）。",
+          "speechRecognitionPermission": "用于在设备上进行语音识别，把口述内容写成日记。"
+        }
+      ]
+    ],
+    "experiments": {
+      "typedRoutes": false
+    }
+  }
+}
