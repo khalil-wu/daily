@@ -137,10 +137,9 @@
       "typedRoutes": false
     },
     "extra": {
-      "leancloud": {
-        "appId": "",
-        "appKey": "",
-        "serverURL": ""
+      "cloudbase": {
+        "env": "",
+        "region": "ap-shanghai"
       }
     }
   }
