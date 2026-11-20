@@ -1,7 +1,13 @@
 import { useRef, useSyncExternalStore } from 'react';
 import type { AppState, Entry, EntryAI, Notebook, PeriodReview, Person, RelationKey, StoredAccount, SyncConflict, Tag, VideoClip } from './types';
 import { defaultState, loadState, normalizeEntry, normalizeState, saveState, clearAllStorage, loadCloud, saveCloud } from './storage';
-import { uid, sha256 } from '../utils/text';
+import { uid, sha256, isPhone } from '../utils/text';
+import {
+  initCloud, cloudConfigured, currentRemoteAccount,
+  loginByPhone, loginByPassword, registerByEmail,
+  sendSmsCode, sendResetSmsCode, resetPasswordBySms, requestPasswordResetEmail,
+  logoutRemote, pullRemoteEntries, pushRemoteEntries, destroyRemoteAccount, cloudError,
+} from '../services/cloud';
 import { unreferencedVideos } from '../utils/video';
 import { normalizeBirthday } from '../utils/people';
 import { clearAllVideoFiles, discardVideoFiles } from '../services/videoStore';
@@ -67,6 +73,18 @@ export async function hydrate() {
   hydrated = true;
   emit();
   hydrateListeners.forEach(l => l());
+  // 恢复云端登录态：本地存的是云端账号但会话已失效时，要求重新登录
+  initCloud();
+  void currentRemoteAccount().then(remote => {
+    if (!state.account?.remote && !remote) return;
+    if (remote && state.account?.remote && remote.id === state.account.id) return;
+    setState(s => ({
+      ...s,
+      account: remote ?? undefined,
+      usageMode: remote ? 'account' : s.usageMode === 'account' ? 'local' : s.usageMode,
+      sync: remote ? s.sync : { ...s.sync, cloud: false },
+    }), true);
+  }).catch(() => {});
 }
 
 export function isHydrated() {
@@ -483,9 +501,19 @@ export const actions = {
     actions.setPrivacy({ appLock: false, passcodeHash: undefined, biometric: false });
   },
 
-  /* —— 账号（本地账户体系；接入服务端时替换 services/account 即可） —— */
+  /* —— 账号：已配置云端则走远端（services/cloud.ts），否则保持本机模拟 —— */
   async register(identifier: string, password: string): Promise<{ ok: boolean; message?: string }> {
     const id = identifier.trim();
+    if (cloudConfigured()) {
+      if (isPhone(id)) return { ok: false, message: '手机号请使用验证码注册' };
+      try {
+        const acc = await registerByEmail(id, password);
+        setState(s => ({ ...s, account: acc, usageMode: 'account', sync: { ...s.sync, cloud: true } }), true);
+        return { ok: true };
+      } catch (e) {
+        return { ok: false, message: cloudError(e, '注册失败，请稍后再试') };
+      }
+    }
     if (state.accounts.some(a => a.identifier === id)) return { ok: false, message: '该账号已注册，请直接登录' };
     const acc: StoredAccount = {
       id: uid('u'),
@@ -505,6 +533,15 @@ export const actions = {
   },
 
   async login(identifier: string, password: string): Promise<{ ok: boolean; message?: string }> {
+    if (cloudConfigured()) {
+      try {
+        const acc = await loginByPassword(identifier, password);
+        setState(s => ({ ...s, account: acc, usageMode: 'account', sync: { ...s.sync, cloud: true } }), true);
+        return { ok: true };
+      } catch (e) {
+        return { ok: false, message: cloudError(e, '登录失败，请稍后再试') };
+      }
+    }
     const acc = state.accounts.find(a => a.identifier === identifier.trim());
     if (!acc) return { ok: false, message: '账号不存在，请先注册' };
     if ((await sha256(password)) !== acc.passwordHash) return { ok: false, message: '密码错误，请重新输入' };
@@ -517,7 +554,55 @@ export const actions = {
     return { ok: true };
   },
 
-  async resetPassword(identifier: string, password: string): Promise<{ ok: boolean; message?: string }> {
+  /** 发送验证码：手机号走短信，邮箱走验证/重置邮件（链接式，无数字码） */
+  async sendLoginCode(identifier: string): Promise<{ ok: boolean; message?: string }> {
+    if (!cloudConfigured()) return { ok: false, message: '云端尚未配置' };
+    const id = identifier.trim();
+    try {
+      if (isPhone(id)) await sendSmsCode(id);
+      else return { ok: false, message: '邮箱注册无需验证码，验证邮件会在注册后发送' };
+      return { ok: true };
+    } catch (e) {
+      return { ok: false, message: cloudError(e, '验证码发送失败，请稍后再试') };
+    }
+  },
+
+  /** 手机号 + 验证码登录；未注册的手机号自动注册并登录 */
+  async loginByCode(phone: string, code: string): Promise<{ ok: boolean; message?: string }> {
+    if (!cloudConfigured()) return { ok: false, message: '云端尚未配置' };
+    try {
+      const acc = await loginByPhone(phone, code);
+      setState(s => ({ ...s, account: acc, usageMode: 'account', sync: { ...s.sync, cloud: true } }), true);
+      return { ok: true };
+    } catch (e) {
+      return { ok: false, message: cloudError(e, '登录失败，请检查验证码') };
+    }
+  },
+
+  /** 发送重置密码验证：手机号发短码，邮箱发重置邮件 */
+  async sendResetCode(identifier: string): Promise<{ ok: boolean; message?: string }> {
+    if (!cloudConfigured()) return { ok: false, message: '云端尚未配置' };
+    const id = identifier.trim();
+    try {
+      if (isPhone(id)) await sendResetSmsCode(id);
+      else await requestPasswordResetEmail(id);
+      return { ok: true };
+    } catch (e) {
+      return { ok: false, message: cloudError(e, '发送失败，请稍后再试') };
+    }
+  },
+
+  async resetPassword(identifier: string, password: string, code?: string): Promise<{ ok: boolean; message?: string }> {
+    if (cloudConfigured()) {
+      const id = identifier.trim();
+      if (!isPhone(id)) return { ok: false, message: '邮箱重置请前往邮箱点击链接，完成后用新密码登录' };
+      try {
+        await resetPasswordBySms(code ?? '', password);
+        return { ok: true };
+      } catch (e) {
+        return { ok: false, message: cloudError(e, '重置失败，请检查验证码') };
+      }
+    }
     const acc = state.accounts.find(a => a.identifier === identifier.trim());
     if (!acc) return { ok: false, message: '该账号尚未注册' };
     const passwordHash = await sha256(password);
@@ -526,15 +611,20 @@ export const actions = {
   },
 
   logout() {
+    if (state.account?.remote) void logoutRemote();
     setState(s => ({ ...s, account: undefined, usageMode: 'local', sync: { ...s.sync, cloud: false } }), true);
   },
 
   /** 注销账号：删除账号与本地全部数据 */
   async deleteAccount() {
     const accId = state.account?.id;
-    const cloud = await loadCloud();
-    if (accId) delete cloud[accId];
-    await saveCloud(cloud);
+    if (state.account?.remote) {
+      await destroyRemoteAccount().catch(() => {});
+    } else {
+      const cloud = await loadCloud();
+      if (accId) delete cloud[accId];
+      await saveCloud(cloud);
+    }
     const accounts = state.accounts.filter(a => a.id !== accId);
     state = { ...defaultState(), accounts };
     emit();
@@ -553,12 +643,20 @@ export const actions = {
     await clearAIKey();
   },
 
-  /* —— 同步（模拟云端） —— */
+  /* —— 同步：云端账号走 LeanCloud，本机账号走模拟云端 —— */
   async syncNow(): Promise<{ ok: boolean; conflicts: number; message?: string }> {
     const acc = state.account;
     if (!acc) return { ok: false, conflicts: 0, message: '请先登录账号' };
-    const cloud = await loadCloud();
-    const remote = cloud[acc.id];
+    let remote: { entries: Entry[]; updatedAt: number } | undefined;
+    if (acc.remote) {
+      try {
+        remote = { entries: await pullRemoteEntries(), updatedAt: 0 };
+      } catch (e) {
+        return { ok: false, conflicts: 0, message: cloudError(e, '同步失败，请检查网络后重试') };
+      }
+    } else {
+      remote = (await loadCloud())[acc.id];
+    }
     const local = state.entries;
     const conflicts: SyncConflict[] = [];
     const merged = new Map<string, Entry>();
@@ -582,8 +680,17 @@ export const actions = {
     const entries = Array.from(merged.values());
     const now = Date.now();
     if (!conflicts.length) {
-      cloud[acc.id] = { entries, updatedAt: now };
-      await saveCloud(cloud);
+      if (acc.remote) {
+        try {
+          await pushRemoteEntries(entries);
+        } catch (e) {
+          return { ok: false, conflicts: 0, message: cloudError(e, '同步失败，请检查网络后重试') };
+        }
+      } else {
+        const cloud = await loadCloud();
+        cloud[acc.id] = { entries, updatedAt: now };
+        await saveCloud(cloud);
+      }
     }
     setState(s => ({
       ...s,

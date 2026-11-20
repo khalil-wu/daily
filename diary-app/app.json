@@ -135,6 +135,13 @@
     ],
     "experiments": {
       "typedRoutes": false
+    },
+    "extra": {
+      "leancloud": {
+        "appId": "",
+        "appKey": "",
+        "serverURL": ""
+      }
     }
   }
 }

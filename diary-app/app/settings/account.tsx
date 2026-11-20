@@ -7,6 +7,7 @@ import { actions, useStore } from '../../src/store/store';
 import { Button, Card, Group, NavBar, Radio, Row, Screen, Switch } from '../../src/components/ui';
 import { useFeedback } from '../../src/components/feedback';
 import { fmtDateTime } from '../../src/utils/date';
+import { cloudConfigured } from '../../src/services/cloud';
 
 /** 3. 账号与同步（1:1 复刻设计稿3 #3） */
 export default function AccountSyncScreen() {
@@ -119,7 +120,13 @@ export default function AccountSyncScreen() {
             </View>
             <View style={{ flex: 1 }}>
               <Text style={[t.h3, { fontSize: fs(15.5) }]}>{account ? '已登录' : '账号登录同步'}</Text>
-              <Text style={[t.sub, { marginTop: 3 }]}>{account ? account.identifier : '点击登录或注册，在本机账号间同步日记'}</Text>
+              <Text style={[t.sub, { marginTop: 3 }]}>
+                {account
+                  ? account.identifier
+                  : cloudConfigured()
+                    ? '点击登录或注册，多设备同步日记'
+                    : '点击登录或注册，在本机账号间同步日记'}
+              </Text>
             </View>
             <Radio checked={!!account} />
           </Pressable>
@@ -127,8 +134,8 @@ export default function AccountSyncScreen() {
 
         <Group title="同步与数据">
           <Row
-            title="账号同步（本机）"
-            subtitle="尚未接入云端；换设备请用备份文件迁移"
+            title={cloudConfigured() ? '云端同步' : '账号同步（本机）'}
+            subtitle={cloudConfigured() ? '同步到云端，多设备可访问同一账号的日记' : '尚未接入云端；换设备请用备份文件迁移'}
             right={
               <Switch
                 value={sync.cloud}
@@ -171,7 +178,7 @@ export default function AccountSyncScreen() {
                 ? `检测到 ${conflicts.length} 处同步冲突，请及时处理`
                 : sync.lastSyncAt
                   ? `${fmtDateTime(sync.lastSyncAt)} · 同步完成`
-                  : '尚未同步过'
+                  : cloudConfigured() ? '尚未进行过云端同步' : '尚未同步过'
             }
             right={
               <Pressable onPress={() => void runSync()} hitSlop={8} style={{ flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 10, paddingVertical: 5, borderRadius: 999, backgroundColor: c.primaryFaint }}>
@@ -185,7 +192,9 @@ export default function AccountSyncScreen() {
         {conflicts.length > 0 && (
           <Card style={{ marginBottom: 14, backgroundColor: c.warningSoft, borderColor: c.warning }}>
             <Text style={[t.h3, { color: c.text }]}>发现 {conflicts.length} 条同步冲突</Text>
-            <Text style={[t.sub, { marginTop: 4, marginBottom: 12 }]}>两个账号对同一篇日记有不同修改，请手动选择保留方式。</Text>
+            <Text style={[t.sub, { marginTop: 4, marginBottom: 12 }]}>
+              {cloudConfigured() ? '云端与本机对同一篇日记有不同修改' : '两个账号对同一篇日记有不同修改'}，请手动选择保留方式。
+            </Text>
             <Button title="前往处理冲突" size="md" onPress={() => router.push('/sync-conflict')} />
           </Card>
         )}
@@ -193,7 +202,7 @@ export default function AccountSyncScreen() {
         {account ? (
           <Group>
             <Row title="退出登录" onPress={() => void logout()} chevron={false} />
-            <Row title="注销账号" danger subtitle="永久删除本机账号与数据" onPress={() => router.push('/settings/delete-account')} />
+            <Row title="注销账号" danger subtitle={cloudConfigured() ? '永久删除云端账号与数据' : '永久删除本机账号与数据'} onPress={() => router.push('/settings/delete-account')} />
           </Group>
         ) : (
           <Button title="登录 / 注册账号" onPress={() => router.push('/auth/login')} style={{ marginTop: 6 }} />

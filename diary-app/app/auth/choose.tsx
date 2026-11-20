@@ -7,6 +7,7 @@ import { useTheme } from '../../src/theme/ThemeProvider';
 import { actions } from '../../src/store/store';
 import { NavBar, Screen, haptic } from '../../src/components/ui';
 import { IMAGES } from '../../src/data/assets';
+import { cloudConfigured } from '../../src/services/cloud';
 
 /** 5. 选择使用方式（1:1 复刻设计稿1 #5） */
 export default function ChooseModeScreen() {
@@ -78,7 +79,9 @@ export default function ChooseModeScreen() {
               </View>
               <View style={{ flex: 1 }}>
                 <Text style={[t.h3, { fontSize: fs(17) }]}>登录账号</Text>
-                <Text style={[t.sub, { marginTop: 5 }]}>创建本机账号，可在同设备账号间同步日记；云端同步暂未开放。</Text>
+                <Text style={[t.sub, { marginTop: 5 }]}>
+                  {cloudConfigured() ? '登录云端账号，多设备同步日记。' : '创建本机账号，可在同设备账号间同步日记；云端同步暂未开放。'}
+                </Text>
               </View>
               <ChevronRight size={20} color={c.textMuted} style={{ marginLeft: 8 }} />
             </Pressable>

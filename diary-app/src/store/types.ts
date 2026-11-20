@@ -198,6 +198,8 @@ export interface Account {
   identifier: string; // 手机号或邮箱
   nickname: string;
   createdAt: number;
+  /** true = 云端账号（LeanCloud）；未标记的是本机模拟账号 */
+  remote?: boolean;
 }
 
 export interface StoredAccount extends Account {

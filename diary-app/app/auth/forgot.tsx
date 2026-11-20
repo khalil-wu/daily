@@ -5,6 +5,8 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Lock, ShieldCheck, User } from 'lucide-react-native';
 import { useTheme } from '../../src/theme/ThemeProvider';
 import { actions } from '../../src/store/store';
+import { cloudConfigured } from '../../src/services/cloud';
+import { isEmail, isPhone } from '../../src/utils/text';
 import { Button, Field, NavBar, Screen, goBack } from '../../src/components/ui';
 import { BotanicalAccent } from '../../src/components/MoodIcon';
 import { useFeedback } from '../../src/components/feedback';
@@ -19,6 +21,7 @@ export default function ForgotPasswordScreen() {
   const [sentCode, setSentCode] = useState('');
   const [countdown, setCountdown] = useState(0);
   const [password, setPassword] = useState('');
+  const [emailSent, setEmailSent] = useState(false);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -27,9 +30,26 @@ export default function ForgotPasswordScreen() {
     return () => clearTimeout(tmr);
   }, [countdown]);
 
-  const sendCode = () => {
-    if (!identifier.trim()) {
-      toast('请先输入手机号或邮箱', { type: 'warning' });
+  const sendCode = async () => {
+    const id = identifier.trim();
+    if (!id || (!isPhone(id) && !isEmail(id))) {
+      toast('请先输入正确的手机号或邮箱', { type: 'warning' });
+      return;
+    }
+    if (cloudConfigured()) {
+      const res = await actions.sendResetCode(id);
+      if (!res.ok) {
+        toast(res.message || '发送失败', { type: 'error' });
+        return;
+      }
+      if (isEmail(id)) {
+        setEmailSent(true);
+        toast('重置邮件已发送，请前往邮箱点击链接', { type: 'info' });
+        return;
+      }
+      setSentCode('remote');
+      setCountdown(60);
+      toast('验证码已发送，请查收短信', { type: 'info' });
       return;
     }
     const gen = '668822';
@@ -39,11 +59,16 @@ export default function ForgotPasswordScreen() {
   };
 
   const submit = async () => {
-    if (!identifier.trim()) {
+    const id = identifier.trim();
+    if (!id) {
       toast('请输入手机号或邮箱', { type: 'warning' });
       return;
     }
-    if (!code.trim() || (sentCode && code.trim() !== sentCode)) {
+    if (cloudConfigured() && isEmail(id)) {
+      toast('重置密码需前往邮箱点击链接，完成后用新密码登录', { type: 'info' });
+      return;
+    }
+    if (!code.trim() || (sentCode && sentCode !== 'remote' && code.trim() !== sentCode)) {
       toast('请输入正确的验证码', { type: 'warning' });
       return;
     }
@@ -52,7 +77,7 @@ export default function ForgotPasswordScreen() {
       return;
     }
     setLoading(true);
-    const res = await actions.resetPassword(identifier, password);
+    const res = await actions.resetPassword(id, password, code.trim());
     setLoading(false);
     if (!res.ok) {
       toast(res.message || '重置失败', { type: 'error' });
@@ -73,22 +98,30 @@ export default function ForgotPasswordScreen() {
 
           <View style={{ marginTop: 28 }}>
             <Field icon={User} placeholder="手机号 / 邮箱" value={identifier} onChangeText={setIdentifier} autoCapitalize="none" />
-            <Field
-              icon={ShieldCheck}
-              placeholder="验证码"
-              value={code}
-              onChangeText={setCode}
-              keyboardType="number-pad"
-              right={
-                <Pressable disabled={countdown > 0} onPress={sendCode} hitSlop={8}>
-                  <Text style={{ fontSize: fs(13), color: countdown > 0 ? c.textMuted : c.primaryDark, fontWeight: '500' }}>
-                    {countdown > 0 ? `${countdown}s 后重发` : '获取验证码'}
-                  </Text>
-                </Pressable>
-              }
-            />
-            <Field icon={Lock} placeholder="新密码 (6-20位)" value={password} onChangeText={setPassword} secure />
-            <Button title="重置密码" onPress={() => void submit()} loading={loading} style={{ marginTop: 8 }} />
+            {emailSent && cloudConfigured() && isEmail(identifier.trim()) ? (
+              <Text style={{ fontSize: fs(13), color: c.textSub, lineHeight: fs(13) * 1.7, marginTop: 4 }}>
+                重置密码邮件已发送到 {identifier.trim()}，请前往邮箱点击链接完成重置，然后回来用新密码登录。
+              </Text>
+            ) : (
+              <>
+                <Field
+                  icon={ShieldCheck}
+                  placeholder="验证码"
+                  value={code}
+                  onChangeText={setCode}
+                  keyboardType="number-pad"
+                  right={
+                    <Pressable disabled={countdown > 0} onPress={() => void sendCode()} hitSlop={8}>
+                      <Text style={{ fontSize: fs(13), color: countdown > 0 ? c.textMuted : c.primaryDark, fontWeight: '500' }}>
+                        {countdown > 0 ? `${countdown}s 后重发` : '获取验证码'}
+                      </Text>
+                    </Pressable>
+                  }
+                />
+                <Field icon={Lock} placeholder="新密码 (6-20位)" value={password} onChangeText={setPassword} secure />
+                <Button title="重置密码" onPress={() => void submit()} loading={loading} style={{ marginTop: 8 }} />
+              </>
+            )}
           </View>
 
           <Pressable onPress={goBack} style={{ alignItems: 'center', marginTop: 22 }}>

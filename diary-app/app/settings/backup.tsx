@@ -11,6 +11,7 @@ import { decryptBackup, encryptBackup, isEncryptedBackup, WrongPasswordError } f
 import { useFeedback } from '../../src/components/feedback';
 import { fmtDateTime } from '../../src/utils/date';
 import { exportTextFile, pickAndReadTextFile } from '../../src/utils/transfer';
+import { cloudConfigured } from '../../src/services/cloud';
 
 /** 10. 备份与恢复（1:1 复刻设计稿3 #10） */
 export default function BackupScreen() {
@@ -149,12 +150,12 @@ export default function BackupScreen() {
     <Screen edges={['top', 'bottom']}>
       <NavBar variant="large" title="备份与恢复" />
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 36 }}>
-        <Group footer="目前还没有接入云端服务器：同步只在这台设备的账号之间进行，换手机请用下面的「手动备份」带走数据。">
+        <Group footer={cloudConfigured() ? '同步会把日记上传到云端账号；照片、视频与录音暂不上传，换设备请用「手动备份」带走。' : '目前还没有接入云端服务器：同步只在这台设备的账号之间进行，换手机请用下面的「手动备份」带走数据。'}>
           <Row
             icon={Cloud}
             iconColor={c.primaryDark}
-            title="账号同步（本机）"
-            subtitle="在本机账号之间同步日记，处理修改冲突"
+            title={cloudConfigured() ? '云端同步' : '账号同步（本机）'}
+            subtitle={cloudConfigured() ? '登录账号后，日记会同步到云端并在多设备间保持一致' : '在本机账号之间同步日记，处理修改冲突'}
             right={
               <Switch
                 value={sync.cloud}
