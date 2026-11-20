@@ -6,7 +6,7 @@ import { Lock, ShieldCheck, User } from 'lucide-react-native';
 import { useTheme } from '../../src/theme/ThemeProvider';
 import { actions, useStore } from '../../src/store/store';
 import { cloudConfigured } from '../../src/services/cloud';
-import { isPhone } from '../../src/utils/text';
+import { isEmail, isPhone } from '../../src/utils/text';
 import { Button, Field, NavBar, Screen } from '../../src/components/ui';
 import { BotanicalAccent } from '../../src/components/MoodIcon';
 import { useFeedback } from '../../src/components/feedback';
@@ -26,8 +26,8 @@ export default function LoginScreen() {
 
   const sendCode = async () => {
     const id = identifier.trim();
-    if (!isPhone(id)) {
-      toast('验证码登录仅支持手机号', { type: 'warning' });
+    if (!isPhone(id) && !isEmail(id)) {
+      toast('请先输入正确的手机号或邮箱', { type: 'warning' });
       return;
     }
     const res = await actions.sendLoginCode(id);
@@ -40,7 +40,7 @@ export default function LoginScreen() {
       if (v <= 1) clearInterval(tmr);
       return v - 1;
     }), 1000);
-    toast('验证码已发送，请查收短信', { type: 'info' });
+    toast(isPhone(id) ? '验证码已发送，请查收短信' : '验证码已发送，请查收邮件（含垃圾箱）', { type: 'info' });
   };
 
   const submit = async () => {
@@ -104,7 +104,7 @@ export default function LoginScreen() {
             {codeMode ? (
               <Field
                 icon={ShieldCheck}
-                placeholder="短信验证码"
+                placeholder="验证码"
                 value={code}
                 onChangeText={setCode}
                 keyboardType="number-pad"
@@ -128,7 +128,7 @@ export default function LoginScreen() {
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
               {cloudConfigured() ? (
                 <Pressable hitSlop={8} onPress={() => setCodeMode(v => !v)}>
-                  <Text style={{ fontSize: fs(13), color: c.primaryDark }}>{codeMode ? '密码登录' : '手机验证码登录'}</Text>
+                  <Text style={{ fontSize: fs(13), color: c.primaryDark }}>{codeMode ? '密码登录' : '验证码登录'}</Text>
                 </Pressable>
               ) : (
                 <View />

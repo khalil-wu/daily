@@ -44,10 +44,6 @@ export default function RegisterScreen() {
       return;
     }
     if (cloudConfigured()) {
-      if (!isPhone(id)) {
-        toast('邮箱注册无需验证码', { type: 'info', message: '提交后我们会向你的邮箱发送验证邮件' });
-        return;
-      }
       const res = await actions.sendLoginCode(id);
       if (!res.ok) {
         toast(res.message || '验证码发送失败', { type: 'error' });
@@ -55,7 +51,7 @@ export default function RegisterScreen() {
       }
       setSentCode('remote');
       setCountdown(60);
-      toast('验证码已发送，请查收短信', { type: 'info' });
+      toast(isPhone(id) ? '验证码已发送，请查收短信' : '验证码已发送，请查收邮件（含垃圾箱）', { type: 'info' });
       return;
     }
     const gen = '668822';
@@ -71,14 +67,11 @@ export default function RegisterScreen() {
       toast('请输入有效的手机号或邮箱', { type: 'warning' });
       return;
     }
-    if (remote ? isPhone(id) : true) {
-      if (!code.trim() || (sentCode && sentCode !== 'remote' && code.trim() !== sentCode)) {
-        toast('请输入正确的验证码', { type: 'warning' });
-        return;
-      }
+    if (!code.trim() || (sentCode && sentCode !== 'remote' && code.trim() !== sentCode)) {
+      toast('请输入正确的验证码', { type: 'warning' });
+      return;
     }
-    const needPassword = remote ? isEmail(id) : true;
-    if (needPassword && (password.length < 6 || password.length > 20)) {
+    if (password.length < 6 || password.length > 20) {
       toast('密码长度需在 6-20 位之间', { type: 'warning' });
       return;
     }
@@ -87,7 +80,7 @@ export default function RegisterScreen() {
       return;
     }
     setLoading(true);
-    const res = remote && isPhone(id)
+    const res = remote
       ? await actions.loginByCode(id, code.trim())
       : await actions.register(id, password);
     setLoading(false);
@@ -95,10 +88,10 @@ export default function RegisterScreen() {
       toast(res.message || '注册失败', { type: 'error' });
       return;
     }
-    // 手机号验证码注册成功且填写了密码：尽力为用户设置初始密码
-    if (remote && isPhone(id) && password.length >= 6) void setPasswordForCurrent(password);
+    // 验证码注册成功后为用户设置密码（便于后续密码登录），失败不影响登录
+    if (remote) void setPasswordForCurrent(password);
     if (!onboarded) actions.completeOnboarding('account');
-    toast(remote && isEmail(id) ? '注册成功，验证邮件已发送' : '注册成功，欢迎来到记得日记');
+    toast('注册成功，欢迎来到记得日记');
     router.replace('/(tabs)');
   };
 
@@ -113,28 +106,21 @@ export default function RegisterScreen() {
 
           <View style={{ marginTop: 24 }}>
             <Field icon={User} placeholder="手机号 / 邮箱" value={identifier} onChangeText={setIdentifier} autoCapitalize="none" keyboardType="email-address" />
-            {!(cloudConfigured() && isEmail(identifier.trim())) && (
-              <Field
-                icon={ShieldCheck}
-                placeholder="验证码"
-                value={code}
-                onChangeText={setCode}
-                keyboardType="number-pad"
-                right={
-                  <Pressable disabled={countdown > 0} onPress={() => void sendCode()} hitSlop={8}>
-                    <Text style={{ fontSize: fs(13), color: countdown > 0 ? c.textMuted : c.primaryDark, fontWeight: '500' }}>
-                      {countdown > 0 ? `${countdown}s 后重发` : '获取验证码'}
-                    </Text>
-                  </Pressable>
-                }
-              />
-            )}
-            {cloudConfigured() && isEmail(identifier.trim()) && (
-              <Text style={{ fontSize: fs(12), color: c.textMuted, marginBottom: 14, marginTop: -4 }}>
-                邮箱注册后我们会发送验证邮件，登录密码即可使用
-              </Text>
-            )}
-            <Field icon={Lock} placeholder={cloudConfigured() && isPhone(identifier.trim()) ? '设置密码（可选，用于密码登录）' : '设置密码 (6-20位)'} value={password} onChangeText={setPassword} secure />
+            <Field
+              icon={ShieldCheck}
+              placeholder="验证码"
+              value={code}
+              onChangeText={setCode}
+              keyboardType="number-pad"
+              right={
+                <Pressable disabled={countdown > 0} onPress={() => void sendCode()} hitSlop={8}>
+                  <Text style={{ fontSize: fs(13), color: countdown > 0 ? c.textMuted : c.primaryDark, fontWeight: '500' }}>
+                    {countdown > 0 ? `${countdown}s 后重发` : '获取验证码'}
+                  </Text>
+                </Pressable>
+              }
+            />
+            <Field icon={Lock} placeholder={cloudConfigured() ? '设置密码 (6-20位，用于密码登录)' : '设置密码 (6-20位)'} value={password} onChangeText={setPassword} secure />
 
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 4, marginBottom: 20 }}>
               <Checkbox checked={agreed} onChange={setAgreed} size={16} />

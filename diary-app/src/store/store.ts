@@ -4,8 +4,8 @@ import { defaultState, loadState, normalizeEntry, normalizeState, saveState, cle
 import { uid, sha256, isPhone } from '../utils/text';
 import {
   initCloud, cloudConfigured, currentRemoteAccount,
-  loginByPhone, loginByPassword, registerByEmail,
-  sendSmsCode, sendResetSmsCode, resetPasswordBySms, requestPasswordResetEmail,
+  loginByPhone, loginByEmail, loginByPassword, registerByEmail,
+  sendSmsCode, sendEmailCode, sendResetSmsCode, resetPasswordBySms, requestPasswordResetEmail,
   logoutRemote, pullRemoteEntries, pushRemoteEntries, destroyRemoteAccount, cloudError,
 } from '../services/cloud';
 import { unreferencedVideos } from '../utils/video';
@@ -554,24 +554,25 @@ export const actions = {
     return { ok: true };
   },
 
-  /** 发送验证码：手机号走短信，邮箱走验证/重置邮件（链接式，无数字码） */
+  /** 发送验证码：手机号走短信，邮箱走内置邮件代发的验证码 */
   async sendLoginCode(identifier: string): Promise<{ ok: boolean; message?: string }> {
     if (!cloudConfigured()) return { ok: false, message: '云端尚未配置' };
     const id = identifier.trim();
     try {
       if (isPhone(id)) await sendSmsCode(id);
-      else return { ok: false, message: '邮箱注册无需验证码，验证邮件会在注册后发送' };
+      else await sendEmailCode(id);
       return { ok: true };
     } catch (e) {
       return { ok: false, message: cloudError(e, '验证码发送失败，请稍后再试') };
     }
   },
 
-  /** 手机号 + 验证码登录；未注册的手机号自动注册并登录 */
-  async loginByCode(phone: string, code: string): Promise<{ ok: boolean; message?: string }> {
+  /** 手机号/邮箱 + 验证码登录；未注册的自动注册并登录 */
+  async loginByCode(identifier: string, code: string): Promise<{ ok: boolean; message?: string }> {
     if (!cloudConfigured()) return { ok: false, message: '云端尚未配置' };
     try {
-      const acc = await loginByPhone(phone, code);
+      const id = identifier.trim();
+      const acc = isPhone(id) ? await loginByPhone(id, code) : await loginByEmail(id, code);
       setState(s => ({ ...s, account: acc, usageMode: 'account', sync: { ...s.sync, cloud: true } }), true);
       return { ok: true };
     } catch (e) {
@@ -594,8 +595,6 @@ export const actions = {
 
   async resetPassword(identifier: string, password: string, code?: string): Promise<{ ok: boolean; message?: string }> {
     if (cloudConfigured()) {
-      const id = identifier.trim();
-      if (!isPhone(id)) return { ok: false, message: '邮箱重置请前往邮箱点击链接，完成后用新密码登录' };
       try {
         await resetPasswordBySms(code ?? '', password);
         return { ok: true };

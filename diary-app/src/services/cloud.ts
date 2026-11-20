@@ -36,6 +36,34 @@ let inited = false;
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 let pendingOtp: { verifyOtp?: (p: { token: string | number }) => Promise<any> } | null = null;
 
+/**
+ * Web 端把对 CloudBase 网关的请求改写到本站 /cb/ 路径，
+ * 由 nginx 反向代理转发并剥掉 Origin，绕开免费版不支持
+ * 自定义 Web 安全域名的限制。RN 端无 CORS 约束，直连即可。
+ */
+function patchWebGateway(env: string) {
+  if (typeof window === 'undefined') return;
+  const gateway = `https://${env}.api.tcloudbasegateway.com`;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const w = window as any;
+  if (!w.__jideGatewayPatched) {
+    w.__jideGatewayPatched = true;
+    const origOpen = XMLHttpRequest.prototype.open;
+    XMLHttpRequest.prototype.open = function (method: string, url: string | URL, ...rest: unknown[]) {
+      const u = String(url);
+      return origOpen.call(this, method, u.startsWith(gateway) ? `/cb${u.slice(gateway.length)}` : u, ...rest as []);
+    };
+    const origFetch = window.fetch?.bind(window);
+    if (origFetch) {
+      window.fetch = (input: RequestInfo | URL, init?: RequestInit) => {
+        const u = typeof input === 'string' ? input : input instanceof URL ? input.href : input.url;
+        if (u.startsWith(gateway)) return origFetch(`/cb${u.slice(gateway.length)}`, init);
+        return origFetch(input as RequestInfo, init);
+      };
+    }
+  }
+}
+
 export function initCloud() {
   if (inited || !cloudConfigured()) return;
   // eslint-disable-next-line @typescript-eslint/no-var-requires
@@ -48,6 +76,7 @@ export function initCloud() {
     require('@cloudbase/adapter-rn');
   }
   const c = readConfig();
+  if (!isRN) patchWebGateway(c.env);
   app = cloudbase.init({ env: c.env, region: c.region });
   auth = app.auth();
   inited = true;
@@ -111,6 +140,26 @@ export async function loginByPhone(phone: string, code: string): Promise<Account
   return toAccount(data?.user ?? data);
 }
 
+/** 邮箱：发送登录/注册验证码（内置邮件代发，未注册自动注册）。 */
+export async function sendEmailCode(email: string) {
+  ensureInit();
+  const res = await auth.signInWithOtp({ email, options: { shouldCreateUser: true } });
+  pendingOtp = unwrap(res) ?? res;
+}
+
+/** 邮箱 + 验证码：登录。 */
+export async function loginByEmail(email: string, code: string): Promise<Account> {
+  ensureInit();
+  if (!pendingOtp?.verifyOtp) {
+    const res = await auth.signInWithOtp({ email, options: { shouldCreateUser: true } });
+    pendingOtp = unwrap(res) ?? res;
+  }
+  const res = await pendingOtp!.verifyOtp!({ token: code });
+  pendingOtp = null;
+  const data = unwrap(res);
+  return toAccount(data?.user ?? data);
+}
+
 /** 手机号：重置密码验证码（复用 OTP 通道）。 */
 export async function sendResetSmsCode(phone: string) {
   await sendSmsCode(phone);
@@ -149,17 +198,11 @@ export async function loginByPassword(identifier: string, password: string): Pro
   return toAccount(data?.user ?? data);
 }
 
-/** 邮箱：发送重置密码邮件（平台内置代发）。 */
+/** 邮箱：重置密码 = 验证码登录后改密（内置代发发送验证码）。 */
 export async function requestPasswordResetEmail(email: string) {
   ensureInit();
-  try {
-    const res = await auth.resetPasswordForEmail({ email });
-    unwrap(res);
-  } catch {
-    // 部分环境未开通重置邮件模板时，退化为 OTP 验证码登录后再改密码
-    const res = await auth.signInWithOtp({ email, options: { shouldCreateUser: false } });
-    pendingOtp = unwrap(res) ?? res;
-  }
+  const res = await auth.signInWithOtp({ email, options: { shouldCreateUser: false } });
+  pendingOtp = unwrap(res) ?? res;
 }
 
 export async function logoutRemote() {
