@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useMemo } from 'react';
-import { Platform, useColorScheme, type TextStyle } from 'react-native';
+import { StyleSheet, useColorScheme, type TextStyle, type ViewStyle } from 'react-native';
 import { useStore } from '../store/store';
-import { buildPalette, FONT_SCALE, LINE_HEIGHT, SERIF, SERIF_BOLD, type Palette } from './tokens';
+import { buildPalette, FONT_SCALE, LINE_HEIGHT, scaleRadius, SERIF, SERIF_BOLD, stylePreset, type Palette, type StylePreset } from './tokens';
 
 export interface Theme {
   c: Palette;
@@ -10,6 +10,12 @@ export interface Theme {
   lineHeight: number; // 正文行高倍数
   contentWidth: number;
   fs: (size: number) => number;
+  /** 当前风格（圆角、是否投影等） */
+  look: StylePreset;
+  /** 圆角随风格缩放：borderRadius: r(16) */
+  r: (n: number) => number;
+  /** 卡片外框：圆润风格是极细描边 + 柔和投影，利落风格是一条清晰的线 */
+  frame: ViewStyle;
   serif: string;
   /** 常用字体样式 */
   t: {
@@ -33,7 +39,20 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const dark = ap.theme === 'dark' || (ap.theme === 'system' && sys === 'dark');
 
   const theme = useMemo<Theme>(() => {
-    const c = buildPalette(dark, ap.accent);
+    const look = stylePreset(ap.style);
+    const c = buildPalette(dark, ap.accent, look.key);
+    const r = (n: number) => scaleRadius(n, look);
+    const frame: ViewStyle = look.flat
+      ? { borderWidth: 1, borderColor: c.border }
+      : {
+          borderWidth: dark ? 0 : StyleSheet.hairlineWidth,
+          borderColor: c.divider,
+          shadowColor: c.shadow,
+          shadowOpacity: dark ? 0 : 0.06,
+          shadowRadius: 12,
+          shadowOffset: { width: 0, height: 3 },
+          elevation: dark ? 0 : 1,
+        };
     const scale = FONT_SCALE[ap.fontScale] ?? 1;
     const lh = LINE_HEIGHT[ap.lineHeight] ?? 1.8;
     const fs = (n: number) => Math.round(n * scale * 10) / 10;
@@ -46,10 +65,13 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
       lineHeight: lh,
       contentWidth: ap.contentWidth,
       fs,
+      look,
+      r,
+      frame,
       serif: SERIF,
       t: {
-        display: { fontFamily: SERIF, fontSize: fs(30), color: c.text, letterSpacing: 2, ...serifBold },
-        h1: { fontFamily: SERIF, fontSize: fs(22), color: c.text, letterSpacing: 0.5, ...serifBold },
+        display: { fontFamily: SERIF, fontSize: fs(30), color: c.text, letterSpacing: 1.5, ...serifBold },
+        h1: { fontFamily: SERIF, fontSize: fs(22), color: c.text, letterSpacing: 0.3, ...serifBold },
         h2: { fontFamily: SERIF, fontSize: fs(18), color: c.text, ...serifBold },
         h3: { fontFamily: SERIF, fontSize: fs(16), color: c.text, ...serifBold },
         body: { fontSize: fs(15), color: c.text, lineHeight: fs(15) * 1.6 },
@@ -59,7 +81,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
         tiny: { fontSize: fs(11), color: c.textMuted },
       },
     };
-  }, [dark, ap.accent, ap.fontScale, ap.lineHeight, ap.contentWidth]);
+  }, [dark, ap.accent, ap.style, ap.fontScale, ap.lineHeight, ap.contentWidth]);
 
   return <ThemeCtx.Provider value={theme}>{children}</ThemeCtx.Provider>;
 }

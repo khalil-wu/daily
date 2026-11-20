@@ -18,6 +18,7 @@ function makeEntry(overrides: Partial<Entry> = {}): Entry {
     createdAt: now,
     updatedAt: now,
     tags: [],
+    people: [],
     photos: [],
     audios: [],
     videos: [],

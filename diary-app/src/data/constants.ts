@@ -1,4 +1,20 @@
-import type { MoodKey, Notebook, Tag, WeatherKey } from '../store/types';
+import type { MoodKey, Notebook, RelationKey, Tag, WeatherKey } from '../store/types';
+
+/** 身边人的关系分组（顺序即列表里的展示顺序） */
+export const RELATIONS: { key: RelationKey; label: string }[] = [
+  { key: 'family', label: '家人' },
+  { key: 'partner', label: '伴侣' },
+  { key: 'friend', label: '朋友' },
+  { key: 'colleague', label: '同事' },
+  { key: 'other', label: '其他' },
+];
+
+export function relationLabel(key?: RelationKey) {
+  return RELATIONS.find(r => r.key === key)?.label ?? '其他';
+}
+
+/** 身边人头像底色 */
+export const PERSON_COLORS = ['#C98B6B', '#7E9BB8', '#8FA98C', '#B58FA8', '#C9A45C', '#7F8FA6', '#A8846E', '#6FA3A0'];
 
 /** 日记本可选配色（莫兰迪色系，与主题色板协调） */
 export const NOTEBOOK_COLORS = ['#B79276', '#9CC59A', '#93AFCF', '#E79A93', '#B9A7C9', '#E8A86B', '#8E8A84'];

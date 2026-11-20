@@ -1,12 +1,13 @@
-import type { AppState, Entry, Tag } from '../store/types';
+import type { AppState, Entry, Person, Tag } from '../store/types';
 import { moodMeta, weatherMeta } from '../data/constants';
 import { normalizeEntry } from '../store/storage';
 import { fmtDateTime, fmtFullDate } from './date';
 import { plainText, uid } from './text';
 import { videoNote } from './video';
 
-export function entryToMarkdown(entry: Entry, tags: Tag[]): string {
+export function entryToMarkdown(entry: Entry, tags: Tag[], people: Person[] = []): string {
   const tagNames = entry.tags.map(id => tags.find(t => t.id === id)?.name).filter(Boolean);
+  const peopleNames = entry.people.map(id => people.find(p => p.id === id)?.name).filter(Boolean);
   const mood = moodMeta(entry.mood);
   const weather = weatherMeta(entry.weather);
   const metaParts = [fmtDateTime(entry.createdAt)];
@@ -14,6 +15,7 @@ export function entryToMarkdown(entry: Entry, tags: Tag[]): string {
   if (weather) metaParts.push(`${weather.label}${entry.temperature != null ? ` ${entry.temperature}°C` : ''}`);
   if (mood) metaParts.push(`心情：${mood.label}`);
   if (tagNames.length) metaParts.push(`标签：${tagNames.join(' / ')}`);
+  if (peopleNames.length) metaParts.push(`和：${peopleNames.join(' / ')}`);
   // 文字导出带不走视频文件，但要留下「这里有过视频」的记录
   const videos = videoNote(entry.videos);
   if (videos) metaParts.push(videos);
@@ -28,10 +30,10 @@ export function entryToMarkdown(entry: Entry, tags: Tag[]): string {
   ].join('\n');
 }
 
-export function entriesToMarkdown(entries: Entry[], tags: Tag[]): string {
+export function entriesToMarkdown(entries: Entry[], tags: Tag[], people: Person[] = []): string {
   const list = entries.filter(e => !e.deletedAt && e.status === 'published').sort((a, b) => b.createdAt - a.createdAt);
   const header = `# 记得日记导出\n\n导出时间：${fmtDateTime(Date.now())} · 共 ${list.length} 篇\n\n---\n\n`;
-  return header + list.map(e => entryToMarkdown(e, tags)).join('\n---\n\n');
+  return header + list.map(e => entryToMarkdown(e, tags, people)).join('\n---\n\n');
 }
 
 export function entriesToPlainText(entries: Entry[], tags: Tag[]): string {
@@ -129,6 +131,7 @@ export function parseImportedEntries(raw: string, format: 'md' | 'txt' | 'json')
       createdAt: t,
       updatedAt: t,
       tags: [],
+      people: [],
       photos: [],
       audios: [],
       videos: [],

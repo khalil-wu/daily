@@ -71,6 +71,10 @@ export function setEditorTags(tags: string[]) {
   updateEditorDraft({ tags });
 }
 
+export function setEditorPeople(people: string[]) {
+  updateEditorDraft({ people });
+}
+
 export function addEditorPhotos(uris: string[]) {
   if (!draft) return;
   const merged = Array.from(new Set([...draft.entry.photos, ...uris]));

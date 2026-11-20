@@ -25,7 +25,8 @@ export function isAutoBackupDue(s: Pick<AppState, 'backup' | 'entries'>, now = D
 
 export function buildSnapshotPayload(snap: AppState) {
   // 账号与待处理冲突属于本机会话状态，不进备份
-  const { accounts: _a, account: _b, conflicts: _c, ...data } = snap as any;
+  // AI 的服务地址和授权时间属于这台设备，也不进备份（密钥本来就不在 state 里）
+  const { accounts: _a, account: _b, conflicts: _c, ai: _d, ...data } = snap as any;
   return { app: '记得日记', version: snap.version, exportedAt: Date.now(), ...data };
 }
 

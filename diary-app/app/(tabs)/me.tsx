@@ -6,7 +6,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as ImagePicker from 'expo-image-picker';
 import {
   Bell, BookMarked, BookOpen, ChevronRight, Cloud, Download, FileText, HardDrive, Heart,
-  HelpCircle, Image as ImageIcon, Info, MapPin, Palette, Settings, Shield, Sparkles, Target, Trash2,
+  HelpCircle, Image as ImageIcon, Info, MapPin, Palette, Settings, Shield, Sparkles, Target, Trash2, Users,
 } from 'lucide-react-native';
 import { useTheme } from '../../src/theme/ThemeProvider';
 import { actions, useStore } from '../../src/store/store';
@@ -25,6 +25,7 @@ export default function MeScreen() {
   const insets = useSafeAreaInsets();
   const { toast } = useFeedback();
   const entries = useStore(s => s.entries);
+  const people = useStore(s => s.people);
   const notebooks = useStore(s => s.notebooks);
   const goals = useStore(s => s.goals);
   const profile = useStore(s => s.profile);
@@ -124,6 +125,7 @@ export default function MeScreen() {
           <Card style={{ flexDirection: 'row', flexWrap: 'wrap', paddingHorizontal: 6, paddingVertical: 10, marginBottom: 14 }}>
             {[
               { icon: BookMarked, label: '日记本', badge: `${notebooks.length}`, path: '/notebooks' as const },
+              { icon: Users, label: '身边人', badge: people.length ? `${people.length}` : undefined, path: '/people' as const },
               { icon: Sparkles, label: '年度回顾', path: '/annual-report' as const },
               { icon: FileText, label: '草稿箱', badge: draftCount ? `${draftCount}` : undefined, path: '/drafts' as const },
               { icon: Heart, label: '收藏置顶', badge: favCount ? `${favCount}` : undefined, path: '/favorites' as const },

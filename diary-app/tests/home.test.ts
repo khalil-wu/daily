@@ -11,6 +11,7 @@ function makeEntry(id: string, createdAt: number, overrides: Partial<Entry> = {}
     createdAt,
     updatedAt: createdAt,
     tags: [],
+    people: [],
     photos: [],
     audios: [],
     videos: [],

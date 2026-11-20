@@ -42,6 +42,8 @@ function EntryListCardInner({ entry, onPress, onLongPress, query, compactDate, n
   const mood = moodMeta(entry.mood);
   const firstTag = entry.tags.length ? tags.find(x => x.id === entry.tags[0]) : undefined;
   const preview = excerpt(entry.body, 56);
+  const titleFallback = entry.title ? '' : preview.slice(0, 16);
+  const previewText = entry.title || !titleFallback ? preview : preview.slice(titleFallback.length);
 
   return (
     <PressableScale
@@ -101,15 +103,15 @@ function EntryListCardInner({ entry, onPress, onLongPress, query, compactDate, n
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5, minWidth: 0 }}>
             {entry.pinned && <Pin size={12} color={c.primary} fill={c.primary} />}
             <HighlightText
-              text={entry.title || (preview ? preview.slice(0, 16) : '无题日记')}
+              text={entry.title || titleFallback || '无题日记'}
               query={query}
               numberOfLines={1}
               style={{ ...t.h3, fontSize: fs(14.5), flexShrink: 1 }}
             />
           </View>
-          {!!preview && (
+          {!!previewText && (
             <HighlightText
-              text={preview}
+              text={previewText}
               query={query}
               numberOfLines={2}
               style={{ fontSize: fs(13), color: c.textSub, lineHeight: fs(13) * 1.55, marginTop: 4 }}

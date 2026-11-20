@@ -1,11 +1,13 @@
 import { useRef, useSyncExternalStore } from 'react';
-import type { AppState, Entry, Notebook, StoredAccount, SyncConflict, Tag, VideoClip } from './types';
+import type { AppState, Entry, EntryAI, Notebook, PeriodReview, Person, RelationKey, StoredAccount, SyncConflict, Tag, VideoClip } from './types';
 import { defaultState, loadState, normalizeEntry, normalizeState, saveState, clearAllStorage, loadCloud, saveCloud } from './storage';
 import { uid, sha256 } from '../utils/text';
 import { unreferencedVideos } from '../utils/video';
+import { normalizeBirthday } from '../utils/people';
 import { clearAllVideoFiles, discardVideoFiles } from '../services/videoStore';
+import { clearAIKey } from '../services/aiKey';
 import { buildSampleDrafts, buildSampleEntries } from '../data/samples';
-import { DEFAULT_NOTEBOOK_ID } from '../data/constants';
+import { DEFAULT_NOTEBOOK_ID, PERSON_COLORS } from '../data/constants';
 
 /* ---------------- 底层 store ---------------- */
 
@@ -190,6 +192,7 @@ export const actions = {
       createdAt: now,
       updatedAt: now,
       tags: [],
+      people: [],
       photos: [],
       audios: [],
       videos: [],
@@ -305,6 +308,85 @@ export const actions = {
       tags: s.tags.filter(t => t.id !== id),
       entries: s.entries.map(e => (e.tags.includes(id) ? { ...e, tags: e.tags.filter(x => x !== id) } : e)),
     }));
+  },
+
+  /* —— 身边人 —— */
+  addPerson(name: string, relation: RelationKey = 'other', extra: Partial<Pick<Person, 'aliases' | 'note' | 'birthday' | 'color'>> = {}): Person | null {
+    const n = name.trim().slice(0, 12);
+    if (!n) return null;
+    const exist = state.people.find(p => p.name === n);
+    if (exist) return exist;
+    const person: Person = {
+      id: uid('p'),
+      name: n,
+      relation,
+      aliases: (extra.aliases ?? []).map(a => a.trim()).filter(a => a && a !== n),
+      note: extra.note?.trim() || undefined,
+      birthday: extra.birthday ? normalizeBirthday(extra.birthday) ?? undefined : undefined,
+      color: extra.color ?? PERSON_COLORS[state.people.length % PERSON_COLORS.length],
+      createdAt: Date.now(),
+    };
+    setState(s => ({ ...s, people: [...s.people, person] }));
+    return person;
+  },
+
+  updatePerson(id: string, patch: Partial<Omit<Person, 'id' | 'createdAt'>>) {
+    setState(s => ({
+      ...s,
+      people: s.people.map(p => {
+        if (p.id !== id) return p;
+        const name = (patch.name ?? p.name).trim().slice(0, 12) || p.name;
+        // 改名不能和别人重名
+        const taken = s.people.some(o => o.id !== id && o.name === name);
+        return {
+          ...p,
+          ...patch,
+          name: taken ? p.name : name,
+          aliases: (patch.aliases ?? p.aliases).map(a => a.trim()).filter(a => a && a !== name),
+          note: patch.note !== undefined ? patch.note.trim() || undefined : p.note,
+          birthday: patch.birthday !== undefined ? normalizeBirthday(patch.birthday) ?? undefined : p.birthday,
+        };
+      }),
+    }));
+  },
+
+  /** 删除身边人：日记本身保留，只解除关联 */
+  removePerson(id: string) {
+    setState(s => ({
+      ...s,
+      people: s.people.filter(p => p.id !== id),
+      entries: s.entries.map(e => (e.people.includes(id) ? { ...e, people: e.people.filter(x => x !== id) } : e)),
+    }));
+  },
+
+  /* —— 「记得」（AI） —— */
+  setAI(p: Partial<AppState['ai']>) {
+    setState(s => ({ ...s, ai: { ...s.ai, ...p } }), true);
+  },
+
+  /** 写入或清除某篇日记的 AI 内容；不算作对日记的修改（updatedAt 不变） */
+  setEntryAI(id: string, patch: Partial<EntryAI>) {
+    setState(s => ({
+      ...s,
+      entries: s.entries.map(e => {
+        if (e.id !== id) return e;
+        const next: EntryAI = { ...(e.ai ?? {}), ...patch };
+        (Object.keys(next) as (keyof EntryAI)[]).forEach(k => next[k] === undefined && delete next[k]);
+        return { ...e, ai: Object.keys(next).length ? next : undefined };
+      }),
+    }));
+  },
+
+  /** 保存一份周 / 月回顾；同一时段只留最新的一份 */
+  saveReview(review: PeriodReview) {
+    setState(s => ({
+      ...s,
+      reviews: [review, ...s.reviews.filter(r => !(r.kind === review.kind && r.from === review.from))].slice(0, 60),
+    }));
+  },
+
+  removeReview(id: string) {
+    setState(s => ({ ...s, reviews: s.reviews.filter(r => r.id !== id) }));
   },
 
   /* —— 日记本 —— */
@@ -458,6 +540,7 @@ export const actions = {
     emit();
     await saveState(state, true);
     await clearAllVideoFiles();
+    await clearAIKey();
   },
 
   /** 清空所有数据（保留账号表） */
@@ -467,6 +550,7 @@ export const actions = {
     emit();
     await saveState(state, true);
     await clearAllVideoFiles();
+    await clearAIKey();
   },
 
   /* —— 同步（模拟云端） —— */
@@ -534,7 +618,8 @@ export const actions = {
   restoreSnapshot(raw: unknown, mode: 'merge' | 'replace' = 'merge') {
     const incoming = normalizeState(raw as Partial<AppState>);
     if (mode === 'replace') {
-      setState(s => ({ ...incoming, accounts: s.accounts, account: s.account, onboarded: true, usageMode: s.usageMode }), true);
+      // AI 的服务地址与授权属于这台设备，不随备份覆盖
+      setState(s => ({ ...incoming, accounts: s.accounts, account: s.account, onboarded: true, usageMode: s.usageMode, ai: s.ai }), true);
       return incoming.entries.length;
     }
     setState(s => {
@@ -547,7 +632,19 @@ export const actions = {
       incoming.tags.forEach(t => tagMap.set(t.id, t));
       const nbMap = new Map(s.notebooks.map(n => [n.id, n]));
       incoming.notebooks.forEach(n => { if (!nbMap.has(n.id)) nbMap.set(n.id, n); });
-      return { ...s, entries: Array.from(map.values()), tags: Array.from(tagMap.values()), notebooks: Array.from(nbMap.values()) };
+      // 身边人：id 相同的保留本机版本；备份里新出现的人补进来
+      const peopleMap = new Map(s.people.map(p => [p.id, p]));
+      incoming.people.forEach(p => { if (!peopleMap.has(p.id)) peopleMap.set(p.id, p); });
+      const reviewMap = new Map(s.reviews.map(r => [r.id, r]));
+      incoming.reviews.forEach(r => { if (!reviewMap.has(r.id)) reviewMap.set(r.id, r); });
+      return {
+        ...s,
+        entries: Array.from(map.values()),
+        tags: Array.from(tagMap.values()),
+        notebooks: Array.from(nbMap.values()),
+        people: Array.from(peopleMap.values()),
+        reviews: Array.from(reviewMap.values()).sort((a, b) => b.from - a.from),
+      };
     }, true);
     return incoming.entries.length;
   },

@@ -1,6 +1,7 @@
-import type { AppState, Entry } from './types';
-import { DEFAULT_NOTEBOOKS, DEFAULT_TAGS } from '../data/constants';
+import type { AppState, Entry, Person } from './types';
+import { DEFAULT_NOTEBOOKS, DEFAULT_TAGS, PERSON_COLORS, RELATIONS } from '../data/constants';
 import { normalizeVideos } from '../utils/video';
+import { normalizeBirthday } from '../utils/people';
 
 const KEY = 'jide-diary:state:v1';
 const mem = new Map<string, string>();
@@ -39,13 +40,17 @@ export function defaultState(): AppState {
     usageMode: null,
     entries: [],
     tags: DEFAULT_TAGS,
+    people: [],
     notebooks: DEFAULT_NOTEBOOKS,
     activeNotebook: null,
     goals: { enabled: true, dailyWords: 200 },
     accounts: [],
     profile: { name: '记得自己', avatar: 'asset:avatar', signature: '记下生活，记得自己' },
+    ai: { enabled: false, baseUrl: '', model: '', autoReply: true, useMemory: true },
+    reviews: [],
     appearance: {
       theme: 'light',
+      style: 'warm',
       accent: 'latte',
       fontScale: 'standard',
       lineHeight: 'standard',
@@ -79,6 +84,7 @@ export function normalizeEntry(item: unknown): Entry {
   return {
     ...e,
     tags: Array.isArray(e.tags) ? e.tags : [],
+    people: Array.isArray(e.people) ? e.people.filter(x => typeof x === 'string') : [],
     photos: Array.isArray(e.photos) ? e.photos : [],
     audios: Array.isArray(e.audios) ? e.audios : [],
     videos: normalizeVideos(e.videos),
@@ -87,6 +93,30 @@ export function normalizeEntry(item: unknown): Entry {
     hidden: !!e.hidden,
     status: e.status ?? 'published',
   } as Entry;
+}
+
+/** 补全身边人字段；没有名字的记录直接丢弃 */
+export function normalizePeople(raw: unknown): Person[] {
+  if (!Array.isArray(raw)) return [];
+  const out: Person[] = [];
+  const seen = new Set<string>();
+  for (const item of raw) {
+    const p = (item && typeof item === 'object' ? item : {}) as Partial<Person>;
+    const name = typeof p.name === 'string' ? p.name.trim() : '';
+    if (!name || typeof p.id !== 'string' || seen.has(p.id)) continue;
+    seen.add(p.id);
+    out.push({
+      id: p.id,
+      name,
+      relation: RELATIONS.some(r => r.key === p.relation) ? p.relation! : 'other',
+      aliases: Array.isArray(p.aliases) ? p.aliases.filter(a => typeof a === 'string' && a.trim()).map(a => a.trim()) : [],
+      note: typeof p.note === 'string' && p.note ? p.note : undefined,
+      birthday: typeof p.birthday === 'string' ? normalizeBirthday(p.birthday) ?? undefined : undefined,
+      color: typeof p.color === 'string' && p.color ? p.color : PERSON_COLORS[out.length % PERSON_COLORS.length],
+      createdAt: typeof p.createdAt === 'number' ? p.createdAt : Date.now(),
+    });
+  }
+  return out;
 }
 
 /** 合并旧数据与默认值，保证新增字段存在 */
@@ -98,6 +128,9 @@ export function normalizeState(raw: Partial<AppState> | null | undefined): AppSt
     ...raw,
     profile: { ...d.profile, ...(raw.profile ?? {}) },
     appearance: { ...d.appearance, ...(raw.appearance ?? {}) },
+    ai: { ...d.ai, ...(raw.ai ?? {}) },
+    reviews: Array.isArray(raw.reviews) ? raw.reviews.filter(x => !!x && typeof x === 'object' && typeof x.id === 'string') : [],
+    people: normalizePeople(raw.people),
     reminders: { ...d.reminders, ...(raw.reminders ?? {}) },
     privacy: { ...d.privacy, ...(raw.privacy ?? {}) },
     sync: { ...d.sync, ...(raw.sync ?? {}) },

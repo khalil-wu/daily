@@ -145,6 +145,7 @@ export function buildSampleEntries(now = Date.now()): Entry[] {
       updatedAt: t,
       mood: s.mood,
       tags: s.tags,
+      people: [],
       photos: s.photos ?? [],
       audios: [],
       videos: [],
@@ -163,7 +164,7 @@ export function buildSampleDrafts(now = Date.now()): Entry[] {
   const mk = (minsAgo: number, title: string, body: string, photo?: string): Entry => {
     const t = now - minsAgo * 60000;
     return {
-      id: uid('e'), title, body, createdAt: t, updatedAt: t, tags: [], photos: photo ? [photo] : [], audios: [], videos: [],
+      id: uid('e'), title, body, createdAt: t, updatedAt: t, tags: [], people: [], photos: photo ? [photo] : [], audios: [], videos: [],
       favorite: false, pinned: false, hidden: false, status: 'draft',
     };
   };

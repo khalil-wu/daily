@@ -6,7 +6,7 @@ import {
 import { router, useLocalSearchParams } from 'expo-router';
 import {
   ChevronLeft, ChevronRight, Copy, Edit3, EyeOff, FileDown, Heart,
-  MapPin, MoreHorizontal, Pin, Share2, Star, Trash2, X,
+  MapPin, MoreHorizontal, Pin, Share2, Sparkles, Star, Trash2, X,
 } from 'lucide-react-native';
 import { useTheme } from '../../src/theme/ThemeProvider';
 import { actions, useEntry, useStore } from '../../src/store/store';
@@ -20,12 +20,14 @@ import { PhotoViewer } from '../../src/components/PhotoViewer';
 import { PhotoLayoutView } from '../../src/components/PhotoLayout';
 import { useFeedback } from '../../src/components/feedback';
 import { PopDialog } from '../../src/components/motion';
-import { fmtMonthDay, fmtMonthDayTime, WEEK_CN } from '../../src/utils/date';
+import { fmtAgo, fmtMonthDay, fmtMonthDayTime, WEEK_CN } from '../../src/utils/date';
 import { entryToMarkdown, exportTextFile } from '../../src/utils/transfer';
 import { clamp, plainText, wordCount } from '../../src/utils/text';
 import { toggleTodoAtLine } from '../../src/utils/richtext';
 import { entryCover } from '../../src/utils/video';
 import { posterUri } from '../../src/services/videoStore';
+import { canSendEntry } from '../../src/utils/ai/privacy';
+import { startReply, useAIStatus, useReplyJob } from '../../src/services/ai';
 import { IMAGES } from '../../src/data/assets';
 
 /** 14. 日记详情页（阅读进度 / 待办直接勾选 / 多图排版 / 上一篇下一篇） */
@@ -36,7 +38,10 @@ export default function MemoryDetailScreen() {
   const entry = useEntry(id);
   const entries = useStore(s => s.entries);
   const tags = useStore(s => s.tags);
+  const people = useStore(s => s.people);
   const notebooks = useStore(s => s.notebooks);
+  const aiStatus = useAIStatus();
+  const replyJob = useReplyJob(id);
   const [viewerIdx, setViewerIdx] = useState<number | null>(null);
   const [shareOpen, setShareOpen] = useState(false);
   const [readProgress, setReadProgress] = useState(0);
@@ -219,9 +224,22 @@ export default function MemoryDetailScreen() {
           </View>
         )}
 
-        {/* 标签与心情 */}
-        {(entry.tags.length > 0 || mood) && (
+        {/* 标签、身边人与心情 */}
+        {(entry.tags.length > 0 || entry.people.length > 0 || mood) && (
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 14 }}>
+            {entry.people.map(pid => {
+              const p = people.find(x => x.id === pid);
+              return p ? (
+                <Chip
+                  key={pid}
+                  size="sm"
+                  label={p.name}
+                  bg={c.cardAlt}
+                  color={c.textSub}
+                  onPress={() => router.push({ pathname: '/people/[id]', params: { id: p.id } })}
+                />
+              ) : null;
+            })}
             {entry.tags.map(tid => {
               const tg = tags.find(x => x.id === tid);
               return tg ? <Chip key={tid} size="sm" label={tg.name} bg={c.primaryFaint} color={c.primaryDark} /> : null;
@@ -278,6 +296,46 @@ export default function MemoryDetailScreen() {
         <Text style={{ fontSize: fs(11.5), color: c.textMuted, marginTop: 26 }}>
           共 {words} 字 · 预计阅读 {readMinutes} 分钟
         </Text>
+
+        {/* 「记得」的回信 */}
+        {(entry.ai?.reply || (aiStatus === 'ready' && canSendEntry(entry))) && (
+          <View style={{ marginTop: 18, backgroundColor: c.primaryFaint, borderRadius: 16, padding: 16, borderWidth: StyleSheet.hairlineWidth, borderColor: c.primarySoft }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
+                <Sparkles size={13} color={c.primaryDark} />
+                <Text style={{ fontSize: fs(12), color: c.primaryDark, fontWeight: '600' }}>记得的回信</Text>
+              </View>
+              {entry.ai?.reply && (
+                <Text style={{ fontSize: fs(11), color: c.textMuted }}>{fmtAgo(entry.ai.reply.at)}</Text>
+              )}
+            </View>
+            {entry.ai?.reply ? (
+              <Text style={{ fontSize: fs(13.5), color: c.text, lineHeight: fs(13.5) * 1.65, marginTop: 10 }}>{entry.ai.reply.text}</Text>
+            ) : replyJob.status === 'loading' ? (
+              <Text style={{ fontSize: fs(13), color: c.textSub, marginTop: 10 }}>记得正在读这篇日记…</Text>
+            ) : replyJob.status === 'error' ? (
+              <View style={{ marginTop: 10 }}>
+                <Text style={{ fontSize: fs(12.5), color: c.danger }}>{replyJob.error}</Text>
+                <Pressable onPress={() => void startReply(entry.id)} style={{ marginTop: 6 }}>
+                  <Text style={{ fontSize: fs(12.5), color: c.primaryDark }}>再试一次 ›</Text>
+                </Pressable>
+              </View>
+            ) : (
+              <Pressable onPress={() => void startReply(entry.id)} style={{ marginTop: 10 }}>
+                <Text style={{ fontSize: fs(13), color: c.primaryDark, fontWeight: '500' }}>请「记得」回一封 ›</Text>
+              </Pressable>
+            )}
+            {entry.ai?.reply && (
+              <Pressable
+                onPress={() => void startReply(entry.id)}
+                disabled={replyJob.status === 'loading'}
+                style={{ marginTop: 10, alignSelf: 'flex-start' }}
+              >
+                <Text style={{ fontSize: fs(12), color: c.textMuted }}>{replyJob.status === 'loading' ? '正在写…' : '再写一封'}</Text>
+              </Pressable>
+            )}
+          </View>
+        )}
 
         {/* 上一篇 / 下一篇 导航卡片 */}
         {(prevEntry || nextEntry) && (

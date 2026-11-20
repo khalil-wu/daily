@@ -1,7 +1,7 @@
 import React from 'react';
 import { ScrollView } from 'react-native';
 import { router } from 'expo-router';
-import { Bell, BookMarked, Cloud, Download, HardDrive, Info, Palette, Shield, Target, Type } from 'lucide-react-native';
+import { Bell, BookMarked, Cloud, Download, HardDrive, Info, Palette, Shield, Sparkles, Target, Type } from 'lucide-react-native';
 import { useTheme } from '../../src/theme/ThemeProvider';
 import { useStore } from '../../src/store/store';
 import { APP_VERSION } from '../../src/data/constants';
@@ -13,6 +13,7 @@ export default function SettingsIndexScreen() {
   const account = useStore(s => s.account);
   const notebooks = useStore(s => s.notebooks);
   const goals = useStore(s => s.goals);
+  const ai = useStore(s => s.ai);
 
   return (
     <Screen edges={['top', 'bottom']}>
@@ -49,6 +50,14 @@ export default function SettingsIndexScreen() {
             title="提醒通知"
             subtitle="每日提醒、重要事项提醒"
             onPress={() => router.push('/settings/reminders')}
+          />
+          <Row
+            icon={Sparkles}
+            iconColor={c.primaryDark}
+            title="记得（AI 助手）"
+            subtitle="追问、整理、回信与周回顾"
+            value={ai.enabled ? '已开启' : '未开启'}
+            onPress={() => router.push('/settings/ai')}
           />
           <Row
             icon={Palette}

@@ -4,7 +4,7 @@ import { router, useLocalSearchParams } from 'expo-router';
 import {
   AudioLines, Bold, BookOpen, Calendar, Check, CheckSquare, Cloud, Eye, EyeOff, Heading1, Image as ImageIcon, Italic, Type,
   LayoutTemplate, List, ListOrdered, MapPin, Mic, Minus, Quote, Redo2, RefreshCw, Smile, Sparkles,
-  Square, Tag as TagIcon, Underline, Undo2, Video,
+  Square, Tag as TagIcon, Underline, Undo2, Users, Video,
 } from 'lucide-react-native';
 import { useTheme } from '../src/theme/ThemeProvider';
 import { actions, openTutorial, useStore } from '../src/store/store';
@@ -21,6 +21,7 @@ import { VideoClipCard } from '../src/components/VideoPlayer';
 import { PhotoViewer } from '../src/components/PhotoViewer';
 import { PhotoLayoutView } from '../src/components/PhotoLayout';
 import { RichBody } from '../src/components/RichBody';
+import { RememberPanel } from '../src/components/RememberPanel';
 import { useFeedback } from '../src/components/feedback';
 import { DateTimeSheet } from '../src/components/DateTimeSheet';
 import { PopDialog, PressableScale } from '../src/components/motion';
@@ -37,6 +38,7 @@ export default function WriteScreen() {
   const { c, t, fs, lineHeight, contentWidth } = useTheme();
   const { toast } = useFeedback();
   const tags = useStore(s => s.tags);
+  const people = useStore(s => s.people);
   const notebooks = useStore(s => s.notebooks);
   const goals = useStore(s => s.goals);
   const account = useStore(s => s.account);
@@ -454,6 +456,18 @@ export default function WriteScreen() {
             onPress={() => router.push('/picker/tags')}
           />
           <Chip
+            icon={Users}
+            label={
+              entry.people.length === 0
+                ? '和谁'
+                : entry.people.length <= 2
+                  ? entry.people.map(id => people.find(p => p.id === id)?.name).filter(Boolean).join('、')
+                  : `${entry.people.length} 个人`
+            }
+            selected={entry.people.length > 0}
+            onPress={() => router.push('/picker/people')}
+          />
+          <Chip
             icon={LayoutTemplate}
             label="模板"
             onPress={() => router.push('/templates')}
@@ -461,9 +475,25 @@ export default function WriteScreen() {
         </ScrollView>
         </View>
 
-        {/* 已选标签展示 */}
-        {entry.tags.length > 0 && (
+        {/* 「记得」面板：追问 / 整理 / 理顺，折叠时只占一行 */}
+        <RememberPanel entry={entry} applyBody={(next, step) => setBody(next, { step })} />
+
+        {/* 已选标签与身边人展示 */}
+        {(entry.tags.length > 0 || entry.people.length > 0) && (
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginBottom: 12 }}>
+            {entry.people.map(pid => {
+              const p = people.find(x => x.id === pid);
+              if (!p) return null;
+              return (
+                <Chip
+                  key={pid}
+                  size="sm"
+                  selected
+                  label={p.name}
+                  onRemove={() => updateEditorDraft({ people: entry.people.filter(x => x !== pid) })}
+                />
+              );
+            })}
             {entry.tags.map(tid => {
               const tg = tags.find(x => x.id === tid);
               if (!tg) return null;

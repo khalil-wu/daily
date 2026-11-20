@@ -1,4 +1,4 @@
-import type { AccentKey, FontScaleKey, LineHeightKey, ThemeMode } from '../theme/tokens';
+import type { AccentKey, FontScaleKey, LineHeightKey, StyleKey, ThemeMode } from '../theme/tokens';
 
 export type MoodKey = 'happy' | 'calm' | 'tired' | 'down' | 'anxious' | 'grateful';
 export type WeatherKey = 'sunny' | 'cloudy' | 'overcast' | 'lightRain' | 'rain' | 'heavyRain' | 'snow' | 'thunder';
@@ -33,6 +33,32 @@ export interface Place {
   longitude?: number;
 }
 
+/** 身边人与我的关系 */
+export type RelationKey = 'family' | 'partner' | 'friend' | 'colleague' | 'other';
+
+/**
+ * 身边人：只存在于本机日记里的人物。
+ * 标记谁出现在一篇日记里，只是给自己看的索引，对方不会收到任何通知。
+ */
+export interface Person {
+  id: string;
+  name: string;
+  relation: RelationKey;
+  /** 日记里可能出现的其他叫法（「妈」「老妈」） */
+  aliases: string[];
+  note?: string;
+  /** 生日，MM-DD */
+  birthday?: string;
+  color: string;
+  createdAt: number;
+}
+
+/** 「记得」（AI）为单篇日记留下的内容 */
+export interface EntryAI {
+  /** 回信 */
+  reply?: { text: string; at: number };
+}
+
 export interface Entry {
   id: string;
   title: string;
@@ -41,6 +67,9 @@ export interface Entry {
   updatedAt: number;
   mood?: MoodKey;
   tags: string[]; // tag id
+  /** 这篇日记里出现的身边人（person id） */
+  people: string[];
+  ai?: EntryAI;
   photos: string[]; // uri，或 asset:photo-xxx
   audios: AudioClip[];
   videos: VideoClip[];
@@ -119,8 +148,43 @@ export interface BackupSettings {
   lastBackupPath?: string;
 }
 
+/**
+ * 「记得」（AI）设置。密钥不在这里：它单独存放在设备的安全存储里（services/aiKey），
+ * 因此不会进入备份、导出文件或同步数据。
+ */
+export interface AISettings {
+  enabled: boolean;
+  /** 用户同意把日记文字发给所填模型服务的时间；没有同意就不会发出任何请求 */
+  consentAt?: number;
+  baseUrl: string;
+  model: string;
+  /** 发布后自动请「记得」回信 */
+  autoReply: boolean;
+  /** 回信时附带几段相关的旧日记，让「记得」能提起以前写过的事 */
+  useMemory: boolean;
+}
+
+/** 周 / 月回顾 */
+export interface PeriodReview {
+  id: string;
+  kind: 'week' | 'month';
+  from: number;
+  to: number;
+  createdAt: number;
+  entryCount: number;
+  summary: string;
+  themes: string[];
+  moodLine: string;
+  /** 从日记原文里摘出的一句话 */
+  quote?: { text: string; entryId: string };
+  /** 留给下一段时间的一个问题 */
+  question: string;
+}
+
 export interface AppearanceSettings {
   theme: ThemeMode;
+  /** 整体风格：配色基调、圆角与描边 */
+  style: StyleKey;
   accent: AccentKey;
   fontScale: FontScaleKey;
   lineHeight: LineHeightKey;
@@ -163,6 +227,7 @@ export interface AppState {
   usageMode: 'local' | 'account' | null;
   entries: Entry[];
   tags: Tag[];
+  people: Person[];
   notebooks: Notebook[];
   /** 首页当前查看的日记本；null 表示全部 */
   activeNotebook: string | null;
@@ -171,6 +236,8 @@ export interface AppState {
   accounts: StoredAccount[];
   profile: Profile;
   appearance: AppearanceSettings;
+  ai: AISettings;
+  reviews: PeriodReview[];
   reminders: ReminderSettings;
   privacy: PrivacySettings;
   sync: SyncSettings;

@@ -6,6 +6,7 @@ import { useTheme } from '../src/theme/ThemeProvider';
 import { actions, useStore } from '../src/store/store';
 import { MOODS } from '../src/data/constants';
 import type { Entry, MoodKey } from '../src/store/types';
+import { personNames } from '../src/utils/people';
 import { Chip, EmptyState, Screen, SearchBar, goBack } from '../src/components/ui';
 import { EntryListCard } from '../src/components/EntryCard';
 import { MoodIcon } from '../src/components/MoodIcon';
@@ -17,17 +18,19 @@ const HOT_KEYWORDS = ['成长', '情绪', '旅行', '生活', '工作', '阅读'
 
 /** 14 & 设计稿3 #14. 搜索页（最近搜索、热门关键词、结果高亮、无结果空状态） */
 export default function SearchScreen() {
-  const params = useLocalSearchParams<{ q?: string; tag?: string; mood?: MoodKey }>();
+  const params = useLocalSearchParams<{ q?: string; tag?: string; mood?: MoodKey; person?: string }>();
   const { c, fs } = useTheme();
   const entries = useStore(s => s.entries);
   const tags = useStore(s => s.tags);
+  const people = useStore(s => s.people);
   const recent = useStore(s => s.recentSearches);
 
   const [query, setQuery] = useState(params.q ?? '');
   const [filterTag, setFilterTag] = useState<string | null>(params.tag ?? null);
   const [filterMood, setFilterMood] = useState<MoodKey | null>(params.mood ?? null);
+  const [filterPerson, setFilterPerson] = useState<string | null>(params.person ?? null);
 
-  const searching = !!(query.trim() || filterTag || filterMood);
+  const searching = !!(query.trim() || filterTag || filterMood || filterPerson);
 
   const results = useMemo(() => {
     if (!searching) return [];
@@ -37,13 +40,19 @@ export default function SearchScreen() {
       .filter(e => {
         if (filterTag && !e.tags.includes(filterTag)) return false;
         if (filterMood && e.mood !== filterMood) return false;
+        if (filterPerson && !e.people.includes(filterPerson)) return false;
         if (!q) return true;
         const tagNames = e.tags.map(id => tags.find(tg => tg.id === id)?.name ?? '').join(' ');
-        const hay = `${e.title} ${plainText(e.body)} ${e.place?.name ?? ''} ${tagNames} ${videoSearchWords(e)}`.toLowerCase();
+        const peopleNames = e.people
+          .map(id => people.find(p => p.id === id))
+          .filter(Boolean)
+          .flatMap(p => personNames(p!))
+          .join(' ');
+        const hay = `${e.title} ${plainText(e.body)} ${e.place?.name ?? ''} ${tagNames} ${peopleNames} ${videoSearchWords(e)}`.toLowerCase();
         return hay.includes(q);
       })
       .sort((a, b) => b.createdAt - a.createdAt);
-  }, [entries, tags, query, filterTag, filterMood, searching]);
+  }, [entries, tags, people, query, filterTag, filterMood, filterPerson, searching]);
 
   const commitQuery = (q: string) => {
     setQuery(q);
@@ -76,13 +85,21 @@ export default function SearchScreen() {
           onSubmit={() => {
             if (query.trim()) actions.pushSearch(query.trim());
           }}
-          autoFocus={!params.tag && !params.mood}
+          autoFocus={!params.tag && !params.mood && !params.person}
           style={{ flex: 1 }}
         />
       </View>
 
-      {(filterTag || filterMood) && (
+      {(filterTag || filterMood || filterPerson) && (
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, paddingHorizontal: 20, paddingBottom: 8 }}>
+          {filterPerson && (
+            <Chip
+              size="sm"
+              selected
+              label={`和：${people.find(x => x.id === filterPerson)?.name ?? filterPerson}`}
+              onRemove={() => setFilterPerson(null)}
+            />
+          )}
           {filterTag && (
             <Chip
               size="sm"
@@ -143,6 +160,17 @@ export default function SearchScreen() {
               <Chip key={m.key} label={m.label} icon={<MoodIcon mood={m.key} size={15} />} onPress={() => setFilterMood(m.key)} />
             ))}
           </View>
+
+          {people.length > 0 && (
+            <>
+              <Text style={{ fontSize: fs(13.5), color: c.textSub, fontWeight: '500', marginTop: 24, marginBottom: 12 }}>按身边人筛选</Text>
+              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>
+                {people.map(p => (
+                  <Chip key={p.id} label={p.name} onPress={() => setFilterPerson(p.id)} />
+                ))}
+              </View>
+            </>
+          )}
         </ScrollView>
       ) : results.length === 0 ? (
         <View style={{ flex: 1, justifyContent: 'center', paddingBottom: 40 }}>
@@ -156,6 +184,7 @@ export default function SearchScreen() {
               setQuery('');
               setFilterTag(null);
               setFilterMood(null);
+              setFilterPerson(null);
             }}
           />
         </View>
