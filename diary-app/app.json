@@ -135,12 +135,6 @@
     ],
     "experiments": {
       "typedRoutes": false
-    },
-    "extra": {
-      "cloudbase": {
-        "env": "",
-        "region": "ap-shanghai"
-      }
     }
   }
 }

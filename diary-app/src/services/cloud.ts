@@ -6,24 +6,26 @@ import type { Account, Entry } from '../store/types';
  * 应用保持完全本地可用（账号/同步走本机模拟）。
  */
 
+import { cloudbaseEnvId, cloudbaseRegion } from './cloud.config';
+
 interface CloudConfig {
   env: string;
   region?: string;
 }
 
 function readConfig(): CloudConfig {
-  try {
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
-    const Constants = require('expo-constants').default;
-    const extra = (Constants?.expoConfig?.extra ?? {}) as { cloudbase?: CloudConfig };
-    return extra.cloudbase ?? { env: '' };
-  } catch {
-    return { env: '' };
-  }
+  return { env: cloudbaseEnvId, region: cloudbaseRegion };
+}
+
+/** 只认真实运行时（浏览器或 React Native）；Node 测试环境视为未配置。 */
+function runtimeSupported(): boolean {
+  if (typeof document !== 'undefined') return true;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return typeof navigator !== 'undefined' && (navigator as any).product === 'ReactNative';
 }
 
 export function cloudConfigured(): boolean {
-  return !!readConfig().env;
+  return !!readConfig().env && runtimeSupported();
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -38,8 +40,9 @@ export function initCloud() {
   if (inited || !cloudConfigured()) return;
   // eslint-disable-next-line @typescript-eslint/no-var-requires
   const cloudbase = require('@cloudbase/js-sdk').default ?? require('@cloudbase/js-sdk');
-  const isWeb = typeof document !== 'undefined';
-  if (!isWeb) {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const isRN = typeof navigator !== 'undefined' && (navigator as any).product === 'ReactNative';
+  if (isRN) {
     // RN 端需要官方适配器（mmkv 持久化登录态）；Web 端 SDK 自带浏览器适配
     // eslint-disable-next-line @typescript-eslint/no-var-requires
     require('@cloudbase/adapter-rn');
