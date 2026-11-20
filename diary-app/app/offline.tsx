@@ -20,7 +20,7 @@ export default function OfflineScreen() {
           </View>
           <Text style={[t.h1, { fontSize: fs(22), textAlign: 'center' }]}>当前处于离线状态</Text>
           <Text style={[t.sub, { textAlign: 'center', marginTop: 14, lineHeight: fs(13.5) * 1.75 }]}>
-            无法连接到网络{'\n'}你仍可以正常记录日记，所有内容已安全保存在本地。{'\n'}网络恢复后将自动同步。
+            无法连接到网络{'\n'}你仍可以正常记录日记，所有内容已安全保存在本地。{'\n'}网络恢复后即可继续使用「记得」。
           </Text>
         </View>
 

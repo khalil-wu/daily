@@ -24,7 +24,7 @@ export default function SettingsIndexScreen() {
             icon={Cloud}
             iconColor={c.primaryDark}
             title="账号与同步"
-            subtitle="本地使用、登录与数据同步"
+            subtitle="本地使用与本机账号同步"
             value={account ? '已登录' : '本地使用'}
             onPress={() => router.push('/settings/account')}
           />

@@ -77,8 +77,8 @@ export default function ChooseModeScreen() {
                 <Cloud size={22} color={c.primaryDark} strokeWidth={1.7} />
               </View>
               <View style={{ flex: 1 }}>
-                <Text style={[t.h3, { fontSize: fs(17) }]}>登录后同步</Text>
-                <Text style={[t.sub, { marginTop: 5 }]}>登录账号，支持多设备同步，数据更安全。</Text>
+                <Text style={[t.h3, { fontSize: fs(17) }]}>登录账号</Text>
+                <Text style={[t.sub, { marginTop: 5 }]}>创建本机账号，可在同设备账号间同步日记；云端同步暂未开放。</Text>
               </View>
               <ChevronRight size={20} color={c.textMuted} style={{ marginLeft: 8 }} />
             </Pressable>

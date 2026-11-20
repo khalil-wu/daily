@@ -9,7 +9,7 @@ import { fmtDateTime } from '../src/utils/date';
 
 const OPTIONS: { key: 'local' | 'cloud' | 'latest'; title: string; desc: string }[] = [
   { key: 'local', title: '保留本机', desc: '使用当前设备上的版本' },
-  { key: 'cloud', title: '保留云端', desc: '使用云端备份的版本' },
+  { key: 'cloud', title: '保留账号端', desc: '使用账号同步过来的版本' },
   { key: 'latest', title: '合并最近修改', desc: '合并双方的修改，并保留最新的版本' },
 ];
 
@@ -43,7 +43,7 @@ export default function SyncConflictScreen() {
           <Image source={IMAGES.syncConflict} style={{ width: 140, height: 140, borderRadius: 24, marginBottom: 12 }} resizeMode="cover" />
           <Text style={[t.h1, { fontSize: fs(21), textAlign: 'center' }]}>检测到同步冲突</Text>
           <Text style={[t.sub, { textAlign: 'center', marginTop: 8 }]}>
-            云端与本机的同一篇日记存在不同的修改，请选择处理方式：
+            两个账号对同一篇日记有不同的修改，请选择处理方式：
           </Text>
         </View>
 
@@ -56,7 +56,7 @@ export default function SyncConflictScreen() {
               本机修改：{fmtDateTime(first.localUpdatedAt)}
             </Text>
             <Text style={{ fontSize: fs(12), color: c.textSub, marginTop: 2 }}>
-              云端修改：{fmtDateTime(first.cloudUpdatedAt)}
+              另一账号修改：{fmtDateTime(first.cloudUpdatedAt)}
             </Text>
           </View>
         )}

@@ -284,7 +284,7 @@ export default function HomeScreen() {
         const res = await actions.syncNow();
         if (!res.ok) toast(res.message || '同步失败', { type: 'warning' });
         else if (res.conflicts > 0) toast(`发现 ${res.conflicts} 条同步冲突`, { type: 'warning', action: { label: '去处理', onPress: () => router.push('/sync-conflict') } });
-        else toast('已与云端同步');
+        else toast('同步完成');
       } else {
         await new Promise(r => setTimeout(r, 350));
         toast('已是最新');

@@ -18,7 +18,7 @@ const TIPS: { icon: LucideIcon; title: string; desc: string }[] = [
   { icon: CalendarClock, title: '补记过去的某一天', desc: '写作页点时间胶囊，可以选任意日期和时刻；日历里也能「补记这一天」。' },
   { icon: CornerDownLeft, title: '回车接续列表', desc: '在列表、待办或引用行里回车，会自动接上下一项；空项上再回车就结束。' },
   { icon: ArrowUpToLine, title: '快速回到顶部', desc: '在首页再点一次底部的「日记」，列表会滚回最上面。' },
-  { icon: RefreshCw, title: '下拉同步', desc: '登录账号后，在首页下拉列表可以立即与云端同步。' },
+  { icon: RefreshCw, title: '下拉同步', desc: '登录账号后，在首页下拉列表可以立即在本机账号间同步。' },
 ];
 
 const FAQS = [

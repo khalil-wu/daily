@@ -47,7 +47,7 @@ export default function LoginScreen() {
       <View style={{ flex: 1, justifyContent: 'space-between' }}>
         <View style={{ paddingHorizontal: 24, paddingTop: 14 }}>
           <Text style={[t.h1, { fontSize: fs(26), letterSpacing: 1 }]}>登录记得日记</Text>
-          <Text style={[t.sub, { fontSize: fs(13.5), marginTop: 8 }]}>同步你的日记，在多设备间安全使用。</Text>
+          <Text style={[t.sub, { fontSize: fs(13.5), marginTop: 8 }]}>登录本机账号，可在同一设备的账号间同步日记。</Text>
 
           <View style={{ marginTop: 28 }}>
             <Field
