@@ -60,6 +60,13 @@ function AppShell() {
   const lockInit = useRef(false);
   const bgAt = useRef<number | null>(null);
 
+  // 路由守卫：未完成引导时，深链进来的任何页面都先回到引导流程
+  useEffect(() => {
+    if (!hydrated || onboarded) return;
+    const publicPaths = ['/onboarding', '/auth/choose', '/auth/login', '/auth/register', '/auth/forgot'];
+    if (!publicPaths.includes(pathname)) router.replace('/onboarding');
+  }, [hydrated, onboarded, pathname]);
+
   useEffect(() => {
     if (!hydrated || lockInit.current) return;
     lockInit.current = true;

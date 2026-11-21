@@ -22,7 +22,9 @@
       "buildNumber": "1",
       "infoPlist": {
         "NSFaceIDUsageDescription": "使用 Face ID 解锁记得日记，保护你的隐私。",
-        "NSLocationWhenInUseUsageDescription": "用于为日记添加当前所在的地点。"
+        "NSLocationWhenInUseUsageDescription": "用于为日记添加当前所在的地点。",
+        "NSSpeechRecognitionUsageDescription": "用于在设备上进行语音识别，把口述内容写成日记。",
+        "NSMicrophoneUsageDescription": "用于把你说的话转成文字（语音听写）。"
       }
     },
     "android": {
@@ -34,7 +36,6 @@
         "backgroundColor": "#FCF0DD"
       },
       "permissions": [
-        "android.permission.RECORD_AUDIO",
         "android.permission.USE_BIOMETRIC",
         "android.permission.USE_FINGERPRINT",
         "android.permission.ACCESS_COARSE_LOCATION",
@@ -44,7 +45,13 @@
         "android.permission.CAMERA",
         "android.permission.READ_MEDIA_IMAGES",
         "android.permission.READ_MEDIA_VIDEO",
-        "android.permission.READ_EXTERNAL_STORAGE"
+        "android.permission.READ_EXTERNAL_STORAGE",
+        "android.permission.MODIFY_AUDIO_SETTINGS",
+        "android.permission.FOREGROUND_SERVICE",
+        "android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK",
+        "android.permission.WRITE_EXTERNAL_STORAGE",
+        "android.permission.INTERNET",
+        "android.permission.RECORD_AUDIO"
       ]
     },
     "web": {
@@ -135,6 +142,13 @@
     ],
     "experiments": {
       "typedRoutes": false
-    }
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "eec9c83d-8b67-477f-9bbb-1a27c63cbf8c"
+      }
+    },
+    "owner": "utopiawu"
   }
 }
