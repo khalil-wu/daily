@@ -53,6 +53,7 @@ export function defaultState(): AppState {
       style: 'warm',
       accent: 'latte',
       fontScale: 'standard',
+      fontFamily: 'serif',
       lineHeight: 'standard',
       contentWidth: 0.5,
       cardStyle: 'image',

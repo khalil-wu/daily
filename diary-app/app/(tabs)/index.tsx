@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
-  Animated, FlatList, Platform, Pressable, RefreshControl, ScrollView,
+  Animated, Easing, FlatList, Platform, Pressable, RefreshControl, ScrollView,
   type StyleProp, StyleSheet, Text, View, type ViewStyle,
 } from 'react-native';
 import { router, useNavigation } from 'expo-router';
@@ -15,7 +15,7 @@ import { Chip, EmptyState, IconButton, Screen, UnderlineTabs, haptic } from '../
 import { EntryGridCard, EntryListCard } from '../../src/components/EntryCard';
 import { SwipeRow, closeOpenSwipeRow, type SwipeAction } from '../../src/components/SwipeRow';
 import { TodayCard } from '../../src/components/TodayCard';
-import { animateNextLayout, BottomSheet, ND, PressableScale, SPRING } from '../../src/components/motion';
+import { animateNextLayout, BottomSheet, ND, PressableScale, prefersReducedMotion, SPRING } from '../../src/components/motion';
 import { setTourHandler, useTourTarget } from '../../src/components/tour';
 import { HomeSkeleton } from '../../src/components/Skeleton';
 import { MoodIcon } from '../../src/components/MoodIcon';
@@ -34,21 +34,23 @@ type FlatListRow =
 const USE_NATIVE = ND;
 
 function AnimatedEntrance({ index, style, children }: { index: number; style?: StyleProp<ViewStyle>; children: React.ReactNode }) {
-  const anim = useRef(new Animated.Value(index < 10 ? 0 : 1)).current;
+  const reduced = prefersReducedMotion();
+  const anim = useRef(new Animated.Value(index < 10 && !reduced ? 0 : 1)).current;
 
   useEffect(() => {
-    if (index >= 10) return;
+    if (index >= 10 || reduced) return;
     const tmr = setTimeout(() => {
       Animated.timing(anim, {
         toValue: 1,
-        duration: 240,
+        duration: 280,
+        easing: Easing.out(Easing.cubic),
         useNativeDriver: USE_NATIVE,
       }).start();
-    }, Math.min(index, 9) * 30);
+    }, Math.min(index, 9) * 28);
     return () => clearTimeout(tmr);
-  }, [anim, index]);
+  }, [anim, index, reduced]);
 
-  if (index >= 10) return <>{children}</>;
+  if (index >= 10 || reduced) return <>{children}</>;
 
   return (
     <Animated.View
@@ -67,7 +69,7 @@ function AnimatedEntrance({ index, style, children }: { index: number; style?: S
 
 /** 9-11. 首页（列表分组虚拟化 / 左滑撤销 / 日记本切换 / 写作目标 / 快捷入口） */
 export default function HomeScreen() {
-  const { c, t, fs, dark } = useTheme();
+  const { c, t, fs, dark, look, r } = useTheme();
   const { toast, sheet } = useFeedback();
   const hydrated = useHydrated();
   const entries = useStore(s => s.entries);
@@ -375,21 +377,21 @@ export default function HomeScreen() {
             style={{
               marginBottom: item.last ? 18 : 0,
               backgroundColor: c.card,
-              borderTopLeftRadius: item.first ? 18 : 0,
-              borderTopRightRadius: item.first ? 18 : 0,
-              borderBottomLeftRadius: item.last ? 18 : 0,
-              borderBottomRightRadius: item.last ? 18 : 0,
-              borderLeftWidth: dark ? 0 : StyleSheet.hairlineWidth,
-              borderRightWidth: dark ? 0 : StyleSheet.hairlineWidth,
-              borderTopWidth: dark || !item.first ? 0 : StyleSheet.hairlineWidth,
-              borderBottomWidth: dark || !item.last ? 0 : StyleSheet.hairlineWidth,
-              borderColor: c.divider,
-              ...(item.last && !dark
+              borderTopLeftRadius: item.first ? r(18) : 0,
+              borderTopRightRadius: item.first ? r(18) : 0,
+              borderBottomLeftRadius: item.last ? r(18) : 0,
+              borderBottomRightRadius: item.last ? r(18) : 0,
+              borderLeftWidth: look.flat ? 1 : dark ? 0 : StyleSheet.hairlineWidth,
+              borderRightWidth: look.flat ? 1 : dark ? 0 : StyleSheet.hairlineWidth,
+              borderTopWidth: look.flat ? (item.first ? 1 : 0) : dark || !item.first ? 0 : StyleSheet.hairlineWidth,
+              borderBottomWidth: look.flat ? (item.last ? 1 : 0) : dark || !item.last ? 0 : StyleSheet.hairlineWidth,
+              borderColor: look.flat ? c.border : c.divider,
+              ...(item.last && !dark && !look.flat
                 ? { shadowColor: c.shadow, shadowOpacity: 0.06, shadowRadius: 14, shadowOffset: { width: 0, height: 6 }, elevation: 1 }
                 : {}),
             }}
           >
-            <SwipeRow actions={makeSwipeActions(item.entry)} radius={item.first && item.last ? 18 : 0}>
+            <SwipeRow actions={makeSwipeActions(item.entry)} radius={item.first && item.last ? r(18) : 0}>
               <EntryListCard
                 entry={item.entry}
                 grouped={{ first: item.first, last: item.last }}
@@ -401,7 +403,7 @@ export default function HomeScreen() {
         </AnimatedEntrance>
       );
     },
-    [c.card, c.divider, c.shadow, c.textMuted, dark, fs, t.h3, makeSwipeActions, openEntry, openEntrySheet],
+    [c.card, c.border, c.divider, c.shadow, c.textMuted, dark, fs, look.flat, r, t.h3, makeSwipeActions, openEntry, openEntrySheet],
   );
 
   const renderGridItem = useCallback(

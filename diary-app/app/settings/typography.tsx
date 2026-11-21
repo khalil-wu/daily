@@ -2,7 +2,8 @@ import React from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useTheme } from '../../src/theme/ThemeProvider';
 import { actions, useStore } from '../../src/store/store';
-import type { LineHeightKey } from '../../src/theme/tokens';
+import type { FontFamilyKey, LineHeightKey } from '../../src/theme/tokens';
+import { FONT_FAMILIES } from '../../src/theme/tokens';
 import { Card, NavBar, Screen, haptic } from '../../src/components/ui';
 
 const WIDTH_STOPS = [
@@ -19,7 +20,7 @@ const LINE_OPTIONS: { key: LineHeightKey; label: string; gap: number }[] = [
 
 /** 7. 字体与排版设置（1:1 复刻设计稿3 #7） */
 export default function TypographyScreen() {
-  const { c, t, fs } = useTheme();
+  const { c, t, fs, serif } = useTheme();
   const ap = useStore(s => s.appearance);
   const previewPad = Math.round(28 - ap.contentWidth * 16);
 
@@ -27,6 +28,51 @@ export default function TypographyScreen() {
     <Screen edges={['top', 'bottom']}>
       <NavBar variant="large" title="字体与排版" />
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 36, gap: 22 }}>
+        {/* 字体 */}
+        <View>
+          <Text style={[t.h3, { fontSize: fs(15) }]}>字体</Text>
+          <Text style={[t.sub, { marginTop: 4, marginBottom: 14 }]}>标题与阅读正文的字形</Text>
+          <View style={{ flexDirection: 'row', gap: 10 }}>
+            {FONT_FAMILIES.map(opt => {
+              const on = (ap.fontFamily ?? 'serif') === opt.key;
+              return (
+                <Pressable
+                  key={opt.key}
+                  onPress={() => {
+                    haptic('light');
+                    actions.setAppearance({ fontFamily: opt.key as FontFamilyKey });
+                  }}
+                  accessibilityLabel={`字体：${opt.name}`}
+                  style={{
+                    flex: 1,
+                    backgroundColor: on ? c.primaryFaint : c.card,
+                    borderRadius: 16,
+                    paddingVertical: 16,
+                    paddingHorizontal: 8,
+                    alignItems: 'center',
+                    borderWidth: on ? 1.5 : StyleSheet.hairlineWidth,
+                    borderColor: on ? c.primary : c.divider,
+                  }}
+                >
+                  <Text
+                    style={{
+                      fontSize: fs(22),
+                      color: on ? c.primaryDark : c.text,
+                      fontFamily: opt.key === 'serif' ? t.h1.fontFamily : opt.key === 'sans' ? undefined : serif,
+                      fontWeight: opt.key === 'sans' ? '700' : '400',
+                    }}
+                  >
+                    记得
+                  </Text>
+                  <Text style={{ fontSize: fs(13), color: on ? c.primaryDark : c.textSub, fontWeight: on ? '600' : '400', marginTop: 10 }}>
+                    {opt.name}
+                  </Text>
+                </Pressable>
+              );
+            })}
+          </View>
+        </View>
+
         {/* 正文宽度 */}
         <View>
           <Text style={[t.h3, { fontSize: fs(15) }]}>正文宽度</Text>

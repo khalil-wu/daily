@@ -3,6 +3,16 @@ import { Image, Modal, Pressable, ScrollView, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ChevronLeft, ChevronRight, X } from 'lucide-react-native';
 import { photoSource } from '../data/assets';
+import { usePhotoUri } from '../utils/usePhotoUri';
+
+function Thumb({ uri, active, onPress }: { uri: string; active: boolean; onPress: () => void }) {
+  const src = photoSource(usePhotoUri(uri));
+  return (
+    <Pressable onPress={onPress} style={{ borderWidth: 2, borderColor: active ? '#B79276' : 'transparent', borderRadius: 8, overflow: 'hidden', opacity: active ? 1 : 0.55 }}>
+      {src && <Image source={src} style={{ width: 52, height: 52 }} resizeMode="cover" />}
+    </Pressable>
+  );
+}
 
 export function PhotoViewer({ photos, initialIndex = 0, visible, onClose }: { photos: string[]; initialIndex?: number; visible: boolean; onClose: () => void }) {
   const [idx, setIdx] = useState(initialIndex);
@@ -13,7 +23,8 @@ export function PhotoViewer({ photos, initialIndex = 0, visible, onClose }: { ph
   }, [visible, initialIndex, photos.length]);
 
   const current = photos[idx];
-  const src = photoSource(current);
+  const currentUri = usePhotoUri(current);
+  const src = photoSource(currentUri);
 
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose} statusBarTranslucent>
@@ -45,14 +56,9 @@ export function PhotoViewer({ photos, initialIndex = 0, visible, onClose }: { ph
 
         {photos.length > 1 && (
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: insets.bottom + 18, gap: 10, alignItems: 'center', justifyContent: 'center', flexGrow: 1 }} style={{ flexGrow: 0 }}>
-            {photos.map((p, i) => {
-              const s = photoSource(p);
-              return (
-                <Pressable key={p + i} onPress={() => setIdx(i)} style={{ borderWidth: 2, borderColor: i === idx ? '#B79276' : 'transparent', borderRadius: 8, overflow: 'hidden', opacity: i === idx ? 1 : 0.55 }}>
-                  {s && <Image source={s} style={{ width: 52, height: 52 }} resizeMode="cover" />}
-                </Pressable>
-              );
-            })}
+            {photos.map((p, i) => (
+              <Thumb key={p + i} uri={p} active={i === idx} onPress={() => setIdx(i)} />
+            ))}
           </ScrollView>
         )}
       </View>

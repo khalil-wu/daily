@@ -17,6 +17,8 @@ const subs = new Set<() => void>();
  * 例如添加后又删掉的、选了「不保存」的新日记里的视频。
  */
 let sessionVideos: VideoClip[] = [];
+/** 同上：这次编辑里出现过的所有照片（应用自己收进来的文件才有清理意义） */
+let sessionPhotos: string[] = [];
 
 function notify() {
   subs.forEach(fn => fn());
@@ -31,6 +33,7 @@ export function startEditorSession(opts: { id?: string; templateId?: string; cre
         dirty: false,
       };
       sessionVideos = [...existing.videos];
+      sessionPhotos = [...existing.photos];
       notify();
       return draft;
     }
@@ -45,6 +48,7 @@ export function startEditorSession(opts: { id?: string; templateId?: string; cre
   });
   draft = { entry: base, dirty: !!opts.templateData };
   sessionVideos = [];
+  sessionPhotos = [...base.photos];
   notify();
   return draft;
 }
@@ -76,8 +80,9 @@ export function setEditorPeople(people: string[]) {
 }
 
 export function addEditorPhotos(uris: string[]) {
-  if (!draft) return;
+  if (!draft || !uris.length) return;
   const merged = Array.from(new Set([...draft.entry.photos, ...uris]));
+  sessionPhotos = Array.from(new Set([...sessionPhotos, ...uris]));
   updateEditorDraft({ photos: merged });
 }
 
@@ -121,12 +126,15 @@ export function markAutoSaved() {
 }
 
 export function clearEditorSession() {
-  const touched = sessionVideos;
+  const touchedVideos = sessionVideos;
+  const touchedPhotos = sessionPhotos;
   draft = null;
   sessionVideos = [];
+  sessionPhotos = [];
   notify();
-  // 此时 store 里已经是最终结果（发布 / 存草稿 / 还原 / 丢弃），没人引用的视频文件可以清理了
-  if (touched.length) actions.releaseVideos(touched);
+  // 此时 store 里已经是最终结果（发布 / 存草稿 / 还原 / 丢弃），没人引用的照片、视频文件可以清理了
+  if (touchedVideos.length) actions.releaseVideos(touchedVideos);
+  if (touchedPhotos.length) actions.releasePhotos(touchedPhotos);
 }
 
 export function useEditorDraft() {

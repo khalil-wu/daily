@@ -34,6 +34,7 @@ import {
 import { useStyles, useTheme, type Theme } from '../theme/ThemeProvider';
 import { radius } from '../theme/tokens';
 import { photoSource } from '../data/assets';
+import { usePhotoUri } from '../utils/usePhotoUri';
 import { ND, PressableScale, SPRING, prefersReducedMotion } from './motion';
 
 export const haptic = (kind: 'light' | 'medium' | 'success' | 'warning' = 'light') => {
@@ -185,7 +186,7 @@ export function PillAction({ label, onPress, disabled }: { label: string; onPres
         justifyContent: 'center',
       }}
     >
-      <Text style={{ color: '#fff', fontSize: fs(14), fontWeight: '600' }}>{label}</Text>
+      <Text style={{ color: c.textOnPrimary, fontSize: fs(14), fontWeight: '600' }}>{label}</Text>
     </PressableScale>
   );
 }
@@ -218,11 +219,11 @@ export function Button({ title, onPress, variant = 'primary', size = 'lg', icon:
   const { c, fs } = useTheme();
   const h = size === 'lg' ? 48 : size === 'md' ? 40 : 32;
   const palette = {
-    primary: { bg: c.primary, fg: '#fff', bd: c.primary },
+    primary: { bg: c.primary, fg: c.textOnPrimary, bd: c.primary },
     secondary: { bg: c.card, fg: c.text, bd: c.border },
     outline: { bg: 'transparent', fg: c.primary, bd: c.primary },
     ghost: { bg: 'transparent', fg: c.textSub, bd: 'transparent' },
-    danger: { bg: c.danger, fg: '#fff', bd: c.danger },
+    danger: { bg: c.danger, fg: c.textOnPrimary, bd: c.danger },
     soft: { bg: c.primaryFaint, fg: c.primaryDark, bd: c.primarySoft },
   }[variant];
   const off = disabled || loading;
@@ -280,18 +281,19 @@ export function Card({ children, style, onPress, padded = true }: { children: Re
   return <View style={[s.card, padded && s.pad, style]}>{children}</View>;
 }
 
-const cardStyles = ({ c, dark }: Theme) =>
+const cardStyles = ({ c, dark, r, look }: Theme) =>
   StyleSheet.create({
     card: {
       backgroundColor: c.card,
-      borderRadius: radius.lg,
-      borderWidth: dark ? 0 : StyleSheet.hairlineWidth,
-      borderColor: c.divider,
+      borderRadius: r(radius.lg),
+      // 圆润风格（温润 / 樱雾）用极细描边 + 柔和投影；利落风格（清冷 / 墨白 / 旧纸）改用清晰的线
+      borderWidth: look.flat ? 1 : dark ? 0 : StyleSheet.hairlineWidth,
+      borderColor: look.flat ? c.border : c.divider,
       shadowColor: c.shadow,
-      shadowOpacity: dark ? 0 : 0.06,
+      shadowOpacity: dark || look.flat ? 0 : 0.06,
       shadowRadius: 12,
       shadowOffset: { width: 0, height: 3 },
-      elevation: dark ? 0 : 1,
+      elevation: dark || look.flat ? 0 : 1,
     },
     pad: { padding: 16 },
   });
@@ -661,7 +663,8 @@ export function Divider({ style, inset = 0 }: { style?: StyleProp<ViewStyle>; in
 
 export function Photo({ uri, style, radius: r = 10 }: { uri?: string; style?: StyleProp<ViewStyle>; radius?: number }) {
   const { c } = useTheme();
-  const src = photoSource(uri);
+  const resolved = usePhotoUri(uri);
+  const src = photoSource(resolved);
   if (!src) return <View style={[{ backgroundColor: c.primarySoft, borderRadius: r, overflow: 'hidden' }, style]} />;
   return (
     <View style={[{ borderRadius: r, backgroundColor: c.primarySoft, overflow: 'hidden' }, style]}>

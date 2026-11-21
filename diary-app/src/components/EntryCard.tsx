@@ -30,7 +30,7 @@ interface Props {
 
 /** 列表模式日记卡片（1:1 复刻设计稿1 #9 左侧日期列 + 中间标题摘要 + 右侧圆角缩略图） */
 function EntryListCardInner({ entry, onPress, onLongPress, query, compactDate, noMargin, grouped }: Props) {
-  const { c, t, fs, dark } = useTheme();
+  const { c, t, fs, dark, look, r } = useTheme();
   const cardStyle = useStore(s => s.appearance.cardStyle);
   const tags = useStore(s => s.tags);
   const d = new Date(entry.createdAt);
@@ -66,17 +66,17 @@ function EntryListCardInner({ entry, onPress, onLongPress, query, compactDate, n
           : {
               flexDirection: 'row',
               backgroundColor: c.card,
-              borderRadius: 16,
+              borderRadius: r(16),
               paddingHorizontal: 12,
               paddingVertical: 13,
               marginBottom: noMargin ? 0 : 12,
-              borderWidth: dark ? 0 : StyleSheet.hairlineWidth,
-              borderColor: c.divider,
+              borderWidth: look.flat ? 1 : dark ? 0 : StyleSheet.hairlineWidth,
+              borderColor: look.flat ? c.border : c.divider,
               shadowColor: c.shadow,
-              shadowOpacity: dark ? 0 : 0.05,
+              shadowOpacity: dark || look.flat ? 0 : 0.05,
               shadowRadius: 10,
               shadowOffset: { width: 0, height: 2 },
-              elevation: dark ? 0 : 1,
+              elevation: dark || look.flat ? 0 : 1,
             }
       }
     >
@@ -169,7 +169,7 @@ function EntryListCardInner({ entry, onPress, onLongPress, query, compactDate, n
 
 /** 卡片/网格模式日记卡片（1:1 复刻设计稿1 #10 双列图文网格） */
 function EntryGridCardInner({ entry, onPress, onLongPress }: { entry: Entry; onPress: () => void; onLongPress?: () => void }) {
-  const { c, t, fs, dark } = useTheme();
+  const { c, t, fs, dark, look, r } = useTheme();
   const cardStyle = useStore(s => s.appearance.cardStyle);
   const mood = moodMeta(entry.mood);
   const cover = entryCover(entry);
@@ -186,15 +186,15 @@ function EntryGridCardInner({ entry, onPress, onLongPress }: { entry: Entry; onP
         flex: 1,
         minWidth: 0,
         backgroundColor: c.card,
-        borderRadius: 16,
+        borderRadius: r(16),
         overflow: 'hidden',
-        borderWidth: dark ? 0 : StyleSheet.hairlineWidth,
-        borderColor: c.divider,
+        borderWidth: look.flat ? 1 : dark ? 0 : StyleSheet.hairlineWidth,
+        borderColor: look.flat ? c.border : c.divider,
         shadowColor: c.shadow,
-        shadowOpacity: dark ? 0 : 0.06,
+        shadowOpacity: dark || look.flat ? 0 : 0.06,
         shadowRadius: 10,
         shadowOffset: { width: 0, height: 2 },
-        elevation: dark ? 0 : 1,
+        elevation: dark || look.flat ? 0 : 1,
       }}
     >
       {showImage ? (

@@ -107,8 +107,8 @@ export default function StatsScreen() {
                   </View>
                   <Text style={{ fontSize: fs(12), color: c.textMuted, marginTop: 4 }}>最长连续 {stats.longestStreak} 天</Text>
                 </View>
-                <View style={{ width: 52, height: 52, borderRadius: 26, backgroundColor: '#FCECD9', alignItems: 'center', justifyContent: 'center' }}>
-                  <Flame size={28} color="#E69D45" fill="#F3B86B" />
+                <View style={{ width: 52, height: 52, borderRadius: 26, backgroundColor: c.primaryFaint, alignItems: 'center', justifyContent: 'center' }}>
+                  <Flame size={28} color={c.primary} fill={c.primarySoft} />
                 </View>
               </View>
 
@@ -119,7 +119,7 @@ export default function StatsScreen() {
                     <View key={lbl} style={{ alignItems: 'center', gap: 6 }}>
                       <Text style={{ fontSize: fs(11), color: c.textMuted }}>{lbl}</Text>
                       <View style={{ width: 22, height: 22, borderRadius: 11, backgroundColor: on ? c.primary : c.bgDeep, alignItems: 'center', justifyContent: 'center' }}>
-                        {on && <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: '#fff' }} />}
+                        {on && <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: c.textOnPrimary }} />}
                       </View>
                     </View>
                   );
@@ -188,7 +188,7 @@ export default function StatsScreen() {
                     onPress={() => setRange(r.key)}
                     style={{ paddingHorizontal: 14, paddingVertical: 7, borderRadius: 999, backgroundColor: on ? c.primary : c.card, borderWidth: 0.5, borderColor: on ? c.primary : c.divider }}
                   >
-                    <Text style={{ fontSize: fs(13), color: on ? '#fff' : c.textSub }}>{r.label}</Text>
+                    <Text style={{ fontSize: fs(13), color: on ? c.textOnPrimary : c.textSub }}>{r.label}</Text>
                   </Pressable>
                 );
               })}

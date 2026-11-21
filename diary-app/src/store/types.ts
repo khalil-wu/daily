@@ -1,4 +1,4 @@
-import type { AccentKey, FontScaleKey, LineHeightKey, StyleKey, ThemeMode } from '../theme/tokens';
+import type { AccentKey, FontFamilyKey, FontScaleKey, LineHeightKey, StyleKey, ThemeMode } from '../theme/tokens';
 
 export type MoodKey = 'happy' | 'calm' | 'tired' | 'down' | 'anxious' | 'grateful';
 export type WeatherKey = 'sunny' | 'cloudy' | 'overcast' | 'lightRain' | 'rain' | 'heavyRain' | 'snow' | 'thunder';
@@ -187,6 +187,7 @@ export interface AppearanceSettings {
   style: StyleKey;
   accent: AccentKey;
   fontScale: FontScaleKey;
+  fontFamily: FontFamilyKey;
   lineHeight: LineHeightKey;
   contentWidth: number; // 0 窄 ~ 1 宽
   cardStyle: 'simple' | 'image';

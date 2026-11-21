@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useMemo } from 'react';
 import { StyleSheet, useColorScheme, type TextStyle, type ViewStyle } from 'react-native';
 import { useStore } from '../store/store';
-import { buildPalette, FONT_SCALE, LINE_HEIGHT, scaleRadius, SERIF, SERIF_BOLD, stylePreset, type Palette, type StylePreset } from './tokens';
+import { buildPalette, FONT_SCALE, FONT_STACK, LINE_HEIGHT, scaleRadius, SERIF, SERIF_BOLD, stylePreset, type Palette, type StylePreset } from './tokens';
 
 export interface Theme {
   c: Palette;
@@ -17,6 +17,8 @@ export interface Theme {
   /** 卡片外框：圆润风格是极细描边 + 柔和投影，利落风格是一条清晰的线 */
   frame: ViewStyle;
   serif: string;
+  /** 正文 / 阅读字体（跟随「标题字体」设置） */
+  reading: string | undefined;
   /** 常用字体样式 */
   t: {
     display: TextStyle; // 大标题 28-32
@@ -56,8 +58,15 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     const scale = FONT_SCALE[ap.fontScale] ?? 1;
     const lh = LINE_HEIGHT[ap.lineHeight] ?? 1.8;
     const fs = (n: number) => Math.round(n * scale * 10) / 10;
-    // 双端都不能对单字重自定义字体合成粗体：600 字重的衬线改用真实的 SemiBold 字族
-    const serifBold: Pick<TextStyle, 'fontFamily'> = { fontFamily: SERIF_BOLD };
+    const family = ap.fontFamily ?? 'serif';
+    // 宋体用内置 Noto Serif SC；黑体用系统无衬线；楷体在 iOS / Web 上有系统字
+    const heading = family === 'serif' ? SERIF : family === 'kai' ? FONT_STACK.kai : undefined;
+    const headingBold = family === 'serif' ? SERIF_BOLD : heading;
+    const reading = family === 'serif' ? SERIF : FONT_STACK[family];
+    // 黑体没有「粗体字族」，靠 fontWeight 让系统合成；宋体、楷体用真实字族
+    const serifBold: Pick<TextStyle, 'fontFamily'> = headingBold ? { fontFamily: headingBold } : {};
+    const headingStyle: Pick<TextStyle, 'fontFamily'> = heading ? { fontFamily: heading } : {};
+    const boldWeight: Pick<TextStyle, 'fontWeight'> = headingBold ? {} : { fontWeight: '700' };
     return {
       c,
       dark,
@@ -68,20 +77,21 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
       look,
       r,
       frame,
-      serif: SERIF,
+      serif: heading ?? 'inherit',
+      reading,
       t: {
-        display: { fontFamily: SERIF, fontSize: fs(30), color: c.text, letterSpacing: 1.5, ...serifBold },
-        h1: { fontFamily: SERIF, fontSize: fs(22), color: c.text, letterSpacing: 0.3, ...serifBold },
-        h2: { fontFamily: SERIF, fontSize: fs(18), color: c.text, ...serifBold },
-        h3: { fontFamily: SERIF, fontSize: fs(16), color: c.text, ...serifBold },
+        display: { ...headingStyle, ...boldWeight, fontSize: fs(30), color: c.text, letterSpacing: 1.5, ...serifBold },
+        h1: { ...headingStyle, ...boldWeight, fontSize: fs(22), color: c.text, letterSpacing: 0.3, ...serifBold },
+        h2: { ...headingStyle, ...boldWeight, fontSize: fs(18), color: c.text, ...serifBold },
+        h3: { ...headingStyle, ...boldWeight, fontSize: fs(16), color: c.text, ...serifBold },
         body: { fontSize: fs(15), color: c.text, lineHeight: fs(15) * 1.6 },
-        bodySerif: { fontFamily: SERIF, fontSize: fs(16), color: c.text, lineHeight: fs(16) * lh },
+        bodySerif: { fontFamily: reading, fontSize: fs(16), color: c.text, lineHeight: fs(16) * lh },
         sub: { fontSize: fs(13), color: c.textSub, lineHeight: fs(13) * 1.55 },
         caption: { fontSize: fs(12), color: c.textSub },
         tiny: { fontSize: fs(11), color: c.textMuted },
       },
     };
-  }, [dark, ap.accent, ap.style, ap.fontScale, ap.lineHeight, ap.contentWidth]);
+  }, [dark, ap.accent, ap.style, ap.fontScale, ap.fontFamily, ap.lineHeight, ap.contentWidth]);
 
   return <ThemeCtx.Provider value={theme}>{children}</ThemeCtx.Provider>;
 }

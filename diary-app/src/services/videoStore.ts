@@ -61,7 +61,10 @@ function extOf(uri: string, fallback: string) {
 /* ---------------- 网页：IndexedDB ---------------- */
 
 const DB_NAME = 'jide-diary-media';
+const DB_VERSION = 2;
 const DB_STORE = 'videos';
+/** 与 photoStore 共用这个库，打开时补建照片表，免得先开视频表的那一侧升不了级 */
+const PHOTOS_STORE = 'photos';
 /** 本次会话里已经换好的 blob 地址：id → url */
 const objectUrls = new Map<string, string>();
 
@@ -71,9 +74,11 @@ function openDb(): Promise<IDBDatabase> {
       reject(new Error('当前浏览器不支持本地文件存储'));
       return;
     }
-    const req = indexedDB.open(DB_NAME, 1);
+    const req = indexedDB.open(DB_NAME, DB_VERSION);
     req.onupgradeneeded = () => {
-      if (!req.result.objectStoreNames.contains(DB_STORE)) req.result.createObjectStore(DB_STORE);
+      for (const name of [DB_STORE, PHOTOS_STORE]) {
+        if (!req.result.objectStoreNames.contains(name)) req.result.createObjectStore(name);
+      }
     };
     req.onsuccess = () => resolve(req.result);
     req.onerror = () => reject(req.error);

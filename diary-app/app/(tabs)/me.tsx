@@ -15,6 +15,9 @@ import { useFeedback } from '../../src/components/feedback';
 import { BottomSheet, FadeIn, PressableScale } from '../../src/components/motion';
 import { startHomeTour } from '../../src/components/TutorialOverlay';
 import { IMAGES, photoSource } from '../../src/data/assets';
+import { storePhoto } from '../../src/services/photoStore';
+import { usePhotoUri } from '../../src/utils/usePhotoUri';
+import { uid } from '../../src/utils/text';
 import { computeStats } from '../../src/utils/stats';
 import { daysBetween } from '../../src/utils/date';
 import { fmtNumber } from '../../src/utils/text';
@@ -31,6 +34,7 @@ export default function MeScreen() {
   const profile = useStore(s => s.profile);
   const account = useStore(s => s.account);
   const firstUseAt = useStore(s => s.firstUseAt);
+  const avatarUri = usePhotoUri(profile.avatar);
 
   const [editOpen, setEditOpen] = useState(false);
   const [nameInput, setNameInput] = useState(profile.name);
@@ -56,9 +60,11 @@ export default function MeScreen() {
   const pickAvatar = async () => {
     try {
       const res = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], allowsEditing: true, aspect: [1, 1], quality: 0.8 });
-      if (!res.canceled && res.assets[0]?.uri) {
-        actions.setProfile({ avatar: res.assets[0].uri });
-        toast('头像已更新');
+      const asset = res.canceled ? undefined : res.assets[0];
+      if (asset?.uri) {
+        const stored = await storePhoto(uid('avatar'), asset.uri, { blob: asset.file });
+        actions.setProfile({ avatar: stored.uri });
+        toast(stored.durable ? '头像已更新' : '头像已更新，但没能存进应用，重新打开后可能失效', { type: stored.durable ? undefined : 'warning' });
       }
     } catch {
       toast('无法打开相册', { type: 'warning' });
@@ -91,7 +97,7 @@ export default function MeScreen() {
           {/* 头像与用户信息 */}
           <Pressable onPress={openProfileEdit} style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 18 }}>
             <Image
-              source={photoSource(profile.avatar) ?? IMAGES.avatar}
+              source={photoSource(avatarUri) ?? IMAGES.avatar}
               style={{ width: 68, height: 68, borderRadius: 34, borderWidth: 3, borderColor: c.card, backgroundColor: c.primarySoft }}
             />
             <View style={{ flex: 1, minWidth: 0, marginLeft: 14 }}>
@@ -183,7 +189,7 @@ export default function MeScreen() {
       {/* 编辑个人资料面板 */}
       <BottomSheet visible={editOpen} onClose={() => setEditOpen(false)} title="编辑个人资料" keyboard>
         <PressableScale onPress={() => void pickAvatar()} style={{ alignSelf: 'center', alignItems: 'center', marginTop: 6, marginBottom: 18 }}>
-          <Image source={photoSource(profile.avatar) ?? IMAGES.avatar} style={{ width: 76, height: 76, borderRadius: 38 }} />
+          <Image source={photoSource(avatarUri) ?? IMAGES.avatar} style={{ width: 76, height: 76, borderRadius: 38 }} />
           <Text style={{ fontSize: fs(12), color: c.primaryDark, marginTop: 6 }}>更换头像</Text>
         </PressableScale>
         <Text style={{ fontSize: fs(12.5), color: c.textSub, marginBottom: 6 }}>昵称</Text>

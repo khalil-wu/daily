@@ -324,8 +324,8 @@ export function RememberPanel({ entry, applyBody }: { entry: Entry; applyBody: (
               }}
               style={{ flex: 1, height: 42, borderRadius: 21, backgroundColor: c.primary, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 5 }}
             >
-              <Check size={15} color="#fff" />
-              <Text style={{ fontSize: fs(14), color: '#fff', fontWeight: '600' }}>用这个</Text>
+              <Check size={15} color={c.textOnPrimary} />
+              <Text style={{ fontSize: fs(14), color: c.textOnPrimary, fontWeight: '600' }}>用这个</Text>
             </Pressable>
           </View>
         </ScrollView>

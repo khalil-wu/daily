@@ -191,7 +191,7 @@ export default function AppearanceScreen() {
         </Card>
 
         <Group>
-          <Row title="字体与排版设置" subtitle="调整正文宽度、行距与卡片样式" onPress={() => router.push('/settings/typography')} />
+          <Row title="字体与排版设置" subtitle="字体、正文宽度、行距与卡片样式" onPress={() => router.push('/settings/typography')} />
         </Group>
       </ScrollView>
     </Screen>

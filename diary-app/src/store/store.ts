@@ -11,6 +11,7 @@ import {
 import { unreferencedVideos } from '../utils/video';
 import { normalizeBirthday } from '../utils/people';
 import { clearAllVideoFiles, discardVideoFiles } from '../services/videoStore';
+import { clearAllPhotoFiles, discardPhotoFiles, unreferencedPhotos } from '../services/photoStore';
 import { clearAIKey } from '../services/aiKey';
 import { buildSampleDrafts, buildSampleEntries } from '../data/samples';
 import { DEFAULT_NOTEBOOK_ID, PERSON_COLORS } from '../data/constants';
@@ -188,6 +189,15 @@ function releaseVideos(candidates: VideoClip[]) {
   return orphans.length;
 }
 
+/** 清理照片文件：规则同视频，只删应用自己收进来的、已经没人引用的文件 */
+function releasePhotos(candidates: string[]) {
+  if (!candidates.length) return 0;
+  const holders = [...state.entries, ...state.conflicts.map(c => c.cloudEntry)];
+  const orphans = unreferencedPhotos(candidates, holders);
+  if (orphans.length) void discardPhotoFiles(orphans);
+  return orphans.length;
+}
+
 export const actions = {
   /* —— 引导 & 模式 —— */
   completeOnboarding(mode: 'local' | 'account') {
@@ -268,22 +278,29 @@ export const actions = {
     setState(s => ({ ...s, entries: s.entries.map(e => (e.id === id ? { ...e, deletedAt: undefined } : e)) }));
   },
 
-  /** 彻底删除（连同只属于这篇日记的视频文件） */
+  /** 彻底删除（连同只属于这篇日记的照片、视频文件） */
   destroyEntry(id: string) {
     const gone = state.entries.filter(e => e.id === id);
     setState(s => ({ ...s, entries: s.entries.filter(e => e.id !== id) }));
     releaseVideos(gone.flatMap(e => e.videos));
+    releasePhotos(gone.flatMap(e => e.photos));
   },
 
   emptyTrash() {
     const gone = state.entries.filter(e => !!e.deletedAt);
     setState(s => ({ ...s, entries: s.entries.filter(e => !e.deletedAt) }));
     releaseVideos(gone.flatMap(e => e.videos));
+    releasePhotos(gone.flatMap(e => e.photos));
   },
 
   /** 视频文件清理入口：只删除已经没有任何日记引用的文件 */
   releaseVideos(candidates: VideoClip[]) {
     return releaseVideos(candidates);
+  },
+
+  /** 照片文件清理入口：规则同视频 */
+  releasePhotos(candidates: string[]) {
+    return releasePhotos(candidates);
   },
 
   /** 清理超过 30 天的回收站条目 */
@@ -295,6 +312,7 @@ export const actions = {
       return keep.length === s.entries.length ? s : { ...s, entries: keep };
     });
     releaseVideos(gone.flatMap(e => e.videos));
+    releasePhotos(gone.flatMap(e => e.photos));
   },
 
   importSamples() {
@@ -629,6 +647,7 @@ export const actions = {
     emit();
     await saveState(state, true);
     await clearAllVideoFiles();
+    await clearAllPhotoFiles();
     await clearAIKey();
   },
 
@@ -639,6 +658,7 @@ export const actions = {
     emit();
     await saveState(state, true);
     await clearAllVideoFiles();
+    await clearAllPhotoFiles();
     await clearAIKey();
   },
 

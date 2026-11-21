@@ -4,6 +4,29 @@ import type { FontScaleKey, LineHeightKey } from './palette';
 
 export * from './palette';
 
+export type FontFamilyKey = 'serif' | 'sans' | 'kai';
+
+export const FONT_FAMILIES: { key: FontFamilyKey; name: string; desc: string; sample: string }[] = [
+  { key: 'serif', name: '宋体', desc: '衬线，安静的手账感', sample: '记得当时' },
+  { key: 'sans', name: '黑体', desc: '无衬线，清爽利落', sample: '记得当时' },
+  { key: 'kai', name: '楷体', desc: '手写笔意，像写在本子上', sample: '记得当时' },
+];
+
+/** 标题字体族；正文仍用系统字，保证长文可读 */
+export const FONT_STACK: Record<FontFamilyKey, string | undefined> = {
+  serif: undefined, // 由 SERIF / SERIF_BOLD 提供
+  sans: Platform.select({
+    web: '"PingFang SC", "Noto Sans SC", "Microsoft YaHei", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
+    default: undefined, // 系统默认即 SF / 苹方 / Roboto
+  }),
+  kai: Platform.select({
+    web: '"Kaiti SC", "STKaiti", "KaiTi", "Noto Serif SC", serif',
+    ios: 'Kaiti SC',
+    android: 'serif', // Android 没有内置楷体，回落到衬线
+    default: 'serif',
+  }),
+};
+
 export const FONT_SCALE: Record<FontScaleKey, number> = { standard: 1, large: 1.1, xlarge: 1.22 };
 export const LINE_HEIGHT: Record<LineHeightKey, number> = { compact: 1.55, standard: 1.8, relaxed: 2.05 };
 

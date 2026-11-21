@@ -494,8 +494,8 @@ export default function MemoryDetailScreen() {
                 }}
                 style={{ flex: 1, height: 42, borderRadius: 21, backgroundColor: c.primary, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6 }}
               >
-                <Copy size={15} color="#fff" />
-                <Text style={{ fontSize: fs(13.5), color: '#fff', fontWeight: '600' }}>{Platform.OS === 'web' ? '复制全文' : '分享文字'}</Text>
+                <Copy size={15} color={c.textOnPrimary} />
+                <Text style={{ fontSize: fs(13.5), color: c.textOnPrimary, fontWeight: '600' }}>{Platform.OS === 'web' ? '复制全文' : '分享文字'}</Text>
               </Pressable>
               <Pressable
                 onPress={() => {

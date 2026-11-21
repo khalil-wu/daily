@@ -173,7 +173,7 @@ function ConfirmDialog({ data, onClose }: { data: (ConfirmOptions & { resolve: (
           onPress={() => onClose(true)}
           style={{ flex: 1, height: 42, borderRadius: 21, backgroundColor: shown?.destructive ? c.danger : c.primary, alignItems: 'center', justifyContent: 'center' }}
         >
-          <Text style={{ color: '#fff', fontSize: fs(14), fontWeight: '600' }}>{shown?.confirmText ?? '确定'}</Text>
+          <Text style={{ color: c.textOnPrimary, fontSize: fs(14), fontWeight: '600' }}>{shown?.confirmText ?? '确定'}</Text>
         </PressableScale>
       </View>
     </PopDialog>

@@ -21,7 +21,7 @@ import { useTourTarget } from './tour';
  * 视觉来源：卡片 / 进度条沿用原首页两张卡片的样式，心情胶囊即筛选面板里的 Chip + MoodIcon。
  */
 export function TodayCard() {
-  const { c, t, fs, dark } = useTheme();
+  const { c, t, fs, dark, look, r } = useTheme();
   const entries = useStore(s => s.entries);
   const goals = useStore(s => s.goals);
   const name = useStore(s => s.profile.name);
@@ -60,16 +60,16 @@ export function TodayCard() {
       collapsable={false}
       style={{
         backgroundColor: c.card,
-        borderRadius: 16,
+        borderRadius: r(16),
         padding: 14,
         marginBottom: 14,
-        borderWidth: dark ? 0 : StyleSheet.hairlineWidth,
-        borderColor: c.divider,
+        borderWidth: look.flat ? 1 : dark ? 0 : StyleSheet.hairlineWidth,
+        borderColor: look.flat ? c.border : c.divider,
         shadowColor: c.shadow,
-        shadowOpacity: dark ? 0 : 0.05,
+        shadowOpacity: dark || look.flat ? 0 : 0.05,
         shadowRadius: 10,
         shadowOffset: { width: 0, height: 2 },
-        elevation: dark ? 0 : 1,
+        elevation: dark || look.flat ? 0 : 1,
       }}
     >
       {/* 问候 + 今日状态 + 连续天数 */}

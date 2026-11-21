@@ -691,8 +691,8 @@ export default function WriteScreen() {
               backgroundColor: c.danger,
             }}
           >
-            <Square size={10} color="#fff" fill="#fff" />
-            <Text style={{ fontSize: fs(11.5), color: '#fff', fontWeight: '600' }}>停止</Text>
+            <Square size={10} color={c.textOnPrimary} fill={c.textOnPrimary} />
+            <Text style={{ fontSize: fs(11.5), color: c.textOnPrimary, fontWeight: '600' }}>停止</Text>
           </Pressable>
         </View>
       )}
@@ -809,7 +809,7 @@ export default function WriteScreen() {
             <Text style={{ fontSize: fs(14), color: c.textSub }}>不保存</Text>
           </PressableScale>
           <PressableScale onPress={saveAsDraftAndExit} style={{ flex: 1, height: 42, borderRadius: 21, backgroundColor: c.primary, alignItems: 'center', justifyContent: 'center' }}>
-            <Text style={{ fontSize: fs(14), color: '#fff', fontWeight: '600' }}>保存草稿</Text>
+            <Text style={{ fontSize: fs(14), color: c.textOnPrimary, fontWeight: '600' }}>保存草稿</Text>
           </PressableScale>
         </View>
       </PopDialog>

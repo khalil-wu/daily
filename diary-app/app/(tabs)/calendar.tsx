@@ -118,7 +118,7 @@ export default function CalendarScreen() {
             {monthDomMood && (
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 8, paddingVertical: 2, borderRadius: 999, backgroundColor: monthDomMood.soft }}>
                 <MoodIcon mood={monthDomMood.key} size={13} />
-                <Text style={{ fontSize: fs(11), color: '#2F2A26' }}>主导 · {monthDomMood.label}</Text>
+                <Text style={{ fontSize: fs(11), color: c.text }}>主导 · {monthDomMood.label}</Text>
               </View>
             )}
           </View>
