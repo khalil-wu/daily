@@ -149,6 +149,9 @@
         "projectId": "eec9c83d-8b67-477f-9bbb-1a27c63cbf8c"
       }
     },
-    "owner": "utopiawu"
+    "owner": "utopiawu",
+    "updates": {
+      "url": "https://u.expo.dev/eec9c83d-8b67-477f-9bbb-1a27c63cbf8c"
+    }
   }
 }

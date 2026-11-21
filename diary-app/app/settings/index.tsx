@@ -1,19 +1,44 @@
-import React from 'react';
-import { ScrollView } from 'react-native';
+import React, { useState } from 'react';
+import { Alert, Platform, ScrollView } from 'react-native';
 import { router } from 'expo-router';
-import { Bell, BookMarked, Cloud, Download, HardDrive, Info, Palette, Shield, Sparkles, Target, Type } from 'lucide-react-native';
+import { Bell, BookMarked, Cloud, Download, HardDrive, Info, Palette, RefreshCw, Shield, Sparkles, Target, Type } from 'lucide-react-native';
 import { useTheme } from '../../src/theme/ThemeProvider';
 import { useStore } from '../../src/store/store';
 import { APP_VERSION } from '../../src/data/constants';
 import { Group, NavBar, Row, Screen } from '../../src/components/ui';
+import { useFeedback } from '../../src/components/feedback';
 
 /** 2. 设置页（1:1 复刻设计稿3 #2） */
 export default function SettingsIndexScreen() {
   const { c } = useTheme();
+  const { toast } = useFeedback();
+  const [checking, setChecking] = useState(false);
   const account = useStore(s => s.account);
   const notebooks = useStore(s => s.notebooks);
   const goals = useStore(s => s.goals);
   const ai = useStore(s => s.ai);
+
+  // EAS Update 热更新：检查 → 下载 → 提示重启生效（仅原生端）
+  const checkUpdate = async () => {
+    setChecking(true);
+    try {
+      const Updates = await import('expo-updates');
+      const res = await Updates.checkForUpdateAsync();
+      if (!res.isAvailable) {
+        toast('已是最新版本');
+        return;
+      }
+      await Updates.fetchUpdateAsync();
+      Alert.alert('发现新版本', '已下载完成，重启应用即可生效。', [
+        { text: '稍后', style: 'cancel' },
+        { text: '立即重启', onPress: () => void Updates.reloadAsync() },
+      ]);
+    } catch {
+      toast('检查更新失败，请稍后再试', { type: 'error' });
+    } finally {
+      setChecking(false);
+    }
+  };
 
   return (
     <Screen edges={['top', 'bottom']}>
@@ -94,6 +119,15 @@ export default function SettingsIndexScreen() {
             subtitle="Markdown、PDF 等格式"
             onPress={() => router.push('/settings/transfer')}
           />
+          {Platform.OS !== 'web' && (
+            <Row
+              icon={RefreshCw}
+              iconColor={c.primaryDark}
+              title="检查更新"
+              subtitle={checking ? '正在检查…' : '下载并应用最新版本'}
+              onPress={() => void checkUpdate()}
+            />
+          )}
           <Row
             icon={Info}
             iconColor={c.primaryDark}
