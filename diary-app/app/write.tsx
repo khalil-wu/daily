@@ -35,7 +35,7 @@ import { fmtAgo, fmtMonthDayTime, WEEK_CN } from '../src/utils/date';
 import { wordCount } from '../src/utils/text';
 import { continueListOnEnter, toggleTodoAtLine } from '../src/utils/richtext';
 import { TextHistory } from '../src/utils/history';
-import { entryForSave, hasEntryContent, insertDictation } from '../src/utils/editor';
+import { entryForSave, hasEntryContent, insertDictation, resolveWriteNotebook } from '../src/utils/editor';
 import { flushPendingState, getPersistenceError } from '../src/store/storage';
 import { createDictationSession, isDictationSupported, type DictationSession } from '../src/utils/dictation';
 
@@ -46,7 +46,7 @@ export default function WriteScreen() {
 }
 
 function WriteEditor() {
-  const params = useLocalSearchParams<{ id?: string; template?: string; date?: string; action?: string; prompt?: string; mood?: string; tour?: string }>();
+  const params = useLocalSearchParams<{ id?: string; template?: string; date?: string; action?: string; prompt?: string; mood?: string; tour?: string; notebook?: string }>();
   const { c, t, fs, lineHeight, contentWidth, dark, r, frameInk } = useTheme();
   const { toast } = useFeedback();
   const tags = useStore(s => s.tags);
@@ -149,6 +149,7 @@ function WriteEditor() {
       templateId: params.template,
       createdAt: Number.isFinite(createdAt) ? createdAt : undefined,
       mood: presetMood,
+      notebookId: resolveWriteNotebook(params.notebook, notebooks, params.id),
       templateData: tpl
         ? { title: tpl.title, body: tpl.body, tags: tpl.tags, template: tpl.id }
         : promptItem
@@ -162,7 +163,7 @@ function WriteEditor() {
       void persistCurrentDraft();
       clearEditorSession();
     };
-  }, [params.id, params.template, params.date, params.prompt, params.mood, persistCurrentDraft]);
+  }, [params.id, params.template, params.date, params.prompt, params.mood, params.notebook, notebooks, persistCurrentDraft]);
 
   // 快捷入口直达录音/拍照/拍视频；离开写作页时取消尚未触发的导航。
   const sessionId = draft?.entry.id;

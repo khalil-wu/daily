@@ -4,7 +4,7 @@ import { parseBlocks, toggleTodoAtLine } from '../src/utils/richtext';
 import { plainText } from '../src/utils/text';
 import { isDictationSupported } from '../src/utils/dictation';
 import { actions } from '../src/store/store';
-import { entryForSave, hasEntryContent, insertDictation } from '../src/utils/editor';
+import { entryForSave, hasEntryContent, insertDictation, resolveWriteNotebook } from '../src/utils/editor';
 import { calendarEntryDate } from '../src/utils/calendar';
 
 test('富文本解析：覆盖 8 种块类型、待办勾选往返与纯文本清理', () => {
@@ -86,4 +86,12 @@ test('日历补记：上午写今天不产生未来时间，过去用正午，�
   assert.equal(calendarEntryDate(2026, 10, 20, now), new Date(2026, 10, 20, 12).getTime());
   assert.equal(calendarEntryDate(2026, 10, 22, now), null);
   assert.equal(calendarEntryDate(2027, 0, 1, now), null);
+});
+
+test('写页 notebook 参数：新建时按指定日记本，编辑或无效值则忽略', () => {
+  const nbs = [{ id: 'nb-a' } as any, { id: 'nb-b' } as any];
+  assert.equal(resolveWriteNotebook('nb-a', nbs), 'nb-a');
+  assert.equal(resolveWriteNotebook('missing', nbs), undefined);
+  assert.equal(resolveWriteNotebook('nb-a', nbs, 'existing-entry'), undefined);
+  assert.equal(resolveWriteNotebook(undefined, nbs), undefined);
 });

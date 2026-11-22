@@ -25,7 +25,7 @@ function notify() {
   subs.forEach(fn => fn());
 }
 
-export function startEditorSession(opts: { id?: string; templateId?: string; createdAt?: number; mood?: MoodKey; templateData?: { title: string; body: string; tags: string[]; template?: string } }) {
+export function startEditorSession(opts: { id?: string; templateId?: string; createdAt?: number; mood?: MoodKey; notebookId?: string; templateData?: { title: string; body: string; tags: string[]; template?: string } }) {
   if (opts.id) {
     const existing = actions.snapshot().entries.find(e => e.id === opts.id);
     if (existing) {
@@ -44,7 +44,7 @@ export function startEditorSession(opts: { id?: string; templateId?: string; cre
   const defaultNb = activeNb && activeNb !== DEFAULT_NOTEBOOK_ID ? activeNb : undefined;
   const base = actions.newEntry({
     createdAt: opts.createdAt ?? Date.now(),
-    notebookId: defaultNb,
+    notebookId: opts.notebookId ?? defaultNb,
     ...(opts.mood ? { mood: opts.mood } : {}),
     ...(opts.templateData ?? {}),
   });
