@@ -416,7 +416,7 @@ export function Button({ title, onPress, variant = 'primary', size = 'lg', icon:
   const h = size === 'lg' ? 50 : control.target;
   const palette = {
     primary: { bg: c.primary, fg: c.textOnPrimary, bd: c.primary },
-    secondary: { bg: c.card, fg: c.text, bd: c.controlBorder },
+    secondary: { bg: c.card, fg: c.text, bd: c.border },
     outline: { bg: 'transparent', fg: c.primaryDark, bd: c.primaryDark },
     ghost: { bg: 'transparent', fg: c.textSub, bd: 'transparent' },
     danger: { bg: c.danger, fg: c.textOnDanger, bd: c.danger },
