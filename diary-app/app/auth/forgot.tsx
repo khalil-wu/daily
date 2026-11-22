@@ -4,7 +4,7 @@ import { Text } from '../../src/components/text';
 import { router } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Lock, ShieldCheck, User } from 'lucide-react-native';
-import { useTheme } from '../../src/theme/ThemeProvider';
+import { useIllustrations, useTheme } from '../../src/theme/ThemeProvider';
 import { actions } from '../../src/store/store';
 import { cloudConfigured } from '../../src/services/cloud';
 import { captchaGateActive, withOtpTicket } from '../../src/services/mailgate';
@@ -13,11 +13,11 @@ import { isEmail, isPhone } from '../../src/utils/text';
 import { Button, Field, NavBar, Screen, goBack } from '../../src/components/ui';
 import { BotanicalAccent } from '../../src/components/MoodIcon';
 import { useFeedback } from '../../src/components/feedback';
-import { IMAGES } from '../../src/data/assets';
 
 /** 8. 找回密码页（1:1 复刻设计稿1 #8） */
 export default function ForgotPasswordScreen() {
   const { c, t, fs, dark } = useTheme();
+  const pack = useIllustrations();
   const { toast } = useFeedback();
   const [identifier, setIdentifier] = useState('');
   const [code, setCode] = useState('');
@@ -130,7 +130,7 @@ export default function ForgotPasswordScreen() {
         </View>
 
         <View style={{ height: 170, width: '100%', overflow: 'hidden' }}>
-          <Image source={IMAGES.mountainsMist} style={{ width: '100%', height: '100%', opacity: dark ? 0.3 : 0.88 }} resizeMode="cover" />
+          <Image source={pack.cover as any} style={{ width: '100%', height: '100%', opacity: dark ? 0.3 : 0.88 }} resizeMode="cover" />
           <LinearGradient colors={[c.bg, 'transparent']} style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 80 }} />
         </View>
       </View>

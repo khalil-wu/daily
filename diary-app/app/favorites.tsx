@@ -90,7 +90,7 @@ export default function FavoritesScreen() {
       {list.length === 0 ? (
         <View style={{ flex: 1, justifyContent: 'center' }}>
           <EmptyState
-            image={IMAGES.emptyBook}
+            illustration="emptyBook"
             imageSize={170}
             title={tab === 'favorite' ? '还没有收藏日记' : '还没有置顶日记'}
             desc={tab === 'favorite' ? '在日记详情页点击底部收藏，珍贵的时刻就会出现在这里。' : '在日记详情页点击右上角“···”可以置顶日记。'}

@@ -172,7 +172,7 @@ function TrashContents() {
       {list.length === 0 ? (
         <View style={{ flex: 1, justifyContent: 'center' }}>
           <EmptyState
-            image={IMAGES.emptyBook}
+            illustration="emptyBook"
             imageSize={170}
             title="最近删除为空"
             desc="删除的日记会在这里保留 30 天，方便随时恢复。"

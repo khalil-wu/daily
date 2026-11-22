@@ -54,7 +54,7 @@ export default function PeopleScreen() {
       {people.length === 0 ? (
         <View style={{ flex: 1, justifyContent: 'center' }}>
           <EmptyState
-            image={IMAGES.emptyBook}
+            illustration="emptyBook"
             imageSize={170}
             title="日记里出现过的人"
             desc="在写日记时标记「和谁在一起」，每个人会在这里有自己的一页，不会打扰到对方。"

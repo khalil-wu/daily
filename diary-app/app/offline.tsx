@@ -1,11 +1,10 @@
 import React, { useSyncExternalStore } from 'react';
 import { getPersistenceError, subscribePersistenceError } from '../src/store/storage';
-import { Image, View } from 'react-native';
+import { View } from 'react-native';
 import { Text } from '../src/components/text';
 import { CloudOff } from 'lucide-react-native';
 import { useTheme } from '../src/theme/ThemeProvider';
-import { Button, NavBar, Screen, goBack } from '../src/components/ui';
-import { IMAGES } from '../src/data/assets';
+import { Button, Illustration, NavBar, Screen, goBack } from '../src/components/ui';
 
 /** 13. 离线状态提示（1:1 复刻设计稿3 #13） */
 export default function OfflineScreen() {
@@ -27,19 +26,7 @@ export default function OfflineScreen() {
         </View>
 
         <View style={{ alignItems: 'center', paddingHorizontal: 26, paddingBottom: 20, gap: 22 }}>
-          <View
-            style={{
-              width: 184,
-              height: 184,
-              borderRadius: dark ? 92 : 0,
-              backgroundColor: dark ? 'rgba(236,246,247,0.92)' : 'transparent',
-              padding: dark ? 16 : 0,
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
-          >
-            <Image source={IMAGES.cloudSync} style={{ width: '100%', height: '100%' }} resizeMode="contain" />
-          </View>
+          <Illustration name="cloudSync" size={184} />
           <Button title="知道了" onPress={goBack} />
         </View>
       </View>

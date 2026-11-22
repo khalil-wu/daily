@@ -186,7 +186,7 @@ export default function SearchScreen() {
       ) : results.length === 0 ? (
         <View style={{ flex: 1, justifyContent: 'center', paddingBottom: 40 }}>
           <EmptyState
-            image={IMAGES.emptySearch}
+            illustration="emptySearch"
             imageSize={185}
             title="没有找到相关的日记"
             desc="试试更换关键词，或检查输入是否正确。"

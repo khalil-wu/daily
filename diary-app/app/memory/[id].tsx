@@ -70,7 +70,7 @@ function MemoryDetailContent() {
       <Screen edges={['top']}>
         <NavBar title="日记详情" />
         <View style={{ flex: 1, justifyContent: 'center' }}>
-          <EmptyState image={IMAGES.emptyBook} title="找不到这篇日记" desc="它可能已被删除或移动。" action="返回" onAction={goBack} />
+          <EmptyState illustration="emptyBook" title="找不到这篇日记" desc="它可能已被删除或移动。" action="返回" onAction={goBack} />
         </View>
       </Screen>
     );

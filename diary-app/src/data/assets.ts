@@ -1,5 +1,6 @@
 import type { ImageSourcePropType } from 'react-native';
 import type { MoodKey, WeatherKey } from '../store/types';
+import type { StyleKey } from '../theme/palette';
 
 /** 内置场景插画与封面（线绘陪伴风 04-ink-companion 优化版） */
 export const IMAGES = {
@@ -22,6 +23,137 @@ export const IMAGES = {
   memorySticker: require('../../assets/ink-companion/illustrations/memory-sticker.png'),
   companionBird: require('../../assets/ink-companion/illustrations/companion-bird.png'),
 } as const;
+
+/** 每种主题风格一套插画包：onboarding、封面与场景插画全部跟随风格切换 */
+export interface IllustrationPack {
+  onboardWrite: ImageSourcePropType;
+  onboardMemory: ImageSourcePropType;
+  cover: ImageSourcePropType;
+  emptyBook: ImageSourcePropType;
+  emptySearch: ImageSourcePropType;
+  savedSuccess: ImageSourcePropType;
+  privacyLock: ImageSourcePropType;
+  cloudSync: ImageSourcePropType;
+  memorySticker: ImageSourcePropType;
+  /** 墨色/灰洗笔触在深色底上会消失，需要一块「贴上去的浅色底托」 */
+  darkPlate: boolean;
+}
+export type IllustrationName = Exclude<keyof IllustrationPack, 'darkPlate'>;
+
+const pack = (p: Omit<IllustrationPack, 'darkPlate'>, darkPlate = false): IllustrationPack => ({ ...p, darkPlate });
+
+export const ILLUSTRATION_PACKS: Record<StyleKey, IllustrationPack> = {
+  companion: pack({
+    onboardWrite: require('../../assets/ink-companion/illustrations/onboard-write.jpg'),
+    onboardMemory: require('../../assets/ink-companion/illustrations/onboard-memory.jpg'),
+    cover: require('../../assets/ink-companion/illustrations/profile-cover.jpg'),
+    emptyBook: require('../../assets/ink-companion/illustrations/empty-book.png'),
+    emptySearch: require('../../assets/ink-companion/illustrations/empty-search.png'),
+    savedSuccess: require('../../assets/ink-companion/illustrations/saved-success.png'),
+    privacyLock: require('../../assets/ink-companion/illustrations/privacy-lock.png'),
+    cloudSync: require('../../assets/ink-companion/illustrations/cloud-sync.png'),
+    memorySticker: require('../../assets/ink-companion/illustrations/memory-sticker.png'),
+  }, true),
+  editorial: pack({
+    onboardWrite: require('../../assets/packs/editorial/onboard-write.jpg'),
+    onboardMemory: require('../../assets/packs/editorial/onboard-memory.jpg'),
+    cover: require('../../assets/packs/editorial/profile-cover.jpg'),
+    emptyBook: require('../../assets/packs/editorial/empty-book.png'),
+    emptySearch: require('../../assets/packs/editorial/empty-search.png'),
+    savedSuccess: require('../../assets/packs/editorial/saved-success.png'),
+    privacyLock: require('../../assets/packs/editorial/privacy-lock.png'),
+    cloudSync: require('../../assets/packs/editorial/cloud-sync.png'),
+    memorySticker: require('../../assets/packs/editorial/memory-sticker.png'),
+  }),
+  warm: pack({
+    onboardWrite: require('../../assets/packs/warm/onboard-write.jpg'),
+    onboardMemory: require('../../assets/packs/warm/onboard-memory.jpg'),
+    cover: require('../../assets/packs/warm/profile-cover.jpg'),
+    emptyBook: require('../../assets/packs/warm/empty-book.png'),
+    emptySearch: require('../../assets/packs/warm/empty-search.png'),
+    savedSuccess: require('../../assets/packs/warm/saved-success.png'),
+    privacyLock: require('../../assets/packs/warm/privacy-lock.png'),
+    cloudSync: require('../../assets/packs/warm/cloud-sync.png'),
+    memorySticker: require('../../assets/packs/warm/memory-sticker.png'),
+  }),
+  cool: pack({
+    onboardWrite: require('../../assets/packs/cool/onboard-write.jpg'),
+    onboardMemory: require('../../assets/packs/cool/onboard-memory.jpg'),
+    cover: require('../../assets/packs/cool/profile-cover.jpg'),
+    emptyBook: require('../../assets/packs/cool/empty-book.png'),
+    emptySearch: require('../../assets/packs/cool/empty-search.png'),
+    savedSuccess: require('../../assets/packs/cool/saved-success.png'),
+    privacyLock: require('../../assets/packs/cool/privacy-lock.png'),
+    cloudSync: require('../../assets/packs/cool/cloud-sync.png'),
+    memorySticker: require('../../assets/packs/cool/memory-sticker.png'),
+  }),
+  ink: pack({
+    onboardWrite: require('../../assets/packs/ink/onboard-write.jpg'),
+    onboardMemory: require('../../assets/packs/ink/onboard-memory.jpg'),
+    cover: require('../../assets/packs/ink/profile-cover.jpg'),
+    emptyBook: require('../../assets/packs/ink/empty-book.png'),
+    emptySearch: require('../../assets/packs/ink/empty-search.png'),
+    savedSuccess: require('../../assets/packs/ink/saved-success.png'),
+    privacyLock: require('../../assets/packs/ink/privacy-lock.png'),
+    cloudSync: require('../../assets/packs/ink/cloud-sync.png'),
+    memorySticker: require('../../assets/packs/ink/memory-sticker.png'),
+  }, true),
+  forest: pack({
+    onboardWrite: require('../../assets/packs/forest/onboard-write.jpg'),
+    onboardMemory: require('../../assets/packs/forest/onboard-memory.jpg'),
+    cover: require('../../assets/packs/forest/profile-cover.jpg'),
+    emptyBook: require('../../assets/packs/forest/empty-book.png'),
+    emptySearch: require('../../assets/packs/forest/empty-search.png'),
+    savedSuccess: require('../../assets/packs/forest/saved-success.png'),
+    privacyLock: require('../../assets/packs/forest/privacy-lock.png'),
+    cloudSync: require('../../assets/packs/forest/cloud-sync.png'),
+    memorySticker: require('../../assets/packs/forest/memory-sticker.png'),
+  }),
+  sakura: pack({
+    onboardWrite: require('../../assets/packs/sakura/onboard-write.jpg'),
+    onboardMemory: require('../../assets/packs/sakura/onboard-memory.jpg'),
+    cover: require('../../assets/packs/sakura/profile-cover.jpg'),
+    emptyBook: require('../../assets/packs/sakura/empty-book.png'),
+    emptySearch: require('../../assets/packs/sakura/empty-search.png'),
+    savedSuccess: require('../../assets/packs/sakura/saved-success.png'),
+    privacyLock: require('../../assets/packs/sakura/privacy-lock.png'),
+    cloudSync: require('../../assets/packs/sakura/cloud-sync.png'),
+    memorySticker: require('../../assets/packs/sakura/memory-sticker.png'),
+  }),
+  kraft: pack({
+    onboardWrite: require('../../assets/packs/kraft/onboard-write.jpg'),
+    onboardMemory: require('../../assets/packs/kraft/onboard-memory.jpg'),
+    cover: require('../../assets/packs/kraft/profile-cover.jpg'),
+    emptyBook: require('../../assets/packs/kraft/empty-book.png'),
+    emptySearch: require('../../assets/packs/kraft/empty-search.png'),
+    savedSuccess: require('../../assets/packs/kraft/saved-success.png'),
+    privacyLock: require('../../assets/packs/kraft/privacy-lock.png'),
+    cloudSync: require('../../assets/packs/kraft/cloud-sync.png'),
+    memorySticker: require('../../assets/packs/kraft/memory-sticker.png'),
+  }, true),
+  vivid: pack({
+    onboardWrite: require('../../assets/packs/vivid/onboard-write.jpg'),
+    onboardMemory: require('../../assets/packs/vivid/onboard-memory.jpg'),
+    cover: require('../../assets/packs/vivid/profile-cover.jpg'),
+    emptyBook: require('../../assets/packs/vivid/empty-book.png'),
+    emptySearch: require('../../assets/packs/vivid/empty-search.png'),
+    savedSuccess: require('../../assets/packs/vivid/saved-success.png'),
+    privacyLock: require('../../assets/packs/vivid/privacy-lock.png'),
+    cloudSync: require('../../assets/packs/vivid/cloud-sync.png'),
+    memorySticker: require('../../assets/packs/vivid/memory-sticker.png'),
+  }),
+  midnight: pack({
+    onboardWrite: require('../../assets/packs/midnight/onboard-write.jpg'),
+    onboardMemory: require('../../assets/packs/midnight/onboard-memory.jpg'),
+    cover: require('../../assets/packs/midnight/profile-cover.jpg'),
+    emptyBook: require('../../assets/packs/midnight/empty-book.png'),
+    emptySearch: require('../../assets/packs/midnight/empty-search.png'),
+    savedSuccess: require('../../assets/packs/midnight/saved-success.png'),
+    privacyLock: require('../../assets/packs/midnight/privacy-lock.png'),
+    cloudSync: require('../../assets/packs/midnight/cloud-sync.png'),
+    memorySticker: require('../../assets/packs/midnight/memory-sticker.png'),
+  }),
+};
 
 /** 底部导航线绘图标（17-navigation-icons 归一化 96×96） */
 export const NAV_ICONS: Record<string, ImageSourcePropType> = {

@@ -15,9 +15,10 @@ import {
   X,
   type LucideIcon,
 } from 'lucide-react-native';
-import { useStyles, useTheme, type Theme } from '../theme/ThemeProvider';
+import { useIllustrations, useStyles, useTheme, type Theme } from '../theme/ThemeProvider';
 import { control, radius } from '../theme/tokens';
-import { photoSource } from '../data/assets';
+import { mixHex } from '../theme/palette';
+import { photoSource, type IllustrationName } from '../data/assets';
 import { usePhotoUri } from '../utils/usePhotoUri';
 import { ND, PressableScale, SPRING, useReducedMotion } from './motion';
 
@@ -929,11 +930,37 @@ export function Photo({ uri, style, radius: imageRadius = 10 }: { uri?: string; 
   );
 }
 
-export function EmptyState({ image, title, desc, action, onAction, secondary, onSecondary, style, imageSize = 186 }: { image?: ImageSourcePropType; title: string; desc?: string; action?: string; onAction?: () => void; secondary?: string; onSecondary?: () => void; style?: StyleProp<ViewStyle>; imageSize?: number }) {
+/** 主题插画：跟随当前风格包。dark + darkPlate 的包贴上一块浅色底托，避免墨色笔触消失 */
+export function Illustration({ name, size = 160, style }: { name: IllustrationName; size?: number; style?: StyleProp<ViewStyle> }) {
+  const pack = useIllustrations();
+  const { c, dark, ink, r } = useTheme();
+  const img = (
+    <ExpoImage
+      source={pack[name] as any}
+      style={{ width: '100%', height: '100%' }}
+      contentFit="contain"
+      cachePolicy="memory-disk"
+      transition={0}
+    />
+  );
+  return (
+    <View accessibilityElementsHidden importantForAccessibility="no-hide-descendants" style={[{ width: size, height: size }, style]}>
+      {dark && pack.darkPlate ? (
+        <View style={{ flex: 1, backgroundColor: mixHex(c.card, '#FFFFFF', 0.86), borderRadius: r(24), padding: size * 0.12, borderWidth: 1, borderColor: ink.soft }}>
+          {img}
+        </View>
+      ) : img}
+    </View>
+  );
+}
+
+export function EmptyState({ image, illustration, title, desc, action, onAction, secondary, onSecondary, style, imageSize = 186 }: { image?: ImageSourcePropType; illustration?: IllustrationName; title: string; desc?: string; action?: string; onAction?: () => void; secondary?: string; onSecondary?: () => void; style?: StyleProp<ViewStyle>; imageSize?: number }) {
   const { c, t, dark } = useTheme();
   return (
     <View style={[{ alignItems: 'center', paddingHorizontal: 32, paddingVertical: 24 }, style]}>
-      {image != null && (
+      {illustration != null ? (
+        <Illustration name={illustration} size={imageSize} style={{ marginBottom: 14 }} />
+      ) : image != null && (
         <View
           style={{
             width: imageSize,

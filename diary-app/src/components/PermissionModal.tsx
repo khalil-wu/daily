@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Image, Linking, Platform, ScrollView, View } from 'react-native';
+import { Linking, Platform, ScrollView, View } from 'react-native';
 import { Text } from './text';
 import { Bell, Image as ImageIcon, Mic } from 'lucide-react-native';
 import * as ImagePicker from 'expo-image-picker';
@@ -7,8 +7,7 @@ import * as Notifications from 'expo-notifications';
 import { requestRecordingPermissionsAsync } from 'expo-audio';
 import { useTheme } from '../theme/ThemeProvider';
 import { actions } from '../store/store';
-import { IMAGES } from '../data/assets';
-import { Button, Group, Row } from './ui';
+import { Button, Group, Illustration, Row } from './ui';
 import { BottomSheet } from './motion';
 
 type Permission = 'photos' | 'microphone' | 'notifications';
@@ -50,19 +49,7 @@ export function PermissionModal({ visible, onClose }: { visible: boolean; onClos
     <BottomSheet visible={visible} onClose={onClose} title="记录权限">
       <ScrollView style={{ flexShrink: 1 }} contentContainerStyle={{ paddingBottom: 10 }}>
         <View style={{ alignItems: 'center', marginBottom: 12 }}>
-          <View
-            style={{
-              width: 82,
-              height: 82,
-              borderRadius: dark ? 41 : 0,
-              backgroundColor: dark ? 'rgba(236,246,247,0.92)' : 'transparent',
-              padding: dark ? 8 : 0,
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
-          >
-            <Image source={IMAGES.privacyLock} style={{ width: '100%', height: '100%' }} resizeMode="contain" />
-          </View>
+          <Illustration name="privacyLock" size={82} />
         </View>
         <Text style={[t.sub, { marginBottom: 16, textAlign: 'center' }]}>按需开启，用到时再授权也可以。</Text>
         <Group>

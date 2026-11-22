@@ -141,7 +141,7 @@ export default function MemoryMapScreen() {
     <NavBar title="足迹地图" subtitle={groups.length ? `${groups.length} 处地点 · ${located.length} 处有坐标` : undefined} />
     <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 6, paddingBottom: 36 }}>
       {groups.length === 0 ? <View style={{ flex: 1, justifyContent: 'center', paddingTop: 80 }}>
-        <EmptyState image={IMAGES.emptyBook} imageSize={170} title="还没有足迹" desc="写日记时添加地点，可以在这里按去过的地方回看。" action="去写日记" onAction={() => router.push('/write')} />
+        <EmptyState illustration="emptyBook" imageSize={170} title="还没有足迹" desc="写日记时添加地点，可以在这里按去过的地方回看。" action="去写日记" onAction={() => router.push('/write')} />
       </View> : <>
         {located.length > 0 && <>
           <Text accessibilityRole="header" style={[t.h3, { marginBottom: 10 }]}>地点分布示意</Text>

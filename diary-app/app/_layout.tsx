@@ -8,13 +8,12 @@ import * as SystemUI from 'expo-system-ui';
 import { StatusBar } from 'expo-status-bar';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-import { ThemeProvider, useTheme } from '../src/theme/ThemeProvider';
+import { ThemeProvider, useIllustrations, useTheme } from '../src/theme/ThemeProvider';
 import { FeedbackProvider } from '../src/components/feedback';
 import { PinPadView } from '../src/components/LockGate';
 import { TutorialOverlay } from '../src/components/TutorialOverlay';
 import { actions, closeTutorial, hydrate, useActiveTour, useHydrated, useStore } from '../src/store/store';
 import { isAutoBackupDue, writeAutoBackup } from '../src/services/autoBackup';
-import { IMAGES } from '../src/data/assets';
 import { useReducedMotion } from '../src/components/motion';
 import { FONT_SOURCES } from '../src/theme/fontSources';
 
@@ -27,6 +26,7 @@ if (Platform.OS !== 'web') {
 /** 1. 启动页（品牌与氛围 - 1:1 复刻设计稿1 #1） */
 function SplashOverlay({ onDone }: { onDone: () => void }) {
   const { c, t, fs, dark } = useTheme();
+  const pack = useIllustrations();
   const reduced = useReducedMotion();
   const opacity = useRef(new Animated.Value(1)).current;
 
@@ -40,7 +40,7 @@ function SplashOverlay({ onDone }: { onDone: () => void }) {
 
   return (
     <Animated.View style={[StyleSheet.absoluteFill, { zIndex: 99, backgroundColor: c.bg, opacity }]}>
-      <Image source={IMAGES.splash} style={[StyleSheet.absoluteFill, { width: '100%', height: '100%', opacity: dark ? 0.25 : 0.9 }]} resizeMode="cover" />
+      <Image source={pack.cover as any} style={[StyleSheet.absoluteFill, { width: '100%', height: '100%', opacity: dark ? 0.25 : 0.9 }]} resizeMode="cover" />
       <View style={{ flex: 1, alignItems: 'center', paddingTop: '44%' }}>
         <Text style={[t.display, { fontSize: fs(34), color: c.text, letterSpacing: 4 }]}>记得日记</Text>
         <Text style={{ fontSize: fs(14), color: c.textSub, marginTop: 12, letterSpacing: 1.5 }}>记下生活，记得自己</Text>

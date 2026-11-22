@@ -26,7 +26,7 @@ function HiddenEntriesList() {
       {list.length === 0 ? (
         <View style={{ flex: 1, justifyContent: 'center' }}>
           <EmptyState
-            image={IMAGES.privacyLock}
+            illustration="privacyLock"
             imageSize={170}
             title="没有隐藏的日记"
             desc="在日记详情页右上角“···”中可以将私密日记隐藏，保护个人空间。"

@@ -32,7 +32,7 @@ export default function PhotosWallScreen() {
     <Screen edges={['top', 'bottom']}>
       <NavBar title="影像记忆" subtitle={items.length ? `共 ${photos.length} 张照片${videoCount ? ` · ${videoCount} 段视频` : ''}` : undefined} />
       {items.length === 0 ? <View style={{ flex: 1, justifyContent: 'center' }}>
-        <EmptyState image={IMAGES.emptyBook} imageSize={170} title="还没有影像记录" desc="在写日记时插入照片或视频，它们会汇集成你的光影记忆墙。" action="去写日记" onAction={() => router.push('/write')} />
+        <EmptyState illustration="emptyBook" imageSize={170} title="还没有影像记录" desc="在写日记时插入照片或视频，它们会汇集成你的光影记忆墙。" action="去写日记" onAction={() => router.push('/write')} />
       </View> : <FlatList
         key={filter}
         data={shown} numColumns={3} keyExtractor={item => item.key} initialNumToRender={18} maxToRenderPerBatch={12} windowSize={5}

@@ -85,7 +85,7 @@ export default function AnnualReportScreen() {
       {report.totalEntries === 0 ? (
         <View style={{ flex: 1, justifyContent: 'center', paddingBottom: 40 }}>
           <EmptyState
-            image={IMAGES.emptyBook}
+            illustration="emptyBook"
             imageSize={175}
             title={`${activeYear} 年还没有日记`}
             desc="切换其他年份看看，或现在就开始记录当下的生活。"

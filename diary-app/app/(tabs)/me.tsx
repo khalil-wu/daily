@@ -10,7 +10,7 @@ import {
   Bell, BookMarked, BookOpen, ChevronRight, Cloud, Download, FileText, HardDrive, Heart,
   HelpCircle, Image as ImageIcon, Info, MapPin, Palette, Settings, Shield, Sparkles, Target, Trash2, Users,
 } from 'lucide-react-native';
-import { useTheme } from '../../src/theme/ThemeProvider';
+import { useIllustrations, useTheme } from '../../src/theme/ThemeProvider';
 import { actions, useStore } from '../../src/store/store';
 import { Button, Card, Field, Group, Row, Screen } from '../../src/components/ui';
 import { useFeedback } from '../../src/components/feedback';
@@ -27,6 +27,7 @@ import { fmtNumber } from '../../src/utils/text';
 /** 16 & 设计稿3 #1. 个人中心页 */
 export default function MeScreen() {
   const { c, t, fs, dark, ink } = useTheme();
+  const pack = useIllustrations();
   const inkLook = ink.on;
   const insets = useSafeAreaInsets();
   const { toast } = useFeedback();
@@ -85,7 +86,7 @@ export default function MeScreen() {
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 36 }}>
         {/* 顶部线绘湖畔小鸟封面 + 柔和渐变融合 */}
         <View style={{ height: 196, width: '100%', overflow: 'hidden', backgroundColor: dark ? c.bgDeep : '#FFFFFF' }}>
-          <ExpoImage source={IMAGES.meCover as any} contentFit="cover" cachePolicy="memory-disk" transition={0} style={{ width: '100%', height: '100%', opacity: dark ? 0.6 : 0.98 }} />
+          <ExpoImage source={pack.cover as any} contentFit="cover" cachePolicy="memory-disk" transition={0} style={{ width: '100%', height: '100%', opacity: dark ? 0.6 : 0.98 }} />
           <LinearGradient colors={['transparent', c.bg]} style={{ position: 'absolute', left: 0, right: 0, bottom: 0, height: 64 }} />
           <Pressable
             accessibilityRole="button"

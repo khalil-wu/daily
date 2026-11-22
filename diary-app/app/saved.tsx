@@ -5,12 +5,11 @@ import { Text } from '../src/components/text';
 import { router, useLocalSearchParams } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Sparkles } from 'lucide-react-native';
-import { useTheme } from '../src/theme/ThemeProvider';
+import { useIllustrations, useTheme } from '../src/theme/ThemeProvider';
 import { actions, useEntry, useEntrySaveStatus, useStore } from '../src/store/store';
 import { flushPendingState, saveState } from '../src/store/storage';
 import { useFeedback } from '../src/components/feedback';
-import { Button, Screen } from '../src/components/ui';
-import { IMAGES } from '../src/data/assets';
+import { Button, Illustration, Screen } from '../src/components/ui';
 import { FadeIn } from '../src/components/motion';
 import { computeTodaySummary } from '../src/utils/grouping';
 import { shouldAutoReply, startReply, useReplyJob } from '../src/services/ai';
@@ -24,6 +23,7 @@ export default function SavedScreen() {
 function SavedContent() {
   const { id, revision } = useLocalSearchParams<{ id?: string; revision?: string }>();
   const { c, t, fs, dark, r, frame } = useTheme();
+  const pack = useIllustrations();
   const status = useEntrySaveStatus(id, Number(revision) || undefined);
   const { toast } = useFeedback();
   const synced = status.synced;
@@ -66,24 +66,7 @@ function SavedContent() {
       <View style={{ flex: 1, justifyContent: 'space-between' }}>
         <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 32 }}>
           <FadeIn dy={0} scaleFrom={0.86} duration={420}>
-            <View
-              style={{
-                width: 152,
-                height: 152,
-                borderRadius: dark ? 76 : 0,
-                backgroundColor: dark ? 'rgba(236,246,247,0.92)' : 'transparent',
-                padding: dark ? 14 : 0,
-                alignItems: 'center',
-                justifyContent: 'center',
-                marginBottom: 16,
-              }}
-            >
-              <Image
-                source={IMAGES.savedSuccess}
-                style={{ width: '100%', height: '100%' }}
-                resizeMode="contain"
-              />
-            </View>
+            <Illustration name="savedSuccess" size={152} style={{ marginBottom: 16 }} />
           </FadeIn>
           <FadeIn delay={120} style={{ alignItems: 'center' }}>
             <Text style={[t.h1, { fontSize: fs(23), textAlign: 'center' }]}>
@@ -143,7 +126,7 @@ function SavedContent() {
         </View>
 
         <View style={{ height: 140, width: '100%', overflow: 'hidden' }}>
-          <Image source={IMAGES.mountainsMist} style={{ width: '100%', height: '100%', opacity: dark ? 0.3 : 0.85 }} resizeMode="cover" />
+          <Image source={pack.cover as any} style={{ width: '100%', height: '100%', opacity: dark ? 0.3 : 0.85 }} resizeMode="cover" />
           <LinearGradient colors={[c.bg, 'transparent']} style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 70 }} />
         </View>
       </View>

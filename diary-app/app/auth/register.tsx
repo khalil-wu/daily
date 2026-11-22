@@ -4,7 +4,7 @@ import { Text } from '../../src/components/text';
 import { router } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Lock, ShieldCheck, User } from 'lucide-react-native';
-import { useTheme } from '../../src/theme/ThemeProvider';
+import { useIllustrations, useTheme } from '../../src/theme/ThemeProvider';
 import { actions, useStore } from '../../src/store/store';
 import { Button, Checkbox, Field, NavBar, Screen } from '../../src/components/ui';
 import { BotanicalAccent } from '../../src/components/MoodIcon';
@@ -14,11 +14,11 @@ import { isEmail, isPhone } from '../../src/utils/text';
 import { cloudConfigured } from '../../src/services/cloud';
 import { captchaGateActive, withOtpTicket } from '../../src/services/mailgate';
 import { CaptchaSheet } from '../../src/components/captchaSheet';
-import { IMAGES } from '../../src/data/assets';
 
 /** 7. 注册页（1:1 复刻设计稿1 #7） */
 export default function RegisterScreen() {
   const { c, t, fs, dark } = useTheme();
+  const pack = useIllustrations();
   const { toast } = useFeedback();
   const onboarded = useStore(s => s.onboarded);
   const [identifier, setIdentifier] = useState('');
@@ -165,7 +165,7 @@ export default function RegisterScreen() {
         </View>
 
         <View style={{ height: 140, width: '100%', overflow: 'hidden' }}>
-          <Image source={IMAGES.mountainsMist} style={{ width: '100%', height: '100%', opacity: dark ? 0.3 : 0.85 }} resizeMode="cover" />
+          <Image source={pack.cover as any} style={{ width: '100%', height: '100%', opacity: dark ? 0.3 : 0.85 }} resizeMode="cover" />
           <LinearGradient colors={[c.bg, 'transparent']} style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 70 }} />
         </View>
       </View>

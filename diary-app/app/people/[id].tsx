@@ -43,7 +43,7 @@ export default function PersonDetailScreen() {
       <Screen edges={['top', 'bottom']}>
         <NavBar title="身边人" />
         <View style={{ flex: 1, justifyContent: 'center' }}>
-          <EmptyState image={IMAGES.emptyBook} title="没有找到这个人" desc="TA 可能已被移除。" action="返回" onAction={goBack} />
+          <EmptyState illustration="emptyBook" title="没有找到这个人" desc="TA 可能已被移除。" action="返回" onAction={goBack} />
         </View>
       </Screen>
     );

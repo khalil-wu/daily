@@ -144,7 +144,7 @@ export default function ReviewScreen() {
       {published.length === 0 && sub !== 'period' ? (
         <View style={{ flex: 1, justifyContent: 'center' }}>
           <EmptyState
-            image={IMAGES.emptyBook}
+            illustration="emptyBook"
             imageSize={170}
             title="时光里还没有日记"
             desc="写下的每一天，都会在这里连成你的时间线。"

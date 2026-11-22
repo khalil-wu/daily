@@ -515,7 +515,7 @@ export default function HomeScreen() {
           {moodChips}
           <View style={{ flex: 1, justifyContent: 'center' }}>
           <EmptyState
-            image={IMAGES.emptyBook}
+            illustration="emptyBook"
             imageSize={185}
             title={tab === 'all' ? '还没有任何日记' : '这里暂时空空的'}
             desc={

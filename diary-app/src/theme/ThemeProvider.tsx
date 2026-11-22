@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useEffect, useMemo } from 'react';
 import { Platform, StyleSheet, useColorScheme, type TextStyle, type ViewStyle } from 'react-native';
 import { useStore } from '../store/store';
+import { ILLUSTRATION_PACKS } from '../data/assets';
 import { buildPalette, FONT_SCALE, LINE_HEIGHT, resolveFontRoles, resolveTextFont, scaleRadius, stylePreset, type FontRoles, type Palette, type StylePreset } from './tokens';
 
 export interface Theme {
@@ -110,6 +111,12 @@ export function useTheme(): Theme {
   const theme = useContext(ThemeCtx);
   if (!theme) throw new Error('useTheme must be used within ThemeProvider');
   return theme;
+}
+
+/** 当前主题风格对应的插画包（未配置的风格回退到线绘陪伴） */
+export function useIllustrations() {
+  const { look } = useTheme();
+  return ILLUSTRATION_PACKS[look.key] ?? ILLUSTRATION_PACKS.companion;
 }
 
 export function useStyles<T>(factory: (t: Theme) => T): T {

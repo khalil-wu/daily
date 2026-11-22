@@ -1,11 +1,10 @@
 import React, { useEffect, useState } from 'react';
-import { Image, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { Text } from '../src/components/text';
 import { useTheme } from '../src/theme/ThemeProvider';
 import { actions, useStore } from '../src/store/store';
-import { Button, NavBar, Radio, Screen, goBack, haptic } from '../src/components/ui';
+import { Button, Illustration, NavBar, Radio, Screen, goBack, haptic } from '../src/components/ui';
 import { useFeedback } from '../src/components/feedback';
-import { IMAGES } from '../src/data/assets';
 import { fmtDateTime } from '../src/utils/date';
 import { HiddenAccessBoundary } from '../src/components/HiddenAccessBoundary';
 import { cloudConfigured } from '../src/services/cloud';
@@ -57,20 +56,7 @@ function ConflictContent() {
       <NavBar />
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 22, paddingBottom: 24 }}>
         <View style={{ alignItems: 'center', marginTop: 6, marginBottom: 20 }}>
-          <View
-            style={{
-              width: 152,
-              height: 152,
-              borderRadius: dark ? 76 : 0,
-              backgroundColor: dark ? 'rgba(236,246,247,0.92)' : 'transparent',
-              padding: dark ? 14 : 0,
-              alignItems: 'center',
-              justifyContent: 'center',
-              marginBottom: 12,
-            }}
-          >
-            <Image source={IMAGES.syncConflict} style={{ width: '100%', height: '100%' }} resizeMode="contain" />
-          </View>
+          <Illustration name="cloudSync" size={152} style={{ marginBottom: 12 }} />
           <Text style={[t.h1, { fontSize: fs(21), textAlign: 'center' }]}>检测到同步冲突</Text>
           <Text style={[t.sub, { textAlign: 'center', marginTop: 8 }]}>
             {cloudConfigured() ? '云端与本机' : '本机与账号快照'}对同一篇日记有不同的修改，共 {conflicts.length} 篇待处理，请逐篇比较后选择：

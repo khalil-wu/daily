@@ -100,7 +100,7 @@ export default function DraftsScreen() {
       {drafts.length === 0 ? (
         <View style={{ flex: 1, justifyContent: 'center' }}>
           <EmptyState
-            image={IMAGES.emptyBook}
+            illustration="emptyBook"
             imageSize={170}
             title="草稿箱里空空的"
             desc="写到一半暂存的日记会出现在这里。"

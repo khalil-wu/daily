@@ -1,6 +1,8 @@
 import React from 'react';
 import { Pressable, ScrollView, View } from 'react-native';
 import { Check } from 'lucide-react-native';
+import { Image as ExpoImage } from 'expo-image';
+import { ILLUSTRATION_PACKS } from '../../src/data/assets';
 import { Text } from '../../src/components/text';
 import { router } from 'expo-router';
 import { useTheme } from '../../src/theme/ThemeProvider';
@@ -38,7 +40,7 @@ export default function AppearanceScreen() {
       </View><Text style={t.caption}>{ap.theme === 'system' ? `当前跟随系统使用${dark ? '深色' : '浅色'}。` : '显示模式会应用到所有页面与弹层。'}</Text></View>
       <View style={{ gap: 12 }}><Text style={t.h3}>整体风格</Text><Text style={t.sub}>纸面、卡片、圆角与描边一起变化。选择风格会应用搭配的强调色，之后仍可单独调整。</Text>
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>{STYLES.map(st => { const on = ap.style === st.key; const p = buildPalette(dark, on ? ap.accent : st.accent, st.key); return <Pressable key={st.key} accessibilityRole="radio" accessibilityLabel={`风格：${st.name}`} accessibilityHint={st.desc} accessibilityState={{ checked: on }} aria-checked={on} {...webSpaceAction(() => actions.setAppearance({ style: st.key, accent: st.accent }))} onPress={() => { haptic('light'); actions.setAppearance({ style: st.key, accent: st.accent }); }} style={{ flexBasis: '30%', flexGrow: 1, minWidth: 114, backgroundColor: c.card, borderRadius: r(16), padding: 9, borderWidth: on ? 2 : 1, borderColor: on ? c.primaryDark : c.divider }}>
-          <View style={{ height: 72, borderRadius: scaleRadius(12, st), overflow: 'hidden' }}><PaletteSample palette={p} look={st} /></View>
+          <View style={{ height: 72, borderRadius: scaleRadius(12, st), overflow: 'hidden', flexDirection: 'row', alignItems: 'center' }}><PaletteSample palette={p} look={st} /><ExpoImage source={ILLUSTRATION_PACKS[st.key].emptyBook as any} style={{ width: 44, height: 44, marginRight: 6 }} contentFit="contain" transition={0} /></View>
           <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 4, marginTop: 9 }}><Text style={{ fontSize: fs(14), color: on ? c.primaryDark : c.text, fontWeight: '600' }}>{st.name}</Text>{on && <Check size={14} color={c.primaryDark} />}</View>
           <Text style={{ fontSize: fs(12), lineHeight: fs(18), color: c.textSub, textAlign: 'center', marginTop: 4 }}>{st.desc}</Text>
         </Pressable>; })}</View>

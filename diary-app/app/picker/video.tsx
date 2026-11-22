@@ -206,7 +206,7 @@ export default function VideoPickerScreen() {
         {picked.length === 0 ? (
           <View style={{ flex: 1, justifyContent: 'center', paddingBottom: 40 }}>
             <EmptyState
-              image={IMAGES.emptyBook}
+              illustration="emptyBook"
               imageSize={150}
               title="还没有选择视频"
               desc="拍一段此刻，或从相册里挑一段，让这篇日记动起来。"

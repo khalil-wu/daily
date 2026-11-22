@@ -99,6 +99,8 @@ export const ACCENTS = [
   { key: 'ink', name: '墨黑', color: '#191919', darkColor: '#ECEAE6' },
   { key: 'vermilion', name: '朱砂', color: '#B4472F', darkColor: '#D9705A' },
   { key: 'pine', name: '松绿', color: '#3F7A63', darkColor: '#6DB094' },
+  { key: 'iris', name: '鸢尾', color: '#5B5BD6', darkColor: '#8E8CF0' },
+  { key: 'starlight', name: '星光', color: '#4F5FB8', darkColor: '#9AA8F0' },
   { key: 'indigo', name: '靛青', color: '#3D4A8F', darkColor: '#8792D6' },
 ] as const;
 export type AccentKey = (typeof ACCENTS)[number]['key'];
@@ -121,7 +123,7 @@ interface Neutral {
   shadow: string;
 }
 
-export type StyleKey = 'companion' | 'editorial' | 'warm' | 'cool' | 'ink' | 'forest' | 'sakura' | 'kraft';
+export type StyleKey = 'companion' | 'editorial' | 'warm' | 'cool' | 'ink' | 'forest' | 'sakura' | 'kraft' | 'vivid' | 'midnight';
 
 export interface StylePreset {
   key: StyleKey;
@@ -226,6 +228,28 @@ export const STYLES: StylePreset[] = [
     dark: {
       bg: '#19150F', bgDeep: '#120F0A', card: '#231D15', cardAlt: '#292219', divider: '#392F22', border: '#4A3E2E',
       text: '#F0E7D6', textSub: '#B4A78F', textMuted: '#837760', inputBg: '#2A2319', overlay: 'rgba(0,0,0,0.62)', shadow: '#000000',
+    },
+  },
+  {
+    key: 'vivid', name: '彩色时刻', desc: '明快渐变与彩色形状，像一本拼色手账', accent: 'iris', radius: 1.05, pill: 999, flat: false,
+    light: {
+      bg: '#F6F6FB', bgDeep: '#ECECF6', card: '#FFFFFF', cardAlt: '#F9F9FD', divider: '#E4E4F0', border: '#D3D3E4',
+      text: '#1E1E2E', textSub: '#5A5A72', textMuted: '#8A8AA2', inputBg: '#EFEFF7', overlay: 'rgba(22,22,40,0.46)', shadow: '#4B4B8F',
+    },
+    dark: {
+      bg: '#121222', bgDeep: '#0C0C18', card: '#1B1B2F', cardAlt: '#212136', divider: '#2C2C44', border: '#3A3A56',
+      text: '#EEEEF8', textSub: '#A9A9C4', textMuted: '#73738F', inputBg: '#20203A', overlay: 'rgba(0,0,0,0.62)', shadow: '#000000',
+    },
+  },
+  {
+    key: 'midnight', name: '深蓝星笺', desc: '深蓝夜色与星光，适合夜里慢慢写', accent: 'starlight', radius: 0.9, pill: 999, flat: false,
+    light: {
+      bg: '#F2F4FA', bgDeep: '#E6E9F4', card: '#FFFFFF', cardAlt: '#F7F8FC', divider: '#DEE2EF', border: '#C9CFE3',
+      text: '#161C38', textSub: '#525A7A', textMuted: '#868DA8', inputBg: '#ECEFF7', overlay: 'rgba(14,20,48,0.5)', shadow: '#26306A',
+    },
+    dark: {
+      bg: '#0D1330', bgDeep: '#090E24', card: '#151C3E', cardAlt: '#1B2348', divider: '#262F58', border: '#354070',
+      text: '#ECEFFC', textSub: '#A6AED0', textMuted: '#727BA0', inputBg: '#1A2246', overlay: 'rgba(0,0,0,0.64)', shadow: '#000000',
     },
   },
 ];

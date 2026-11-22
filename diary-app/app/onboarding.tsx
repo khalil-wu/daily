@@ -2,11 +2,10 @@ import React, { useEffect, useRef, useState } from 'react';
 import { Animated, Image, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { Text } from '../src/components/text';
 import { router } from 'expo-router';
-import { useTheme } from '../src/theme/ThemeProvider';
+import { useIllustrations, useTheme } from '../src/theme/ThemeProvider';
 import { Button, Screen } from '../src/components/ui';
 import { MoodIcon } from '../src/components/MoodIcon';
 import { ND, PressableScale, SPRING, useReducedMotion } from '../src/components/motion';
-import { IMAGES } from '../src/data/assets';
 import type { MoodKey } from '../src/store/types';
 
 const PAGES = [
@@ -14,21 +13,21 @@ const PAGES = [
     key: 'daily',
     title: '记录日常生活',
     desc: '把生活里的小事、想法和感受\n都写下来，留住真实的日常。',
-    image: IMAGES.onboardNotebook,
+    art: 'onboardWrite',
     cta: '下一步',
   },
   {
     key: 'mood',
     title: '记录心情与思考',
     desc: '不仅记录发生了什么，\n也记得当下的情绪、感受与思考，\n更好地理解自己。',
-    image: IMAGES.onboardClouds,
+    art: 'memorySticker',
     cta: '下一步',
   },
   {
     key: 'review',
     title: '回看记忆与成长',
     desc: '随时回翻过去的日记，\n看见情绪的变化、生活的轨迹，\n和一点点成长。',
-    image: IMAGES.onboardPolaroid,
+    art: 'onboardMemory',
     cta: '开始使用',
   },
 ] as const;
@@ -93,6 +92,7 @@ function Dot({ on, color, onPress, label }: { on: boolean; color: string; onPres
 /** 2-4. 引导页 1-3（1:1 复刻设计稿1 #2-#4） */
 export default function OnboardingScreen() {
   const { c, t, fs, dark, r, ink, frameInk } = useTheme();
+  const pack = useIllustrations();
   const inkLook = ink.on;
   const reduced = useReducedMotion();
   const [pageW, setPageW] = useState(1);
@@ -196,7 +196,7 @@ export default function OnboardingScreen() {
                       ...(inkLook ? frameInk : { borderWidth: StyleSheet.hairlineWidth, borderColor: c.divider }),
                     }}
                   >
-                    <Image source={p.image} style={{ width: '100%', height: '100%' }} resizeMode="cover" />
+                    <Image source={pack[p.art]} style={{ width: '100%', height: '100%' }} resizeMode="cover" />
                   </View>
                 </Postcard>
               )}
@@ -218,7 +218,7 @@ export default function OnboardingScreen() {
                         justifyContent: 'center',
                       }}
                     >
-                    <Image source={p.image} style={{ width: '100%', height: '100%' }} resizeMode="contain" />
+                    <Image source={pack[p.art]} style={{ width: '100%', height: '100%' }} resizeMode="contain" />
                     </View>
                   </Postcard>
                   <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', width: '96%', marginTop: 18 }}>
@@ -262,7 +262,7 @@ export default function OnboardingScreen() {
                       ...(inkLook ? frameInk : { borderWidth: StyleSheet.hairlineWidth, borderColor: c.divider }),
                     }}
                   >
-                    <Image source={p.image} style={{ width: '100%', height: '100%' }} resizeMode="cover" />
+                    <Image source={pack[p.art]} style={{ width: '100%', height: '100%' }} resizeMode="cover" />
                   </View>
                 </Postcard>
               )}
