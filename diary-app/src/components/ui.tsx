@@ -609,11 +609,11 @@ export function Switch({ value, onChange, disabled, label }: { value: boolean; o
       aria-checked={value}
       aria-disabled={!!disabled}
     >
-      <View style={{ width: 46, height: 26, borderRadius: 13, backgroundColor: value ? c.primary : c.controlBorder, justifyContent: 'center' }}>
+      <View style={{ width: 46, height: 26, borderRadius: 13, backgroundColor: value ? c.primary : c.border, justifyContent: 'center' }}>
         <Animated.View
           style={{
-            width: 22, height: 22, borderRadius: 11, backgroundColor: value ? c.textOnPrimary : c.card, transform: [{ translateX: x }],
-            shadowColor: '#000', shadowOpacity: 0.15, shadowRadius: 3, shadowOffset: { width: 0, height: 1 }, elevation: 2,
+            width: 22, height: 22, borderRadius: 11, backgroundColor: '#FFFFFF', transform: [{ translateX: x }],
+            shadowColor: '#000', shadowOpacity: 0.2, shadowRadius: 3, shadowOffset: { width: 0, height: 1 }, elevation: 2,
           }}
         />
       </View>
