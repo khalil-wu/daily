@@ -43,7 +43,7 @@ const HOME_STEPS: TourStep[] = [
     key: 'fab',
     tag: '开始记录',
     title: '从这里写下第一篇',
-    desc: '点「＋」可以直接写日记，也可以用模板、录音或拍照开始。',
+    desc: '点笔就直接开始写；上面的「＋」里有模板、录音和拍照。',
     targets: ['home.fab'],
     pad: 8,
     radius: 999,

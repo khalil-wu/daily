@@ -51,8 +51,7 @@ try {
   const { context, page } = await seededContext(state);
   await page.goto(baseURL);
   await page.getByRole('button', { name: /^日记本 全部日记/ }).click();
-  await page.getByRole('button', { name: '新建日记', exact: true }).click();
-  await page.getByText('写日记', { exact: true }).click();
+  await page.getByRole('button', { name: '写日记', exact: true }).click();
   await page.getByLabel('日记标题', { exact: true }).fill('快速返回草稿');
   await page.getByLabel('日记正文', { exact: true }).fill('这一段在防抖保存前立刻返回');
   await page.goBack();

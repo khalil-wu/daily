@@ -338,9 +338,36 @@ export default function HomeScreen() {
     );
   }, [tab, moodsUsed, filterMood]);
 
+  // 目录页抬头：翻开书看到的第一页是这本书自己的目录，而不是一个通用列表
+  const bookHeading = useMemo(() => {
+    const pub = notebookEntries.filter(e => e.status === 'published');
+    if (!pub.length) return null;
+    const times = pub.map(e => e.createdAt);
+    const f = (ts: number) => { const d = new Date(ts); return `${d.getFullYear()}.${d.getMonth() + 1}`; };
+    const from = f(Math.min(...times));
+    const to = f(Math.max(...times));
+    return (
+      <View style={{ alignItems: 'center', paddingTop: 6, paddingBottom: 18 }}>
+        <Text style={{ fontSize: fs(10.5), color: c.textMuted, letterSpacing: 6 }}>目 录</Text>
+        <Text textRole="reading" numberOfLines={2} style={[t.display, { fontSize: fs(26), lineHeight: fs(36), textAlign: 'center', marginTop: 6 }]}>
+          {currentNotebook ? currentNotebook.name : '全部日记'}
+        </Text>
+        <Text style={{ fontSize: fs(12), color: c.textSub, marginTop: 4 }}>
+          {from === to ? from : `${from} — ${to}`} · 共 {pub.length} 篇
+        </Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 12 }}>
+          <View style={{ width: 44, height: 1, backgroundColor: c.border }} />
+          <View style={{ width: 5, height: 5, transform: [{ rotate: '45deg' }], backgroundColor: currentNotebook?.color ?? c.primary }} />
+          <View style={{ width: 44, height: 1, backgroundColor: c.border }} />
+        </View>
+      </View>
+    );
+  }, [notebookEntries, currentNotebook, c, fs, t.display]);
+
   const listHeader = useMemo(() => {
     return (
       <View>
+        {showToday && bookHeading}
         {showToday && <OnThisDay />}
         {moodChips}
 
@@ -354,7 +381,7 @@ export default function HomeScreen() {
         )}
       </View>
     );
-  }, [showToday, tab, c, fs, homeView, filtered.length, moodChips]);
+  }, [showToday, tab, c, fs, homeView, filtered.length, moodChips, bookHeading]);
 
   // 列表底部「每日一句」（Diarly 首页名言卡）：衬线居中排版，按日轮换
   const listFooter = useMemo(() => {
@@ -500,10 +527,10 @@ export default function HomeScreen() {
           {currentNotebook && (
             <View style={{ width: 9, height: 9, borderRadius: 5, backgroundColor: currentNotebook.color }} />
           )}
-          <Text style={[t.h1, { fontSize: fs(20), flexShrink: 1 }]} numberOfLines={1}>
+          <Text style={[t.h3, { fontSize: fs(15), flexShrink: 1, color: c.textSub }]} numberOfLines={1}>
             {currentNotebook ? currentNotebook.name : '全部日记'}
           </Text>
-          <ChevronDown size={18} color={c.textSub} />
+          <ChevronDown size={15} color={c.textMuted} />
         </Pressable>
 
         <View ref={toolsTarget} collapsable={false} style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
@@ -699,7 +726,21 @@ export default function HomeScreen() {
         </Animated.View>
       )}
 
-      <View ref={fabTarget} collapsable={false} style={{ position: 'absolute', right: 20, bottom: 20, zIndex: 25 }}>
+      <View ref={fabTarget} collapsable={false} style={{ position: 'absolute', right: 20, bottom: 20, zIndex: 25, alignItems: 'center', gap: 10 }}>
+        {!fabOpen && (
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="更多记录方式"
+            hitSlop={6}
+            onPress={() => {
+              haptic('light');
+              setFabOpen(true);
+            }}
+            style={({ pressed }) => ({ width: 36, height: 36, borderRadius: 18, backgroundColor: c.card, borderWidth: 1, borderColor: ink.on ? ink.line : c.border, alignItems: 'center', justifyContent: 'center', opacity: pressed ? 0.7 : 1 })}
+          >
+            <Plus size={18} color={c.text} strokeWidth={1.9} />
+          </Pressable>
+        )}
         {ink.on ? (
           <InkPress
             offset={3}
@@ -707,9 +748,16 @@ export default function HomeScreen() {
             underlay={dark ? '#000000' : ink.line}
             onPress={() => {
               haptic('medium');
-              setFabOpen(v => !v);
+              // 点一下就开始写；更多记录方式放在上面的小按钮和长按里
+              if (fabOpen) setFabOpen(false);
+              else router.push('/write');
             }}
-            accessibilityLabel={fabOpen ? '收起新建菜单' : '新建日记'}
+            onLongPress={() => {
+              haptic('medium');
+              setFabOpen(true);
+            }}
+            accessibilityLabel={fabOpen ? '收起新建菜单' : '写日记'}
+            accessibilityHint="长按可选择模板、录音或拍照" 
             faceStyle={{
               width: 58,
               height: 58,
@@ -732,9 +780,16 @@ export default function HomeScreen() {
             scaleTo={0.9}
             onPress={() => {
               haptic('medium');
-              setFabOpen(v => !v);
+              // 点一下就开始写；更多记录方式放在上面的小按钮和长按里
+              if (fabOpen) setFabOpen(false);
+              else router.push('/write');
             }}
-            accessibilityLabel={fabOpen ? '收起新建菜单' : '新建日记'}
+            onLongPress={() => {
+              haptic('medium');
+              setFabOpen(true);
+            }}
+            accessibilityLabel={fabOpen ? '收起新建菜单' : '写日记'}
+            accessibilityHint="长按可选择模板、录音或拍照" 
             style={{
               width: 56,
               height: 56,

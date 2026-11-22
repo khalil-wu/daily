@@ -1,6 +1,6 @@
 import { HiddenAccessBoundary } from '../src/components/HiddenAccessBoundary';
-import React, { useEffect, useMemo, useRef } from 'react';
-import { Animated, Easing, Image, Pressable, View } from 'react-native';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { Animated, Easing, Image, Platform, Pressable, View } from 'react-native';
 import { Text } from '../src/components/text';
 import { router, useLocalSearchParams } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -130,9 +130,19 @@ function SavedContent() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [entry?.id]);
 
+  // 保存成功就是结束：印章落下后自动翻到刚写好的这一页，不用再点一次。
+  // 需要用户处理的情况（未落盘、冲突、等待回信）才停在这里。
+  const settled = !!entry && status.local && !status.error && !status.conflict && !reply && replyJob.status === 'idle';
+  const [stay, setStay] = useState(false);
+  useEffect(() => {
+    if (!settled || stay || !id) return;
+    const timer = setTimeout(() => router.replace({ pathname: '/memory/[id]', params: { id } }), 1500);
+    return () => clearTimeout(timer);
+  }, [settled, stay, id]);
+
   return (
     <Screen edges={['top', 'bottom']}>
-      <View style={{ flex: 1, justifyContent: 'space-between' }}>
+      <View style={{ flex: 1, justifyContent: 'space-between' }} onTouchStart={() => setStay(true)} {...(Platform.OS === 'web' ? ({ onMouseDown: () => setStay(true) } as object) : {})}>
         <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 32 }}>
           <FadeIn dy={0} scaleFrom={0.86} duration={420}>
             <View>
