@@ -29,7 +29,10 @@ try {
   const firstInteractiveMs = Date.now() - started;
   await page.getByText('跳过', { exact: true }).filter({ visible: true }).first().click();
   await page.getByText('先本地使用', { exact: true }).click();
-  await page.getByText('一分钟，认识记得日记', { exact: true }).waitFor({ timeout: 10000 });
+  await page.getByText('这是你的书架，点一本翻开', { exact: true }).waitFor({ timeout: 10000 });
+  await page.getByText('跳过', { exact: true }).filter({ visible: true }).last().click();
+  await page.getByRole('button', { name: /^日记本 全部日记/ }).click();
+  await page.getByText('一分钟，认识记得日记', { exact: true }).waitFor({ timeout: 15000 });
   await page.getByText('跳过', { exact: true }).filter({ visible: true }).last().click();
   await page.getByText('写一篇日记', { exact: true }).waitFor();
   await page.evaluate(() => document.fonts.ready);

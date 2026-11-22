@@ -4,7 +4,8 @@ import { Text } from '../../src/components/text';
 import { router } from 'expo-router';
 import { Award, CheckCircle2, ChevronLeft, ChevronRight, Image as ImageIcon, Quote, RefreshCw, Search, Sparkles } from 'lucide-react-native';
 import { useTheme } from '../../src/theme/ThemeProvider';
-import { useStore } from '../../src/store/store';
+import { useBookEntries, useStore } from '../../src/store/store';
+import { ScreenTitle, useOpenSearch } from '../../src/components/BookScope';
 import { Button, Card, EmptyState, IconButton, Photo, Screen, Segmented, webSpaceAction } from '../../src/components/ui';
 import { useFeedback } from '../../src/components/feedback';
 import { BottomSheet, useCountUp } from '../../src/components/motion';
@@ -26,7 +27,8 @@ type ReviewTab = 'period' | 'timeline' | 'year' | 'milestone';
 export default function ReviewScreen() {
   const { c, t, fs, r, dark } = useTheme();
   const { toast } = useFeedback();
-  const entries = useStore(s => s.entries);
+  const entries = useBookEntries();
+  const openSearch = useOpenSearch();
   const tags = useStore(s => s.tags);
   const people = useStore(s => s.people);
   const reviews = useStore(s => s.reviews);
@@ -124,8 +126,8 @@ export default function ReviewScreen() {
   return (
     <Screen edges={['top']}>
       <View style={{ height: 52, paddingHorizontal: 20, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-        <Text style={[t.h1, { fontSize: fs(22) }]}>回顾</Text>
-        <IconButton icon={Search} label="搜索" onPress={() => router.push('/search')} />
+        <ScreenTitle title="回顾" />
+        <IconButton icon={Search} label="搜索" onPress={openSearch} />
       </View>
 
       <View style={{ paddingHorizontal: 20, paddingBottom: 12 }}>

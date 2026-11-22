@@ -15,7 +15,7 @@ const browser = await chromium.launch({ headless: true });
 const errors: string[] = [];
 const mode = process.env.JIDE_AUDIT_MODE;
 const results: unknown[] = mode === 'performance' ? JSON.parse(await readFile(new URL('extended-report.json', out), 'utf8')).filter((r: any) => r.case === 'lock-40-visible-frames' && r.result === 'pass') : [];
-const seed = (): AppState => ({ ...defaultState(), onboarded: true, usageMode: 'local', tutorialSeen: true, editorTourSeen: true, backup: { auto: false } });
+const seed = (): AppState => ({ ...defaultState(), onboarded: true, usageMode: 'local', tutorialSeen: true, editorTourSeen: true, shelfTourSeen: true, backup: { auto: false } });
 async function context(state: AppState) {
   const c = await browser.newContext({ viewport: { width: 390, height: 844 }, reducedMotion: 'reduce', locale: 'zh-CN' });
   await c.addInitScript('globalThis.__name = (value) => value;');

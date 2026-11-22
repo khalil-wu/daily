@@ -11,7 +11,7 @@ const errors: string[] = [];
 await mkdir('docs/qa/editor-workflows', { recursive: true });
 try {
   const context = await browser.newContext({ viewport: { width: 390, height: 844 }, reducedMotion: 'reduce', locale: 'zh-CN' });
-  const state = { ...defaultState(), onboarded: true, tutorialSeen: true, editorTourSeen: true, usageMode: 'local', backup: { auto: false } };
+  const state = { ...defaultState(), onboarded: true, tutorialSeen: true, editorTourSeen: true, shelfTourSeen: true, usageMode: 'local', backup: { auto: false } };
   state.entries = [actions.newEntry({ id: 'workflow', title: '保留原有标题', body: '保留原有正文', status: 'published', photos: ['asset:photo-sky', 'asset:photo-lake'], place: { name: '原有地点', latitude: 31.2, longitude: 121.5 } })];
   await context.addInitScript(initial => {
     if (!sessionStorage.getItem('workflow-seeded')) {

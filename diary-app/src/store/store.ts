@@ -1,4 +1,4 @@
-import { useRef, useSyncExternalStore } from 'react';
+import { useMemo, useRef, useSyncExternalStore } from 'react';
 import type { Account, AppState, Entry, EntryAI, Notebook, PeriodReview, Person, RelationKey, StoredAccount, SyncConflict, Tag, VideoClip } from './types';
 import { getPersistedSnapshot, getPersistenceError, subscribePersistenceError, defaultState, loadState, normalizeEntry, normalizeState, saveState, clearAllStorage, loadCloud, saveCloud, isEntryRecord } from './storage';
 import { uid, sha256, isPhone } from '../utils/text';
@@ -9,6 +9,7 @@ import {
   logoutRemote, pullRemoteEntries, pushRemoteEntries, pullRemoteMetadata, pushRemoteMetadata, remoteMediaTransport, destroyRemoteAccount, cloudError,
   snapshotRemoteSession, restoreRemoteSession, dropRemoteSessionLocal, resetRemoteSessionCache,
 } from '../services/cloud';
+import { sortNotebooks } from '../utils/shelf';
 import { unreferencedVideos } from '../utils/video';
 import { normalizeBirthday } from '../utils/people';
 import { clearAllVideoFiles, discardVideoFiles } from '../services/videoStore';
@@ -28,7 +29,7 @@ let state: AppState = defaultState();
 let hydrated = false;
 let hydration: Promise<void> | null = null;
 /** 当前正在进行的新手导览：home = 首页导览，editor = 写作页导览 */
-export type TourKind = 'home' | 'editor';
+export type TourKind = 'home' | 'editor' | 'shelf';
 let activeTour: TourKind | null = null;
 const listeners = new Set<() => void>();
 const hydrateListeners = new Set<() => void>();
@@ -177,6 +178,25 @@ export function inNotebook(e: Entry, notebookId: string | null) {
   if (!notebookId) return true;
   if (notebookId === DEFAULT_NOTEBOOK_ID) return !e.notebookId || e.notebookId === DEFAULT_NOTEBOOK_ID;
   return e.notebookId === notebookId;
+}
+
+/** 按日记本取日记（null = 全部）；可见性规则（删除/隐藏/草稿）仍由各使用处自行过滤 */
+export function scopeEntries(entries: Entry[], notebookId: string | null): Entry[] {
+  return notebookId ? entries.filter(e => inNotebook(e, notebookId)) : entries;
+}
+
+/** 当前打开的这本书里的日记（activeNotebook = null 即「全部日记」） */
+export function useBookEntries(): Entry[] {
+  const entries = useStore(s => s.entries);
+  const activeNotebook = useStore(s => s.activeNotebook);
+  return useMemo(() => scopeEntries(entries, activeNotebook), [entries, activeNotebook]);
+}
+
+/** 当前打开的这本书；全部日记返回 null */
+export function useActiveBook(): Notebook | null {
+  const notebooks = useStore(s => s.notebooks);
+  const activeNotebook = useStore(s => s.activeNotebook);
+  return useMemo(() => (activeNotebook ? notebooks.find(n => n.id === activeNotebook) ?? null : null), [notebooks, activeNotebook]);
 }
 
 /** 回收站保留天数 */
@@ -386,6 +406,12 @@ export const actions = {
   },
   setEditorTourSeen(seen: boolean) {
     setState(s => ({ ...s, editorTourSeen: seen }), true);
+  },
+  setShelfDragHintSeen(seen: boolean) {
+    setState(s => ({ ...s, shelfDragHintSeen: seen }), true);
+  },
+  setShelfTourSeen(seen: boolean) {
+    setState(s => ({ ...s, shelfTourSeen: seen }), true);
   },
 
   /* —— 日记 —— */
@@ -618,7 +644,9 @@ export const actions = {
     if (!n) return null;
     const exist = state.notebooks.find(x => x.name === n);
     if (exist) return exist;
-    const nb: Notebook = { id: uid('nb'), name: n.slice(0, 16), color, createdAt: Date.now() };
+    const sorted = sortNotebooks(state.notebooks);
+    const nextOrder = sorted.length ? Math.max(...sorted.map((x, i) => x.order ?? i)) + 1 : 0;
+    const nb: Notebook = { id: uid('nb'), name: n.slice(0, 16), color, createdAt: Date.now(), order: nextOrder };
     setState(s => ({ ...s, notebooks: [...s.notebooks, nb] }));
     return nb;
   },
@@ -628,6 +656,17 @@ export const actions = {
       ...s,
       notebooks: s.notebooks.map(n => (n.id === id ? { ...n, ...patch, name: (patch.name ?? n.name).trim().slice(0, 16) || n.name } : n)),
     }));
+  },
+
+  /** 按给定 id 顺序重排书架：写入连续 order，数组也同步成同样的顺序 */
+  reorderNotebooks(ids: string[]) {
+    setState(s => {
+      const rank = new Map(ids.map((id, i) => [id, i] as const));
+      const sorted = sortNotebooks(s.notebooks);
+      const known = sorted.filter(n => rank.has(n.id)).sort((a, b) => rank.get(a.id)! - rank.get(b.id)!);
+      const rest = sorted.filter(n => !rank.has(n.id));
+      return { ...s, notebooks: [...known, ...rest].map((n, i) => ({ ...n, order: i })) };
+    });
   },
 
   /** 删除日记本：其中的日记归入默认日记本，默认日记本不可删除 */
@@ -949,7 +988,11 @@ export const actions = {
       const tagMap = new Map(s.tags.map(t => [t.id, t]));
       incoming.tags.forEach(t => tagMap.set(t.id, t));
       const nbMap = new Map(s.notebooks.map(n => [n.id, n]));
-      incoming.notebooks.forEach(n => { if (!nbMap.has(n.id)) nbMap.set(n.id, n); });
+      incoming.notebooks.forEach(n => {
+        const cur = nbMap.get(n.id);
+        if (!cur) nbMap.set(n.id, n);
+        else if (cur.order === undefined && n.order !== undefined) nbMap.set(n.id, { ...cur, order: n.order });
+      });
       // 身边人：id 相同的保留本机版本；备份里新出现的人补进来
       const peopleMap = new Map(s.people.map(p => [p.id, p]));
       incoming.people.forEach(p => { if (!peopleMap.has(p.id)) peopleMap.set(p.id, p); });
@@ -959,7 +1002,7 @@ export const actions = {
         ...s,
         entries: Array.from(map.values()),
         tags: Array.from(tagMap.values()),
-        notebooks: Array.from(nbMap.values()),
+        notebooks: sortNotebooks(Array.from(nbMap.values())),
         people: Array.from(peopleMap.values()),
         reviews: Array.from(reviewMap.values()).sort((a, b) => b.from - a.from),
       };

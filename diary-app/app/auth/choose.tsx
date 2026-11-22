@@ -17,7 +17,7 @@ export default function ChooseModeScreen() {
   const pickLocal = () => {
     haptic('medium');
     actions.completeOnboarding('local');
-    router.replace('/(tabs)');
+    router.replace('/shelf');
   };
 
   return (

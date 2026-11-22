@@ -114,7 +114,7 @@ export default function RegisterScreen() {
     }
     if (!onboarded) actions.completeOnboarding('account');
     toast('注册成功，欢迎来到记得日记');
-    router.replace('/(tabs)');
+    router.replace('/shelf');
   };
 
   return (

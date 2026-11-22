@@ -43,11 +43,14 @@ try {
       localStorage.setItem(key, JSON.stringify(state));
     });
     await page.reload();
+    await page.getByRole('button', { name: /^日记本 全部日记/ }).waitFor();
+    await page.screenshot({ path: `${out}/shelf-${viewport.width}.png` });
+    await page.getByRole('button', { name: /^日记本 全部日记/ }).click();
     await page.getByRole('tab', { name: '日记', exact: true }).last().waitFor();
     await page.screenshot({ path: `${out}/home-${viewport.width}.png` });
     const overflow = await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth);
     assert.equal(overflow, false, 'no horizontal page overflow');
-    for (const name of ['日历', '回顾', '统计', '我的', '日记']) {
+    for (const name of ['日历', '回顾', '统计', '日记']) {
       await page.getByRole('tab', { name, exact: true }).last().click();
       await page.waitForTimeout(100);
       assert.equal(await page.getByRole('tab', { name, exact: true }).last().getAttribute('aria-selected'), 'true');
@@ -78,6 +81,7 @@ try {
     await page.emulateMedia({ reducedMotion: 'reduce' });
     if (viewport.width === 390) {
       await page.goto(baseURL);
+      await page.getByRole('button', { name: /^日记本 全部日记/ }).click();
       await page.getByText('加载示例日记体验', { exact: true }).click();
       await page.getByRole('alert').waitFor({ state: 'hidden' });
       await page.evaluate(() => document.fonts.ready);
@@ -89,6 +93,7 @@ try {
         localStorage.setItem(key, JSON.stringify(state));
       });
       await page.reload();
+      await page.getByRole('button', { name: /^日记本 全部日记/ }).click();
       await page.getByRole('tab', { name: '日记', exact: true }).last().waitFor();
       await page.evaluate(() => document.fonts.ready);
       assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth), false, 'dark / extra large font does not overflow');

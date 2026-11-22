@@ -103,6 +103,8 @@ export interface Notebook {
   name: string;
   color: string;
   createdAt: number;
+  /** 书架顺序；旧数据没有该字段，沿用原数组顺序 */
+  order?: number;
 }
 
 /** 写作目标 */
@@ -258,6 +260,10 @@ export interface AppState {
   tutorialSeen?: boolean;
   /** 是否已看过写作页导览 */
   editorTourSeen?: boolean;
+  /** 是否已看过书架导览 */
+  shelfTourSeen?: boolean;
+  /** 是否已经拖动整理过书架（之后不再提示） */
+  shelfDragHintSeen?: boolean;
   usageMode: 'local' | 'account' | null;
   entries: Entry[];
   tags: Tag[];

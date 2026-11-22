@@ -4,7 +4,7 @@ import { Text } from '../src/components/text';
 import { router, useLocalSearchParams } from 'expo-router';
 import { Award, Calendar, ChevronLeft, ChevronRight, Flame, MapPin, Moon, Sparkles, Sunrise } from 'lucide-react-native';
 import { useTheme } from '../src/theme/ThemeProvider';
-import { useStore } from '../src/store/store';
+import { useActiveBook, useBookEntries, useStore } from '../src/store/store';
 import { Card, EmptyState, NavBar, Screen, Segmented, haptic, webSpaceAction } from '../src/components/ui';
 import { BottomSheet } from '../src/components/motion';
 import { MoodIcon } from '../src/components/MoodIcon';
@@ -19,7 +19,8 @@ import { IMAGES } from '../src/data/assets';
 export default function AnnualReportScreen() {
   const params = useLocalSearchParams<{ year?: string }>();
   const { c, t, fs, dark, r, look } = useTheme();
-  const entries = useStore(s => s.entries);
+  const entries = useBookEntries();
+  const book = useActiveBook();
   const tags = useStore(s => s.tags);
 
   const years = useMemo(() => {
@@ -65,7 +66,7 @@ export default function AnnualReportScreen() {
 
   return (
     <Screen edges={['top', 'bottom']}>
-      <NavBar title="年度回顾" />
+      <NavBar title={book ? `${book.name} · 年度回顾` : '年度回顾'} />
 
       {/* 年份切换栏 */}
       <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 18, paddingBottom: 10 }}>

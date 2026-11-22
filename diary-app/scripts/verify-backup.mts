@@ -11,7 +11,7 @@ const baseURL = process.env.DIARY_TEST_URL || 'http://127.0.0.1:8765';
 assert.ok(['localhost', '127.0.0.1'].includes(new URL(baseURL).hostname), 'Use a local preview for seeded test data.');
 const browser = await chromium.launch({ headless: true });
 const errors: string[] = [];
-const seed = (): AppState => ({ ...defaultState(), onboarded: true, usageMode: 'local', tutorialSeen: true, editorTourSeen: true, backup: { auto: false } });
+const seed = (): AppState => ({ ...defaultState(), onboarded: true, usageMode: 'local', tutorialSeen: true, editorTourSeen: true, shelfTourSeen: true, backup: { auto: false } });
 async function open(state: AppState) {
   const context = await browser.newContext({ viewport: { width: 390, height: 844 }, reducedMotion: 'reduce', locale: 'zh-CN', acceptDownloads: true });
   // tsx preserves function names with this helper inside serialized evaluate callbacks.

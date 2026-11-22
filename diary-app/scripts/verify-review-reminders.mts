@@ -15,7 +15,7 @@ const now = new Date();
 const recent = new Date(now.getFullYear(), now.getMonth() - 1, Math.min(now.getDate(), 28), 12).getTime();
 const older = new Date(now.getFullYear() - 2, now.getMonth(), now.getDate(), 12).getTime();
 const date = dayKey(recent);
-const initial = { ...defaultState(), onboarded: true, tutorialSeen: true, editorTourSeen: true, usageMode: 'local', backup: { auto: false }, entries: [
+const initial = { ...defaultState(), onboarded: true, tutorialSeen: true, editorTourSeen: true, shelfTourSeen: true, usageMode: 'local', backup: { auto: false }, entries: [
   normalizeEntry({ id: 'recent-memory', title: '近年的公开回忆', body: '用于日期与回忆范围验收的合成内容。', createdAt: recent, status: 'published' }),
   normalizeEntry({ id: 'same-day', title: '同一天另一篇', createdAt: recent + 3600000, status: 'published' }),
   normalizeEntry({ id: 'old-memory', title: '更早的公开回忆', createdAt: older, status: 'published' }),

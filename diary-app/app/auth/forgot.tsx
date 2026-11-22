@@ -88,7 +88,7 @@ export default function ForgotPasswordScreen() {
     }
     if (res.account) {
       toast('密码已重置，已为你登录');
-      router.replace('/(tabs)');
+      router.replace('/shelf');
       return;
     }
     toast('密码已重置，请使用新密码登录');

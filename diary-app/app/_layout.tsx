@@ -143,7 +143,9 @@ function AppShell() {
         <Stack.Screen name="auth/login" />
         <Stack.Screen name="auth/register" />
         <Stack.Screen name="auth/forgot" />
-        <Stack.Screen name="(tabs)" options={{ animation: 'none' }} />
+        <Stack.Screen name="shelf" options={{ animation: 'none' }} />
+        <Stack.Screen name="(tabs)" options={{ animation: reduced ? 'none' : 'fade', animationDuration: 180 }} />
+        <Stack.Screen name="me" />
         <Stack.Screen name="write" options={{ animation: reduced ? 'none' : 'slide_from_bottom' }} />
         <Stack.Screen name="saved" options={{ animation: reduced ? 'none' : 'fade' }} />
         <Stack.Screen name="memory/[id]" />
@@ -206,6 +208,7 @@ function AppShell() {
         onFinish={tour => {
           closeTutorial();
           if (tour === 'home') actions.setTutorialSeen(true);
+          else if (tour === 'shelf') actions.setShelfTourSeen(true);
           else actions.setEditorTourSeen(true);
         }}
       />

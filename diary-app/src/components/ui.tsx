@@ -135,7 +135,7 @@ interface NavBarProps {
 
 export function goBack() {
   if (router.canGoBack()) router.back();
-  else router.replace('/(tabs)');
+  else router.replace('/shelf');
 }
 
 export function NavBar({ title, subtitle, variant = 'center', back = true, left, right, style }: NavBarProps) {

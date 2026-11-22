@@ -4,7 +4,8 @@ import { Text } from '../../src/components/text';
 import { router } from 'expo-router';
 import { PenLine, Search } from 'lucide-react-native';
 import { useTheme } from '../../src/theme/ThemeProvider';
-import { useStore } from '../../src/store/store';
+import { useBookEntries } from '../../src/store/store';
+import { ScreenTitle, useOpenSearch } from '../../src/components/BookScope';
 import { Button, Card, Divider, IconButton, Screen } from '../../src/components/ui';
 import { CalendarMonth } from '../../src/components/Charts';
 import { EntryListCard } from '../../src/components/EntryCard';
@@ -19,7 +20,8 @@ import { calendarEntryDate } from '../../src/utils/calendar';
 /** 12. 日历页 */
 export default function CalendarScreen() {
   const { c, t, fs, dark, r } = useTheme();
-  const entries = useStore(s => s.entries);
+  const entries = useBookEntries();
+  const openSearch = useOpenSearch();
   const now = new Date();
   const [year, setYear] = useState(now.getFullYear());
   const [month, setMonth] = useState(now.getMonth());
@@ -83,7 +85,7 @@ export default function CalendarScreen() {
   return (
     <Screen edges={['top']}>
       <View style={{ height: 52, paddingHorizontal: 20, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-        <Text style={[t.h1, { fontSize: fs(22) }]}>日历</Text>
+        <ScreenTitle title="日历" />
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
           {!isViewingToday && (
             <Pressable accessibilityRole="button" accessibilityLabel="回到今天" onPress={jumpToday} style={{ minHeight: 44, justifyContent: 'center' }}>
@@ -92,7 +94,7 @@ export default function CalendarScreen() {
               </View>
             </Pressable>
           )}
-          <IconButton icon={Search} label="搜索" onPress={() => router.push('/search')} />
+          <IconButton icon={Search} label="搜索" onPress={openSearch} />
         </View>
       </View>
 

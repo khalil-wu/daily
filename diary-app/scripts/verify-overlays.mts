@@ -15,7 +15,7 @@ const results: { check: string; detail?: unknown }[] = [];
 const errors: string[] = [];
 const image = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aD1sAAAAASUVORK5CYII=';
 function state(): AppState {
-  const initial = { ...defaultState(), onboarded: true, tutorialSeen: true, editorTourSeen: true, usageMode: 'local' as const, backup: { auto: false } };
+  const initial = { ...defaultState(), onboarded: true, tutorialSeen: true, editorTourSeen: true, shelfTourSeen: true, usageMode: 'local' as const, backup: { auto: false } };
   initial.people = [{ id: 'overlay-person', name: '小林', aliases: [], relation: 'friend', birthday: '03-08', color: '#9B785C', createdAt: Date.now() }];
   initial.entries = [actions.newEntry({ id: 'overlay-entry', title: '浮层验收日记', body: '用于回归验证的合成内容', status: 'published', people: ['overlay-person'], photos: [image], createdAt: new Date(2026, 10, 20, 15, 24).getTime() }), actions.newEntry({ id: 'overlay-photo-entry', title: '另一篇照片日记', body: '同一照片可关联不同日记', status: 'published', photos: [image], createdAt: new Date(2026, 10, 19, 15, 24).getTime() })];
   return initial;

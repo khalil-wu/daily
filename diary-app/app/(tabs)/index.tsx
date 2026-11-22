@@ -3,15 +3,15 @@ import { Animated, FlatList, Platform, Pressable, RefreshControl, ScrollView, St
 import { Text } from '../../src/components/text';
 import { router, useNavigation } from 'expo-router';
 import {
-  AudioLines, BookOpen, ChevronDown, CloudOff, FileText, FolderInput, Heart,
-  Image as ImageIcon, LayoutGrid, List, Lock, Pin, Plus, Search, Trash2, X,
+  AudioLines, ChevronDown, CloudOff, FileText, FolderInput, Heart,
+  Image as ImageIcon, LayoutGrid, Library, List, Lock, Pin, Plus, Search, Trash2, X,
 } from 'lucide-react-native';
 import { useTheme } from '../../src/theme/ThemeProvider';
 import { actions, inNotebook, openTutorial, useHydrated, useStore } from '../../src/store/store';
 import { Chip, EmptyState, IconButton, InkPress, Screen, UnderlineTabs, haptic } from '../../src/components/ui';
 import { EntryGridCard, EntryListCard } from '../../src/components/EntryCard';
 import { SwipeRow, closeOpenSwipeRow, type SwipeAction } from '../../src/components/SwipeRow';
-import { TodayCard } from '../../src/components/TodayCard';
+import { leaveBook, useOpenSearch } from '../../src/components/BookScope';
 import { OnThisDay } from '../../src/components/OnThisDay';
 import { animateNextLayout, BottomSheet, CrumpleRow, FadeIn, ND, PressableScale, useReducedMotion, SPRING } from '../../src/components/motion';
 import { setTourHandler, useTourTarget } from '../../src/components/tour';
@@ -65,6 +65,7 @@ export default function HomeScreen() {
   // 听写只在真正支持的环境里给入口（Expo Go / 不支持的原生构建不显示）
   const dictationSupported = useMemo(() => isDictationSupported(), []);
 
+  const openSearch = useOpenSearch();
   const navigation = useNavigation();
   const listRef = useRef<FlatList<any>>(null);
   const titleTarget = useTourTarget('home.title');
@@ -157,14 +158,6 @@ export default function HomeScreen() {
     }
     return out;
   }, [filtered, tab]);
-
-  const notebookCounts = useMemo(() => {
-    const counts = new Map<string, number>();
-    for (const nb of notebooks) {
-      counts.set(nb.id, aliveEntries.filter(e => inNotebook(e, nb.id)).length);
-    }
-    return counts;
-  }, [notebooks, aliveEntries]);
 
   const toggleView = useCallback(() => {
     haptic('light');
@@ -348,7 +341,6 @@ export default function HomeScreen() {
   const listHeader = useMemo(() => {
     return (
       <View>
-        {showToday && <TodayCard />}
         {showToday && <OnThisDay />}
         {moodChips}
 
@@ -481,6 +473,20 @@ export default function HomeScreen() {
       {/* 顶部栏 */}
       <View style={{ height: 52, paddingHorizontal: 20, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
         <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="回到书架"
+          hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
+          onPress={() => {
+            haptic('light');
+            leaveBook();
+          }}
+          style={{ height: 32, paddingHorizontal: 10, borderRadius: 16, flexDirection: 'row', alignItems: 'center', gap: 5, backgroundColor: c.inputBg }}
+        >
+          <Library size={16} color={c.text} strokeWidth={1.9} />
+          <Text style={{ fontSize: fs(13), color: c.text, fontWeight: '600' }}>书架</Text>
+        </Pressable>
+
+        <Pressable
           ref={titleTarget}
           collapsable={false}
           onPress={() => {
@@ -488,20 +494,20 @@ export default function HomeScreen() {
             setDropOpen(true);
           }}
           hitSlop={10}
-          accessibilityLabel="日记本与筛选"
-          style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flexShrink: 1, minWidth: 0 }}
+          accessibilityLabel="筛选与内容空间"
+          style={{ flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, minWidth: 0, paddingHorizontal: 6 }}
         >
           {currentNotebook && (
             <View style={{ width: 9, height: 9, borderRadius: 5, backgroundColor: currentNotebook.color }} />
           )}
-          <Text style={[t.h1, { fontSize: fs(24), flexShrink: 1 }]} numberOfLines={1}>
-            {currentNotebook ? currentNotebook.name : '记得日记'}
+          <Text style={[t.h1, { fontSize: fs(20), flexShrink: 1 }]} numberOfLines={1}>
+            {currentNotebook ? currentNotebook.name : '全部日记'}
           </Text>
           <ChevronDown size={18} color={c.textSub} />
         </Pressable>
 
         <View ref={toolsTarget} collapsable={false} style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-          <IconButton icon={Search} label="搜索" onPress={() => router.push('/search')} />
+          <IconButton icon={Search} label="搜索" onPress={openSearch} />
           <IconButton
             icon={homeView === 'list' ? LayoutGrid : List}
             label="切换视图"
@@ -563,14 +569,14 @@ export default function HomeScreen() {
             onAction={() => router.push('/write')}
             secondary={
               activeNotebook
-                ? '查看全部日记本'
+                ? '回到书架'
                 : entries.length === 0
                   ? '加载示例日记体验'
                   : undefined
             }
             onSecondary={
               activeNotebook
-                ? () => actions.setActiveNotebook(null)
+                ? leaveBook
                 : entries.length === 0
                   ? loadSamples
                   : undefined
@@ -751,76 +757,8 @@ export default function HomeScreen() {
       </View>
 
       {/* 顶部标题下拉面板：日记本切换 + 内容空间 + 筛选 */}
-      <BottomSheet visible={dropOpen} onClose={() => setDropOpen(false)} title="日记本与筛选" maxHeight={0.82}>
+      <BottomSheet visible={dropOpen} onClose={() => setDropOpen(false)} title="筛选与内容空间" maxHeight={0.82}>
         <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingTop: 6, paddingBottom: 8 }}>
-          {/* 日记本切换区 */}
-          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
-            <Text style={{ fontSize: fs(12.5), color: c.textSub }}>我的日记本</Text>
-            <Pressable
-              hitSlop={8}
-              onPress={() => {
-                setDropOpen(false);
-                router.push('/notebooks');
-              }}
-            >
-              <Text style={{ fontSize: fs(12.5), color: c.primaryDark, fontWeight: '500' }}>管理 ›</Text>
-            </Pressable>
-          </View>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingBottom: 16 }}>
-            <Pressable
-              onPress={() => {
-                haptic('light');
-                actions.setActiveNotebook(null);
-                setDropOpen(false);
-              }}
-              style={{
-                flexDirection: 'row',
-                alignItems: 'center',
-                gap: 6,
-                paddingHorizontal: 12,
-                paddingVertical: 8,
-                borderRadius: 12,
-                backgroundColor: activeNotebook === null ? c.primaryFaint : c.card,
-                borderWidth: 1,
-                borderColor: activeNotebook === null ? c.primary : c.divider,
-              }}
-            >
-              <BookOpen size={14} color={activeNotebook === null ? c.primaryDark : c.textSub} />
-              <Text style={{ fontSize: fs(13), color: activeNotebook === null ? c.primaryDark : c.text, fontWeight: activeNotebook === null ? '600' : '400' }}>
-                全部 ({aliveEntries.length})
-              </Text>
-            </Pressable>
-            {notebooks.map(nb => {
-              const active = activeNotebook === nb.id;
-              return (
-                <Pressable
-                  key={nb.id}
-                  onPress={() => {
-                    haptic('light');
-                    actions.setActiveNotebook(nb.id);
-                    setDropOpen(false);
-                  }}
-                  style={{
-                    flexDirection: 'row',
-                    alignItems: 'center',
-                    gap: 6,
-                    paddingHorizontal: 12,
-                    paddingVertical: 8,
-                    borderRadius: 12,
-                    backgroundColor: active ? c.primaryFaint : c.card,
-                    borderWidth: 1,
-                    borderColor: active ? c.primary : c.divider,
-                  }}
-                >
-                  <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: nb.color }} />
-                  <Text style={{ fontSize: fs(13), color: active ? c.primaryDark : c.text, fontWeight: active ? '600' : '400' }}>
-                    {nb.name} ({notebookCounts.get(nb.id) ?? 0})
-                  </Text>
-                </Pressable>
-              );
-            })}
-          </ScrollView>
-
           <Text style={{ fontSize: fs(12.5), color: c.textSub, marginBottom: 8 }}>内容空间</Text>
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginBottom: 18 }}>
             {[

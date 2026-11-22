@@ -4,7 +4,8 @@ import { Text } from '../../src/components/text';
 import { router } from 'expo-router';
 import { ChevronRight, Flame, MapPin, Search, Sparkles } from 'lucide-react-native';
 import { useTheme } from '../../src/theme/ThemeProvider';
-import { useStore } from '../../src/store/store';
+import { useActiveBook, useBookEntries, useStore } from '../../src/store/store';
+import { ScreenTitle, useOpenSearch } from '../../src/components/BookScope';
 import { Card, IconButton, Screen, Segmented } from '../../src/components/ui';
 import { useCountUp } from '../../src/components/motion';
 import { MoodIcon, WeatherIcon } from '../../src/components/MoodIcon';
@@ -30,7 +31,9 @@ type StatsTab = 'overview' | 'mood' | 'writing';
 export default function StatsScreen() {
   const { c, t, fs, r } = useTheme();
   const [chartWidth, setChartWidth] = useState(240);
-  const entries = useStore(s => s.entries);
+  const entries = useBookEntries();
+  const book = useActiveBook();
+  const openSearch = useOpenSearch();
   const tags = useStore(s => s.tags);
   const [sub, setSub] = useState<StatsTab>('overview');
   const [range, setRange] = useState<7 | 30 | 0>(30);
@@ -63,8 +66,8 @@ export default function StatsScreen() {
   return (
     <Screen edges={['top']}>
       <View style={{ height: 52, paddingHorizontal: 20, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-        <Text style={[t.h1, { fontSize: fs(22) }]}>统计</Text>
-        <IconButton icon={Search} label="搜索" onPress={() => router.push('/search')} />
+        <ScreenTitle title="统计" />
+        <IconButton icon={Search} label="搜索" onPress={openSearch} />
       </View>
 
       <View style={{ paddingHorizontal: 20, paddingBottom: 12 }}>
@@ -94,7 +97,7 @@ export default function StatsScreen() {
                 </View>
                 <View style={{ flex: 1, minWidth: 0 }}>
                   <Text style={[t.h3, { fontSize: fs(14.5), color: c.primaryDark }]} numberOfLines={1}>
-                    {currentYear} 年度回顾报告
+                    {book ? `${book.name} · ${currentYear} 年度回顾` : `${currentYear} 年度回顾报告`}
                   </Text>
                   <Text style={{ fontSize: fs(11.5), color: c.textSub, marginTop: 2 }} numberOfLines={1}>
                     情绪像素、年度词云与高光时刻

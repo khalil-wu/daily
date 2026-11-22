@@ -4,25 +4,31 @@ import { Text } from '../src/components/text';
 import { router, useLocalSearchParams } from 'expo-router';
 import { ChevronLeft, Clock, X } from 'lucide-react-native';
 import { useTheme } from '../src/theme/ThemeProvider';
-import { actions, useStore } from '../src/store/store';
+import { actions, scopeEntries, useStore } from '../src/store/store';
 import { MOODS } from '../src/data/constants';
 import type { Entry, MoodKey } from '../src/store/types';
 import { Chip, EmptyState, Screen, SearchBar, goBack } from '../src/components/ui';
 import { EntryListCard } from '../src/components/EntryCard';
 import { MoodIcon } from '../src/components/MoodIcon';
 import { IMAGES } from '../src/data/assets';
+import { resolveSearchScope } from '../src/utils/editor';
 import { buildSearchIndex, searchEntries } from '../src/utils/search';
 
 const HOT_KEYWORDS = ['成长', '情绪', '旅行', '生活', '工作', '阅读', '自我', '感恩', '视频'];
 
 /** 14 & 设计稿3 #14. 搜索页（最近搜索、热门关键词、结果高亮、无结果空状态） */
 export default function SearchScreen() {
-  const params = useLocalSearchParams<{ q?: string; tag?: string; mood?: MoodKey; person?: string }>();
+  const params = useLocalSearchParams<{ q?: string; tag?: string; mood?: MoodKey; person?: string; scope?: string }>();
   const { c, fs } = useTheme();
-  const entries = useStore(s => s.entries);
+  const allEntries = useStore(s => s.entries);
+  const notebooks = useStore(s => s.notebooks);
   const tags = useStore(s => s.tags);
   const people = useStore(s => s.people);
   const recent = useStore(s => s.recentSearches);
+  const scopeId = useMemo(() => resolveSearchScope(params.scope, notebooks), [params.scope, notebooks]);
+  const scopeName = scopeId ? notebooks.find(n => n.id === scopeId)?.name : undefined;
+  const [scopedOnly, setScopedOnly] = useState(true);
+  const entries = useMemo(() => scopeEntries(allEntries, scopeId && scopedOnly ? scopeId : null), [allEntries, scopeId, scopedOnly]);
 
   const [query, setQuery] = useState(params.q ?? '');
   const [filterTag, setFilterTag] = useState<string | null>(params.tag ?? null);
@@ -85,6 +91,12 @@ export default function SearchScreen() {
           style={{ flex: 1 }}
         />
       </View>
+
+      {scopeId && scopeName && (
+        <View style={{ flexDirection: 'row', paddingHorizontal: 20, paddingBottom: 8 }}>
+          <Chip size="sm" selected={scopedOnly} label={`只搜「${scopeName}」`} onPress={() => setScopedOnly(v => !v)} />
+        </View>
+      )}
 
       {(filterTag || filterMood || filterPerson) && (
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, paddingHorizontal: 20, paddingBottom: 8 }}>

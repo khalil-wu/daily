@@ -1139,7 +1139,7 @@ function WriteEditor() {
             hitSlop={8}
             onPress={() => {
               setNbModal(false);
-              router.push('/notebooks');
+              router.push('/shelf');
             }}
           >
             <Text style={{ fontSize: fs(12.5), color: c.primaryDark }}>管理 ›</Text>

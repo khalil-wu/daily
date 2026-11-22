@@ -193,7 +193,7 @@ function SavedContent() {
           </FadeIn>
 
           <Pressable onPress={() => router.replace('/(tabs)')} style={{ marginTop: 18 }}>
-            <Text style={{ fontSize: fs(13), color: c.textSub }}>回到首页</Text>
+            <Text style={{ fontSize: fs(13), color: c.textSub }}>回到日记本</Text>
           </Pressable>
         </View>
 

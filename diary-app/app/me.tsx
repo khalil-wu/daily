@@ -1,28 +1,28 @@
 import React, { useMemo, useState } from 'react';
 import { Image, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { Image as ExpoImage } from 'expo-image';
-import { Text } from '../../src/components/text';
+import { Text } from '../src/components/text';
 import { router } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as ImagePicker from 'expo-image-picker';
 import {
-  Bell, BookMarked, BookOpen, ChevronRight, Cloud, Download, FileText, HardDrive, Heart,
+  Bell, BookMarked, ChevronLeft, BookOpen, ChevronRight, Cloud, Download, FileText, HardDrive, Heart,
   HelpCircle, Image as ImageIcon, Info, MapPin, Palette, Settings, Shield, Sparkles, Target, Trash2, Users,
 } from 'lucide-react-native';
-import { useIllustrations, useTheme } from '../../src/theme/ThemeProvider';
-import { actions, useStore } from '../../src/store/store';
-import { Button, Card, Field, Group, Row, Screen } from '../../src/components/ui';
-import { useFeedback } from '../../src/components/feedback';
-import { BottomSheet, PressableScale, useCountUp } from '../../src/components/motion';
-import { startHomeTour } from '../../src/components/TutorialOverlay';
-import { IMAGES, photoSource } from '../../src/data/assets';
-import { storePhoto } from '../../src/services/photoStore';
-import { usePhotoUri } from '../../src/utils/usePhotoUri';
-import { uid } from '../../src/utils/text';
-import { computeStats } from '../../src/utils/stats';
-import { daysBetween } from '../../src/utils/date';
-import { fmtNumber } from '../../src/utils/text';
+import { useIllustrations, useTheme } from '../src/theme/ThemeProvider';
+import { actions, useStore } from '../src/store/store';
+import { Button, Card, Field, Group, Row, Screen, goBack } from '../src/components/ui';
+import { useFeedback } from '../src/components/feedback';
+import { BottomSheet, PressableScale, useCountUp } from '../src/components/motion';
+import { startHomeTour } from '../src/components/TutorialOverlay';
+import { IMAGES, photoSource } from '../src/data/assets';
+import { storePhoto } from '../src/services/photoStore';
+import { usePhotoUri } from '../src/utils/usePhotoUri';
+import { uid } from '../src/utils/text';
+import { computeStats } from '../src/utils/stats';
+import { daysBetween } from '../src/utils/date';
+import { fmtNumber } from '../src/utils/text';
 
 /** 16 & 设计稿3 #1. 个人中心页 */
 export default function MeScreen() {
@@ -90,6 +90,17 @@ export default function MeScreen() {
           <LinearGradient colors={['transparent', c.bg]} style={{ position: 'absolute', left: 0, right: 0, bottom: 0, height: 64 }} />
           <Pressable
             accessibilityRole="button"
+            accessibilityLabel="返回"
+            onPress={goBack}
+            hitSlop={12}
+            style={{ position: 'absolute', top: insets.top + 4, left: 14, minWidth: 44, minHeight: 44, alignItems: 'center', justifyContent: 'center' }}
+          >
+            <View style={{ width: 38, height: 38, borderRadius: 19, backgroundColor: dark ? 'rgba(0,0,0,0.45)' : 'rgba(255,255,255,0.9)', borderWidth: inkLook ? 1.25 : 0, borderColor: ink.line, alignItems: 'center', justifyContent: 'center' }}>
+              <ChevronLeft size={21} color={c.text} strokeWidth={1.8} />
+            </View>
+          </Pressable>
+          <Pressable
+            accessibilityRole="button"
             accessibilityLabel="设置"
             onPress={() => router.push('/settings')}
             hitSlop={12}
@@ -121,7 +132,7 @@ export default function MeScreen() {
           </Pressable>
 
           {/* 3 栏核心数字（轻点直达统计） */}
-          <Card onPress={() => router.push('/(tabs)/stats')} style={{ flexDirection: 'row', paddingVertical: 16, marginBottom: 14 }}>
+          <Card style={{ flexDirection: 'row', paddingVertical: 16, marginBottom: 14 }}>
             {[
               { num: stats.recordDays, label: '记录天数' },
               { num: stats.totalEntries, label: '日记篇数' },
@@ -135,7 +146,7 @@ export default function MeScreen() {
           <Text style={{ fontSize: fs(12.5), letterSpacing: 0.4, color: c.textSub, marginBottom: 8, marginLeft: 6, fontWeight: '500' }}>我的空间</Text>
           <Card style={{ flexDirection: 'row', flexWrap: 'wrap', paddingHorizontal: 6, paddingVertical: 10, marginBottom: 14 }}>
             {[
-              { icon: BookMarked, label: '日记本', badge: `${notebooks.length}`, path: '/notebooks' as const },
+              { icon: BookMarked, label: '日记本', badge: `${notebooks.length}`, path: '/shelf' as const },
               { icon: Users, label: '身边人', badge: people.length ? `${people.length}` : undefined, path: '/people' as const },
               { icon: ImageIcon, label: '影像记忆', badge: stats.totalPhotos ? `${stats.totalPhotos}` : undefined, path: '/photos' as const },
               { icon: MapPin, label: '足迹地图', badge: stats.placeCounts.length ? `${stats.placeCounts.length}` : undefined, path: '/memory-map' as const },

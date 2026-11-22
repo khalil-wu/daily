@@ -19,7 +19,7 @@ async function contextFor(viewport, appearance = {}, options = {}) {
     localStorage.setItem('jide-diary:state:v1', JSON.stringify(initial));
     sessionStorage.setItem('design-system-seeded', 'yes');
   }, {
-    version: 1, onboarded: true, tutorialSeen: true, editorTourSeen: true, usageMode: 'local',
+    version: 1, onboarded: true, tutorialSeen: true, editorTourSeen: true, shelfTourSeen: true, usageMode: 'local',
     entries: [], backup: { auto: false },
     appearance: { theme: 'light', style: 'warm', accent: 'latte', fontScale: 'standard', fontFamily: 'serif', lineHeight: 'relaxed', contentWidth: 0.37, cardStyle: 'image', ...appearance },
   });

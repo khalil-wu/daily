@@ -10,5 +10,5 @@ export default function Index() {
   const { c } = useTheme();
 
   if (!hydrated) return <View style={{ flex: 1, backgroundColor: c.bg }} />;
-  return <Redirect href={onboarded ? '/(tabs)' : '/onboarding'} />;
+  return <Redirect href={onboarded ? '/shelf' : '/onboarding'} />;
 }

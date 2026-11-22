@@ -12,7 +12,7 @@ entries[0] = { ...entries[0], id: 'audit-entry', people: ['audit-person'] };
 entries.push(...buildSampleDrafts(now));
 entries.push({ ...entries[0], id: 'audit-hidden', title: '隐藏日记示例', hidden: true });
 entries.push({ ...entries[0], id: 'audit-deleted', title: '回收站示例', deletedAt: now });
-const state = { ...defaultState(), entries, onboarded: true, tutorialSeen: true, editorTourSeen: true,
+const state = { ...defaultState(), entries, onboarded: true, tutorialSeen: true, editorTourSeen: true, shelfTourSeen: true,
   backup: { auto: false }, people: [{ id: 'audit-person', name: '小林', aliases: ['林同学'], relation: 'friend', color: '#56875F', createdAt: now - 86400000, note: '一起旅行的朋友', birthday: '12-15' }],
   conflicts: [{ entryId: 'audit-entry', localUpdatedAt: now, cloudUpdatedAt: now + 1000, cloudEntry: { ...entries[0], body: '另一个版本的示例内容', updatedAt: now + 1000 } }],
 };

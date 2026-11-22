@@ -49,20 +49,10 @@ const HOME_STEPS: TourStep[] = [
     radius: 999,
   },
   {
-    key: 'today',
-    tag: '今日',
-    title: '每天一张小卡片',
-    desc: '点一个心情就能开始写；不知道写什么时，试试今日灵感。写完后这里会收起，只留今日进度和连续天数。',
-    targets: ['home.today'],
-    optional: true,
-    pad: 4,
-    radius: 18,
-  },
-  {
     key: 'title',
     tag: '整理',
-    title: '日记本与筛选',
-    desc: '点标题可以切换日记本、按心情或标签筛选，还能进入草稿箱、收藏和最近删除。',
+    title: '筛选与内容空间',
+    desc: '点标题可以按心情或标签筛选，还能进入草稿箱、收藏和最近删除；左边的「书架」会合上这本书回到书架。',
     targets: ['home.title'],
     pad: 8,
     radius: 14,
@@ -95,9 +85,9 @@ const HOME_STEPS: TourStep[] = [
   {
     key: 'insight',
     tag: '洞察与守护',
-    title: '统计与我的',
-    desc: '「统计」呈现情绪和写作习惯；「我的」里有应用锁、备份恢复和导入导出，守护你的记录。',
-    targets: ['tab.stats', 'tab.me'],
+    title: '统计与守护',
+    desc: '「统计」呈现这本书里的情绪和写作习惯；书架页右上角的头像进入「我的」，那里有应用锁、备份恢复和导入导出。',
+    targets: ['tab.stats'],
     pad: -3,
     radius: 16,
   },
@@ -106,6 +96,19 @@ const HOME_STEPS: TourStep[] = [
     tag: '完成',
     title: '准备好了',
     desc: '现在就写下今天的一句话吧，\n哪怕只有一行，也是值得记住的一天。',
+  },
+];
+
+const SHELF_STEPS: TourStep[] = [
+  {
+    key: 'shelf',
+    tag: '书架',
+    title: '这是你的书架，点一本翻开',
+    desc: '每本日记本都是一本真正的书，翻开就进入这本书里的日记、日历、回顾与统计；「全部日记」会汇总所有内容。',
+    targets: ['shelf.books'],
+    optional: true,
+    pad: 6,
+    radius: 14,
   },
 ];
 
@@ -287,7 +290,7 @@ export function TutorialOverlay({ tour, onFinish }: { tour: TourKind | null; onF
 function TourRunner({ tour, onFinish }: { tour: TourKind; onFinish: (tour: TourKind, completed: boolean) => void }) {
   const { c, t, fs, dark } = useTheme();
   const insets = useSafeAreaInsets();
-  const steps = tour === 'home' ? HOME_STEPS : EDITOR_STEPS;
+  const steps = tour === 'home' ? HOME_STEPS : tour === 'shelf' ? SHELF_STEPS : EDITOR_STEPS;
 
   const [idx, setIdx] = useState(0);
   const [size, setSize] = useState({ w: 0, h: 0 });

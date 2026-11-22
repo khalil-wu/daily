@@ -61,7 +61,7 @@ export default function SettingsIndexScreen() {
             title="我的日记本"
             subtitle="新建、分类管理你的日记本"
             value={`${notebooks.length} 本`}
-            onPress={() => router.push('/notebooks')}
+            onPress={() => router.push('/shelf')}
           />
           <Row
             icon={Target}

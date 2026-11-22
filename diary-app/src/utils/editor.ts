@@ -16,6 +16,12 @@ export function insertDictation(body: string, text: string, selection: { start: 
   return { body: body.slice(0, start) + text + body.slice(end), cursor: start + text.length };
 }
 
+/** /search?scope=<id>：从某本书里进入时默认只搜这本；日记本不存在或未传时为 null（搜全部） */
+export function resolveSearchScope(param: string | undefined, notebooks: Notebook[]): string | null {
+  if (!param) return null;
+  return notebooks.some(n => n.id === param) ? param : null;
+}
+
 /** /write?notebook=<id>：仅新建时生效；编辑已有日记、或日记本不存在时忽略（回落到当前日记本规则） */
 export function resolveWriteNotebook(param: string | undefined, notebooks: Notebook[], editingId?: string): string | undefined {
   if (!param || editingId) return undefined;

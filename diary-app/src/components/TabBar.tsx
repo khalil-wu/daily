@@ -16,7 +16,6 @@ const TAB_META: Record<string, { label: string }> = {
   calendar: { label: '日历' },
   review: { label: '回顾' },
   stats: { label: '统计' },
-  me: { label: '我的' },
 };
 
 const TabItem = React.memo(function TabItem({ name, focused, onPress, onLongPress }: { name: string; focused: boolean; onPress: () => void; onLongPress: () => void }) {

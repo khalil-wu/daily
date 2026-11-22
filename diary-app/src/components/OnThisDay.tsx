@@ -6,7 +6,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import Svg, { Path } from 'react-native-svg';
 import { ChevronRight, Heart, History } from 'lucide-react-native';
 import { useTheme } from '../theme/ThemeProvider';
-import { useStore } from '../store/store';
+import { useBookEntries } from '../store/store';
 import { fmtMonthDay } from '../utils/date';
 import { excerpt } from '../utils/text';
 import { entryCover } from '../utils/video';
@@ -24,7 +24,7 @@ import type { Entry } from '../store/types';
  */
 export function OnThisDay() {
   const { c, t, fs } = useTheme();
-  const entries = useStore(s => s.entries);
+  const entries = useBookEntries();
   const [now, setNow] = useState(() => Date.now());
   useFocusEffect(
     React.useCallback(() => {

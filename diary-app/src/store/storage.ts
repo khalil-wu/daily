@@ -39,6 +39,8 @@ export function defaultState(): AppState {
     onboarded: false,
     tutorialSeen: false,
     editorTourSeen: false,
+    shelfTourSeen: false,
+    shelfDragHintSeen: false,
     usageMode: null,
     entries: [],
     tags: DEFAULT_TAGS,

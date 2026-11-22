@@ -76,7 +76,7 @@ export default function LoginScreen() {
       }
       if (!onboarded) actions.completeOnboarding('account');
       toast('登录成功');
-      router.replace('/(tabs)');
+      router.replace('/shelf');
       return;
     }
     if (password.length < 6) {
@@ -92,7 +92,7 @@ export default function LoginScreen() {
     }
     if (!onboarded) actions.completeOnboarding('account');
     toast('登录成功');
-    router.replace('/(tabs)');
+    router.replace('/shelf');
   };
 
   return (
@@ -164,7 +164,7 @@ export default function LoginScreen() {
                       accessibilityLabel={`使用账号 ${a.identifier}`}
                       onPress={() => void (async () => {
                         const res = await actions.quickSwitchTo(a.id);
-                        if (res.ok) { toast('已切换账号'); router.replace('/(tabs)'); return; }
+                        if (res.ok) { toast('已切换账号'); router.replace('/shelf'); return; }
                         setIdentifier(a.identifier);
                       })()}
                       style={{ paddingHorizontal: 12, paddingVertical: 7, borderRadius: 999, backgroundColor: c.card, borderWidth: 1, borderColor: c.divider }}

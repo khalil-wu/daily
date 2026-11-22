@@ -13,7 +13,7 @@ const errors: string[] = [];
 const results: string[] = [];
 
 function seedState(): AppState {
-  return { ...defaultState(), onboarded: true, tutorialSeen: true, editorTourSeen: true, usageMode: 'local', backup: { auto: false } };
+  return { ...defaultState(), onboarded: true, tutorialSeen: true, editorTourSeen: true, shelfTourSeen: true, usageMode: 'local', backup: { auto: false } };
 }
 
 async function seededContext(state: AppState): Promise<{ context: BrowserContext; page: Page }> {
@@ -50,6 +50,7 @@ try {
   state.recentSearches = ['需要删除的记录'];
   const { context, page } = await seededContext(state);
   await page.goto(baseURL);
+  await page.getByRole('button', { name: /^日记本 全部日记/ }).click();
   await page.getByRole('button', { name: '新建日记', exact: true }).click();
   await page.getByText('写日记', { exact: true }).click();
   await page.getByLabel('日记标题', { exact: true }).fill('快速返回草稿');
@@ -106,7 +107,7 @@ try {
   const expand = page.getByRole('button', { name: '展开今日卡片', exact: true });
   if (await expand.count()) await expand.click();
   await page.getByRole('button', { name: '换一个写作灵感', exact: true }).click();
-  assert.equal(new URL(page.url()).pathname, '/');
+  assert.equal(new URL(page.url()).pathname, '/shelf');
   results.push('更换灵感只更新题目，不误触新建日记');
   await context.close();
 
