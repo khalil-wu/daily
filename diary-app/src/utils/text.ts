@@ -39,6 +39,8 @@ export function plainText(body: string) {
     .replace(/^(-{3,}|\*{3,})\s*$/gm, '')
     .replace(/\*\*(.+?)\*\*/g, '$1')
     .replace(/__(.+?)__/g, '$1')
+    .replace(/~~(.+?)~~/g, '$1')
+    .replace(/==(.+?)==/g, '$1')
     .replace(/\*(.+?)\*/g, '$1')
     .replace(/^#\s+/gm, '')
     .replace(/^>\s?/gm, '')

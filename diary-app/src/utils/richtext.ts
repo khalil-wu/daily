@@ -152,3 +152,31 @@ export function continueListOnEnter(prev: string, next: string, caret?: number):
     cursor: i + 1 + nextPrefix.length,
   };
 }
+
+export type InlineMark = 'bold' | 'italic' | 'underline' | 'strike' | 'highlight';
+export interface InlineToken {
+  text: string;
+  mark?: InlineMark;
+}
+
+const INLINE_RE = /(\*\*(.+?)\*\*|__(.+?)__|\*(.+?)\*|~~(.+?)~~|==(.+?)==)/g;
+
+/** 解析行内标记：**粗体** *斜体* __下划线__ ~~删除线~~ ==高亮== */
+export function parseInline(line: string): InlineToken[] {
+  const tokens: InlineToken[] = [];
+  let last = 0;
+  let match: RegExpExecArray | null;
+  INLINE_RE.lastIndex = 0;
+  while ((match = INLINE_RE.exec(line)) !== null) {
+    if (match.index > last) tokens.push({ text: line.slice(last, match.index) });
+    const mark: InlineMark = match[2] !== undefined ? 'bold'
+      : match[3] !== undefined ? 'underline'
+      : match[4] !== undefined ? 'italic'
+      : match[5] !== undefined ? 'strike'
+      : 'highlight';
+    tokens.push({ text: match[2] ?? match[3] ?? match[4] ?? match[5] ?? match[6] ?? '', mark });
+    last = INLINE_RE.lastIndex;
+  }
+  if (last < line.length) tokens.push({ text: line.slice(last) });
+  return tokens;
+}

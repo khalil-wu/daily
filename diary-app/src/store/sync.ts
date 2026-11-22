@@ -12,7 +12,7 @@ export function entryFingerprint(e: Entry): string {
     e.videos.map(v => [v.id, v.uri, v.duration, v.poster, v.width, v.height, v.createdAt]),
     e.favorite, e.pinned, e.hidden, e.deletedAt, e.purgedAt, e.weather, e.temperature,
     e.place?.name, e.place?.detail, e.place?.latitude, e.place?.longitude,
-    e.template, e.notebookId, e.photoLayout, e.ai?.reply?.text, e.ai?.reply?.at];
+    e.template, e.notebookId, e.photoLayout, e.paper, e.ai?.reply?.text, e.ai?.reply?.at];
   return Array.from(sha256(new TextEncoder().encode(JSON.stringify(content))), n => n.toString(16).padStart(2, '0')).join('');
 }
 

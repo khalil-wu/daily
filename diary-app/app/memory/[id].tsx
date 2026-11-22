@@ -8,7 +8,9 @@ import {
 } from 'lucide-react-native';
 import { useTheme } from '../../src/theme/ThemeProvider';
 import { actions, useEntry, useStore } from '../../src/store/store';
-import { DEFAULT_NOTEBOOK_ID, moodMeta, moodTint, weatherMeta } from '../../src/data/constants';
+import { DEFAULT_NOTEBOOK_ID, moodMeta, moodTint, paperColors, weatherMeta } from '../../src/data/constants';
+import { PAPER_IMAGES } from '../../src/data/assets';
+import { Image as ExpoImage } from 'expo-image';
 import { Chip, EmptyState, IconButton, NavBar, Photo, Screen, goBack, haptic } from '../../src/components/ui';
 import { MoodIcon, WeatherIcon } from '../../src/components/MoodIcon';
 import { RichBody } from '../../src/components/RichBody';
@@ -65,6 +67,14 @@ function MemoryDetailContent() {
     };
   }, [entries, entry]);
 
+  const paperBg = React.useMemo(
+    () =>
+      entry?.paper && PAPER_IMAGES[entry.paper] ? (
+        <ExpoImage source={PAPER_IMAGES[entry.paper] as any} style={StyleSheet.absoluteFill} contentFit="cover" cachePolicy="memory-disk" transition={120} pointerEvents="none" />
+      ) : null,
+    [entry?.paper],
+  );
+
   if (!entry) {
     return (
       <Screen edges={['top']}>
@@ -82,6 +92,7 @@ function MemoryDetailContent() {
   const d = new Date(entry.createdAt);
   const padH = Math.round(28 - contentWidth * 14);
   const words = wordCount(entry.title) + wordCount(entry.body);
+  const pcol = paperColors(entry.paper);
   const readMinutes = Math.max(1, Math.ceil(words / 350));
   // 分享卡配图：有照片用照片，只有视频时用视频封面
   const shareCover = entryCover(entry);
@@ -186,17 +197,20 @@ function MemoryDetailContent() {
         scrollEventThrottle={16}
         contentContainerStyle={{ paddingHorizontal: padH, paddingTop: 12, paddingBottom: 32 }}
       >
-        {!!entry.title && <Text style={[t.readingTitle, { fontSize: fs(24), lineHeight: fs(24) * 1.42 }]}>{entry.title}</Text>}
+        {/* 信纸内容区：标题+正文，文字配色由底纸决定 */}
+        <View style={paperBg ? { borderRadius: r(18), overflow: 'hidden', paddingHorizontal: 20, paddingVertical: 20 } : undefined}>
+          {paperBg}
+        {!!entry.title && <Text style={[t.readingTitle, { fontSize: fs(24), lineHeight: fs(24) * 1.42, color: pcol?.text ?? c.text }]}>{entry.title}</Text>}
 
         {/* 元信息分两行：时间 + 日记本 ／ 地点 · 天气 */}
         <View style={{ flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 8, marginTop: 10 }}>
-          <Text style={{ fontSize: fs(12.5), color: c.textSub }}>
+          <Text style={{ fontSize: fs(12.5), color: pcol?.sub ?? c.textSub }}>
             {fmtMonthDayTime(entry.createdAt)} {WEEK_CN[d.getDay()]}
           </Text>
           {notebook && (
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5, paddingHorizontal: 8, paddingVertical: 2, borderRadius: r(999), backgroundColor: c.cardAlt, borderWidth: StyleSheet.hairlineWidth, borderColor: c.divider }}>
               <View style={{ width: 7, height: 7, borderRadius: 3.5, backgroundColor: notebook.color }} />
-              <Text style={{ fontSize: fs(11), color: c.textSub }}>{notebook.name}</Text>
+              <Text style={{ fontSize: fs(11), color: pcol?.sub ?? c.textSub }}>{notebook.name}</Text>
             </View>
           )}
         </View>
@@ -205,14 +219,14 @@ function MemoryDetailContent() {
             {!!entry.place?.name && (
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 3, flexShrink: 1 }}>
                 <MapPin size={12} color={c.textMuted} />
-                <Text numberOfLines={1} style={{ fontSize: fs(12.5), color: c.textSub, flexShrink: 1 }}>{entry.place.name}</Text>
+                <Text numberOfLines={1} style={{ fontSize: fs(12.5), color: pcol?.sub ?? c.textSub, flexShrink: 1 }}>{entry.place.name}</Text>
               </View>
             )}
-            {!!entry.place?.name && weather && <Text style={{ fontSize: fs(12.5), color: c.textMuted }}>·</Text>}
+            {!!entry.place?.name && weather && <Text style={{ fontSize: fs(12.5), color: pcol?.placeholder ?? c.textMuted }}>·</Text>}
             {weather && (
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
                 <WeatherIcon weather={weather.key} size={14} />
-                <Text style={{ fontSize: fs(12.5), color: c.textSub }}>
+                <Text style={{ fontSize: fs(12.5), color: pcol?.sub ?? c.textSub }}>
                   {weather.label}{entry.temperature != null ? ` ${entry.temperature}°C` : ''}
                 </Text>
               </View>
@@ -284,12 +298,15 @@ function MemoryDetailContent() {
           <View style={{ marginTop: 22 }}>
             <RichBody
               body={entry.body}
+              colors={pcol ? { text: pcol.text, sub: pcol.sub, muted: pcol.placeholder } : undefined}
               onToggleTodo={lineIdx => {
                 actions.updateEntry(entry.id, { body: toggleTodoAtLine(entry.body, lineIdx) });
               }}
             />
           </View>
         )}
+
+        </View>
 
         <Text style={{ fontSize: fs(11.5), color: c.textMuted, marginTop: 26 }}>
           共 {words} 字 · 预计阅读 {readMinutes} 分钟

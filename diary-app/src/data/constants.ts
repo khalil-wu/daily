@@ -1,4 +1,4 @@
-import type { MoodKey, Notebook, RelationKey, Tag, WeatherKey } from '../store/types';
+import type { MoodKey, Notebook, PaperKey, RelationKey, Tag, WeatherKey } from '../store/types';
 
 /** 身边人的关系分组（顺序即列表里的展示顺序） */
 export const RELATIONS: { key: RelationKey; label: string }[] = [
@@ -41,9 +41,11 @@ export const MOODS: MoodMeta[] = [
   { key: 'tired', label: '疲惫', desc: '有些累', color: '#B9A7C9', soft: '#EEE8F3', score: 2 },
   { key: 'down', label: '低落', desc: '情绪低沉', color: '#93AFCF', soft: '#E4ECF5', score: 1 },
   { key: 'anxious', label: '焦虑', desc: '有些不安', color: '#E8A86B', soft: '#FBE9D8', score: 2 },
+  { key: 'excited', label: '兴奋', desc: '充满干劲', color: '#F29E4C', soft: '#FDEBD9', score: 5 },
+  { key: 'angry', label: '生气', desc: '有些恼火', color: '#E06A5F', soft: '#FADFDB', score: 1 },
 ];
 
-export const MOOD_ORDER: MoodKey[] = ['happy', 'calm', 'tired', 'down', 'anxious', 'grateful'];
+export const MOOD_ORDER: MoodKey[] = ['happy', 'excited', 'calm', 'grateful', 'tired', 'down', 'anxious', 'angry'];
 
 export function moodMeta(key?: MoodKey): MoodMeta | undefined {
   return MOODS.find(m => m.key === key);
@@ -58,7 +60,7 @@ export function moodTint(mood: MoodMeta | undefined, dark: boolean): string {
 export interface WeatherMeta {
   key: WeatherKey;
   label: string;
-  icon: 'Sun' | 'CloudSun' | 'Cloud' | 'CloudDrizzle' | 'CloudRain' | 'CloudRainWind' | 'Snowflake' | 'CloudLightning';
+  icon: 'Sun' | 'CloudSun' | 'Cloud' | 'CloudDrizzle' | 'CloudRain' | 'CloudRainWind' | 'Snowflake' | 'CloudLightning' | 'Wind' | 'Moon';
   color: string;
 }
 
@@ -71,10 +73,38 @@ export const WEATHERS: WeatherMeta[] = [
   { key: 'heavyRain', label: '大雨', icon: 'CloudRainWind', color: '#5B86AE' },
   { key: 'snow', label: '雪', icon: 'Snowflake', color: '#8FB7D6' },
   { key: 'thunder', label: '雷阵雨', icon: 'CloudLightning', color: '#C49A5A' },
+  { key: 'windy', label: '有风', icon: 'Wind', color: '#7FA9C2' },
+  { key: 'clearNight', label: '晴夜', icon: 'Moon', color: '#8C94C8' },
 ];
 
 export function weatherMeta(key?: WeatherKey): WeatherMeta | undefined {
   return WEATHERS.find(w => w.key === key);
+}
+
+/** 信纸（15-backgrounds）：dark 表示底纸本身是深色，文字配色随之固定 */
+export interface PaperMeta { key: PaperKey; name: string; dark: boolean }
+export const PAPERS: PaperMeta[] = [
+  { key: 'paper-white', name: '纯白纤纸', dark: false },
+  { key: 'mist-blue', name: '蓝雾留白', dark: false },
+  { key: 'mint-leaves', name: '薄荷叶影', dark: false },
+  { key: 'lilac-air', name: '紫雾呼吸', dark: false },
+  { key: 'night-sky', name: '夜空信纸', dark: true },
+  { key: 'ocean', name: '海风信纸', dark: false },
+  { key: 'forest', name: '森林信纸', dark: false },
+  { key: 'ink', name: '水墨信纸', dark: false },
+  { key: 'scrapbook', name: '拼贴信纸', dark: false },
+  { key: 'geometric', name: '几何信纸', dark: false },
+];
+export function paperMeta(key?: PaperKey): PaperMeta | undefined {
+  return PAPERS.find(p => p.key === key);
+}
+/** 信纸上的文字配色由底纸决定，不跟随应用深浅模式（用户内容背景规则） */
+export function paperColors(key?: PaperKey) {
+  const meta = paperMeta(key);
+  if (!meta) return undefined;
+  return meta.dark
+    ? { text: '#EEF1FA', sub: '#B8C0DA', placeholder: '#8E97B8', caret: '#9AA8F0' }
+    : { text: '#1F2528', sub: '#545B60', placeholder: '#8A9196', caret: '#3F5FB8' };
 }
 
 /** 标签可用图标（lucide 名称） */

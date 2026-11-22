@@ -44,7 +44,7 @@ export default function MoodPickerScreen() {
                   width: '48%',
                   backgroundColor: on ? c.primaryFaint : c.card,
                   borderRadius: r(18),
-                  paddingVertical: 20,
+                  paddingVertical: 16,
                   paddingHorizontal: 14,
                   alignItems: 'center',
                   ...(ink.on

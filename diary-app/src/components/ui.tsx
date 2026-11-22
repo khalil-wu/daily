@@ -17,7 +17,6 @@ import {
 } from 'lucide-react-native';
 import { useIllustrations, useStyles, useTheme, type Theme } from '../theme/ThemeProvider';
 import { control, radius } from '../theme/tokens';
-import { mixHex } from '../theme/palette';
 import { photoSource, type IllustrationName } from '../data/assets';
 import { usePhotoUri } from '../utils/usePhotoUri';
 import { ND, PressableScale, SPRING, useReducedMotion } from './motion';
@@ -946,7 +945,8 @@ export function Illustration({ name, size = 160, style }: { name: IllustrationNa
   return (
     <View accessibilityElementsHidden importantForAccessibility="no-hide-descendants" style={[{ width: size, height: size }, style]}>
       {dark && pack.darkPlate ? (
-        <View style={{ flex: 1, backgroundColor: mixHex(c.card, '#FFFFFF', 0.86), borderRadius: r(24), padding: size * 0.12, borderWidth: 1, borderColor: ink.soft }}>
+        // 「贴上去的明信片」底托：暖纸色 + 硬影 + 微倾角，避免墨色笔触在深色底上消失
+        <View style={{ flex: 1, backgroundColor: '#F6F4EF', borderRadius: r(22), padding: size * 0.1, boxShadow: '0px 3px 0px #000000', transform: [{ rotate: '-1.5deg' }] }}>
           {img}
         </View>
       ) : img}

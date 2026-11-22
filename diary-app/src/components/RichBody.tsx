@@ -3,7 +3,7 @@ import { Pressable, StyleSheet, View, type TextStyle } from 'react-native';
 import { Text } from './text';
 import { Check } from 'lucide-react-native';
 import { useTheme } from '../theme/ThemeProvider';
-import { parseBlocks } from '../utils/richtext';
+import { parseBlocks, parseInline } from '../utils/richtext';
 import { haptic } from './ui';
 
 /** 高亮搜索关键词 */
@@ -40,26 +40,28 @@ export function HighlightText({ text, query, style, numberOfLines }: { text: str
   );
 }
 
-/** 渲染行内 **粗体**、*斜体*、__下划线__ */
-function renderInline(line: string, baseStyle: TextStyle, accentColor: string) {
-  const tokens: React.ReactNode[] = [];
-  const regex = /(\*\*(.+?)\*\*|__(.+?)__|\*(.+?)\*)/g;
-  let last = 0;
-  let match: RegExpExecArray | null;
+/** 渲染行内标记（~~删除线~~、==高亮== 等同语法见 parseInline） */
+function renderInline(line: string, baseStyle: TextStyle, accentColor: string, dark = false) {
+  const tokens = parseInline(line);
+  const nodes: React.ReactNode[] = [];
+  let plain = '';
   let k = 0;
-  while ((match = regex.exec(line)) !== null) {
-    if (match.index > last) tokens.push(line.slice(last, match.index));
-    if (match[2] !== undefined) {
-      tokens.push(<Text key={k++} style={[baseStyle, { fontWeight: '700' }]}>{match[2]}</Text>);
-    } else if (match[3] !== undefined) {
-      tokens.push(<Text key={k++} style={[baseStyle, { textDecorationLine: 'underline', textDecorationColor: accentColor }]}>{match[3]}</Text>);
-    } else if (match[4] !== undefined) {
-      tokens.push(<Text key={k++} style={[baseStyle, { fontStyle: 'italic' }]}>{match[4]}</Text>);
+  for (const tok of tokens) {
+    if (!tok.mark) {
+      plain += tok.text;
+      continue;
     }
-    last = regex.lastIndex;
+    if (plain) { nodes.push(plain); plain = ''; }
+    const style: TextStyle =
+      tok.mark === 'bold' ? { fontWeight: '700' }
+      : tok.mark === 'underline' ? { textDecorationLine: 'underline', textDecorationColor: accentColor }
+      : tok.mark === 'italic' ? { fontStyle: 'italic' }
+      : tok.mark === 'strike' ? { textDecorationLine: 'line-through' }
+      : { backgroundColor: dark ? 'rgba(255,214,102,0.28)' : '#FFF0B3' };
+    nodes.push(<Text key={k++} style={[baseStyle, style]}>{tok.text}</Text>);
   }
-  if (last < line.length) tokens.push(line.slice(last));
-  return tokens;
+  if (plain) nodes.push(plain);
+  return nodes;
 }
 
 /** 轻量富文本正文渲染器（支持标题/引用/待办清单/无序与有序列表/分割线/行内样式） */
@@ -67,15 +69,21 @@ export function RichBody({
   body,
   serif = true,
   onToggleTodo,
+  colors,
 }: {
   body: string;
   serif?: boolean;
   onToggleTodo?: (lineIndex: number) => void;
+  /** 覆盖文字配色（如信纸底上固定的文字色） */
+  colors?: { text?: string; sub?: string; muted?: string };
 }) {
   const { c, t, fs, lineHeight, dark, r } = useTheme();
+  const tc = colors?.text ?? c.text;
+  const tsc = colors?.sub ?? c.textSub;
+  const tmc = colors?.muted ?? c.textMuted;
   const baseStyle: TextStyle = serif
-    ? t.bodySerif
-    : { fontSize: fs(15), color: c.text, lineHeight: fs(15) * lineHeight };
+    ? { ...t.bodySerif, color: tc }
+    : { fontSize: fs(15), color: tc, lineHeight: fs(15) * lineHeight };
   const headingStyle = serif ? { ...t.readingTitle, fontSize: fs(19), lineHeight: fs(19) * 1.5 } : t.h2;
   const blocks = React.useMemo(() => parseBlocks(body), [body]);
 
@@ -98,14 +106,14 @@ export function RichBody({
 
         if (block.type === 'heading') {
           return (
-            <Text key={block.lineIndex} style={[headingStyle, { marginTop: i > 0 ? 10 : 0, marginBottom: 2, color: c.text }]}>
-              {renderInline(block.text, headingStyle, c.primary)}
+            <Text key={block.lineIndex} style={[headingStyle, { marginTop: i > 0 ? 10 : 0, marginBottom: 2, color: tc }]}>
+              {renderInline(block.text, headingStyle, c.primary, dark)}
             </Text>
           );
         }
 
         if (block.type === 'quote') {
-          const qStyle: TextStyle = { ...baseStyle, color: c.textSub, fontStyle: 'italic' };
+          const qStyle: TextStyle = { ...baseStyle, color: tsc, fontStyle: 'italic' };
           return (
             <View
               key={block.lineIndex}
@@ -120,14 +128,14 @@ export function RichBody({
                 marginVertical: 2,
               }}
             >
-              <Text style={qStyle}>{renderInline(block.text, qStyle, c.primary)}</Text>
+              <Text style={qStyle}>{renderInline(block.text, qStyle, c.primary, dark)}</Text>
             </View>
           );
         }
 
         if (block.type === 'todo') {
           const todoStyle: TextStyle = block.checked
-            ? { ...baseStyle, color: c.textMuted, textDecorationLine: 'line-through' }
+            ? { ...baseStyle, color: tmc, textDecorationLine: 'line-through' }
             : baseStyle;
           return (
             <Pressable
@@ -153,7 +161,7 @@ export function RichBody({
                   marginRight: 9,
                   marginTop: Math.max(3, ((Number(baseStyle.lineHeight) || 24) - 18) / 2),
                   borderWidth: 1.5,
-                  borderColor: block.checked ? c.primary : c.textMuted,
+                  borderColor: block.checked ? c.primary : tmc,
                   backgroundColor: block.checked ? c.primary : 'transparent',
                   alignItems: 'center',
                   justifyContent: 'center',
@@ -162,7 +170,7 @@ export function RichBody({
                 {block.checked && <Check size={12} color={c.textOnPrimary} strokeWidth={3} />}
               </View>
               <Text style={[todoStyle, { flex: 1 }]}>
-                {renderInline(block.text, todoStyle, c.primary)}
+                {renderInline(block.text, todoStyle, c.primary, dark)}
               </Text>
             </Pressable>
           );
@@ -172,7 +180,7 @@ export function RichBody({
           return (
             <View key={block.lineIndex} style={{ flexDirection: 'row', alignItems: 'flex-start', paddingLeft: 4 }}>
               <Text style={[baseStyle, { color: c.primary, marginRight: 8 }]}>•</Text>
-              <Text style={[baseStyle, { flex: 1 }]}>{renderInline(block.text, baseStyle, c.primary)}</Text>
+              <Text style={[baseStyle, { flex: 1 }]}>{renderInline(block.text, baseStyle, c.primary, dark)}</Text>
             </View>
           );
         }
@@ -181,14 +189,14 @@ export function RichBody({
           return (
             <View key={block.lineIndex} style={{ flexDirection: 'row', alignItems: 'flex-start', paddingLeft: 4 }}>
               <Text style={[baseStyle, { color: c.primaryDark, marginRight: 8, minWidth: 18 }]}>{block.index}.</Text>
-              <Text style={[baseStyle, { flex: 1 }]}>{renderInline(block.text, baseStyle, c.primary)}</Text>
+              <Text style={[baseStyle, { flex: 1 }]}>{renderInline(block.text, baseStyle, c.primary, dark)}</Text>
             </View>
           );
         }
 
         return (
           <Text key={block.lineIndex} style={baseStyle}>
-            {renderInline(block.text, baseStyle, c.primary)}
+            {renderInline(block.text, baseStyle, c.primary, dark)}
           </Text>
         );
       })}

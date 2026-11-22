@@ -87,7 +87,7 @@ export interface DiaryStats {
   tagCounts: { id: string; count: number }[];
 }
 
-const POSITIVE_MOODS = new Set<MoodKey>(['happy', 'calm', 'grateful']);
+const POSITIVE_MOODS = new Set<MoodKey>(['happy', 'calm', 'grateful', 'excited']);
 
 function wordsToLevel(words: number, count: number): 0 | 1 | 2 | 3 | 4 {
   if (count === 0) return 0;

@@ -98,7 +98,7 @@ export default function LocationPickerScreen() {
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 12 }}>
           {WEATHERS.map(w => {
             const on = weather === w.key;
-            return <Pressable key={w.key} accessibilityRole="button" accessibilityLabel={w.label} accessibilityState={{ selected: on }} aria-pressed={on} onPress={() => { haptic('light'); setWeather(cur => cur === w.key ? undefined : w.key); }} style={{ width: '23%', minHeight: 72, backgroundColor: on ? c.primaryFaint : c.card, borderRadius: r(12), paddingVertical: 12, alignItems: 'center', gap: 6, borderWidth: 1, borderColor: on ? c.primary : c.divider }}>
+            return <Pressable key={w.key} accessibilityRole="button" accessibilityLabel={w.label} accessibilityState={{ selected: on }} aria-pressed={on} onPress={() => { haptic('light'); setWeather(cur => cur === w.key ? undefined : w.key); }} style={{ width: '18%', minHeight: 72, backgroundColor: on ? c.primaryFaint : c.card, borderRadius: r(12), paddingVertical: 12, alignItems: 'center', gap: 6, borderWidth: 1, borderColor: on ? c.primary : c.divider }}>
               <WeatherIcon weather={w.key} size={22} /><Text style={{ fontSize: fs(13), color: on ? c.primaryDark : c.textSub }}>{w.label}</Text>
               {on && <Check size={12} color={c.primaryDark} style={{ position: 'absolute', right: 5, top: 5 }} />}
             </Pressable>;

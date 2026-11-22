@@ -1,5 +1,5 @@
 import type { ImageSourcePropType } from 'react-native';
-import type { MoodKey, WeatherKey } from '../store/types';
+import type { MoodKey, PaperKey, WeatherKey } from '../store/types';
 import type { StyleKey } from '../theme/palette';
 
 /** 内置场景插画与封面（线绘陪伴风 04-ink-companion 优化版） */
@@ -184,6 +184,8 @@ export const EDITOR_ICONS = {
   write: require('../../assets/ink-companion/editor/write.png'),
   save: require('../../assets/ink-companion/editor/save.png'),
   close: require('../../assets/ink-companion/editor/close.png'),
+  strike: require('../../assets/ink-companion/editor/strike.png'),
+  highlight: require('../../assets/ink-companion/editor/highlight.png'),
   palette: require('../../assets/ink-companion/editor/palette.png'),
 } as const;
 
@@ -195,6 +197,8 @@ export const MOOD_ICONS: Record<MoodKey, ImageSourcePropType> = {
   tired: require('../../assets/ink-companion/moods/tired.png'),
   down: require('../../assets/ink-companion/moods/sad.png'),
   anxious: require('../../assets/ink-companion/moods/anxious.png'),
+  excited: require('../../assets/ink-companion/moods/excited.png'),
+  angry: require('../../assets/ink-companion/moods/angry.png'),
 };
 
 /** 天气图标（12-weather 归一化 128×128） */
@@ -207,6 +211,34 @@ export const WEATHER_ICONS: Record<WeatherKey, ImageSourcePropType> = {
   heavyRain: require('../../assets/ink-companion/weather/stormy.png'),
   snow: require('../../assets/ink-companion/weather/snowy.png'),
   thunder: require('../../assets/ink-companion/weather/stormy.png'),
+  windy: require('../../assets/ink-companion/weather/windy.png'),
+  clearNight: require('../../assets/ink-companion/weather/clear-night.png'),
+};
+
+/** 信纸全图（720×1080）与选择器缩略图（120×180） */
+export const PAPER_IMAGES: Record<PaperKey, ImageSourcePropType> = {
+  'paper-white': require('../../assets/papers/paper-white.jpg'),
+  'mist-blue': require('../../assets/papers/mist-blue.jpg'),
+  'mint-leaves': require('../../assets/papers/mint-leaves.jpg'),
+  'lilac-air': require('../../assets/papers/lilac-air.jpg'),
+  'night-sky': require('../../assets/papers/night-sky.jpg'),
+  ocean: require('../../assets/papers/ocean.jpg'),
+  forest: require('../../assets/papers/forest.jpg'),
+  ink: require('../../assets/papers/ink.jpg'),
+  scrapbook: require('../../assets/papers/scrapbook.jpg'),
+  geometric: require('../../assets/papers/geometric.jpg'),
+};
+export const PAPER_THUMBS: Record<PaperKey, ImageSourcePropType> = {
+  'paper-white': require('../../assets/papers/thumb/paper-white.jpg'),
+  'mist-blue': require('../../assets/papers/thumb/mist-blue.jpg'),
+  'mint-leaves': require('../../assets/papers/thumb/mint-leaves.jpg'),
+  'lilac-air': require('../../assets/papers/thumb/lilac-air.jpg'),
+  'night-sky': require('../../assets/papers/thumb/night-sky.jpg'),
+  ocean: require('../../assets/papers/thumb/ocean.jpg'),
+  forest: require('../../assets/papers/thumb/forest.jpg'),
+  ink: require('../../assets/papers/thumb/ink.jpg'),
+  scrapbook: require('../../assets/papers/thumb/scrapbook.jpg'),
+  geometric: require('../../assets/papers/thumb/geometric.jpg'),
 };
 
 /** 日记照片可引用的内置素材：asset:<key> */

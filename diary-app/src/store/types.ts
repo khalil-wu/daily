@@ -1,7 +1,7 @@
 import type { AccentKey, FontFamilyKey, FontScaleKey, LineHeightKey, StyleKey, ThemeMode } from '../theme/tokens';
 
-export type MoodKey = 'happy' | 'calm' | 'tired' | 'down' | 'anxious' | 'grateful';
-export type WeatherKey = 'sunny' | 'cloudy' | 'overcast' | 'lightRain' | 'rain' | 'heavyRain' | 'snow' | 'thunder';
+export type MoodKey = 'happy' | 'calm' | 'tired' | 'down' | 'anxious' | 'grateful' | 'excited' | 'angry';
+export type WeatherKey = 'sunny' | 'cloudy' | 'overcast' | 'lightRain' | 'rain' | 'heavyRain' | 'snow' | 'thunder' | 'windy' | 'clearNight';
 export type EntryStatus = 'published' | 'draft';
 
 export interface AudioClip {
@@ -88,9 +88,14 @@ export interface Entry {
   notebookId?: string;
   /** 多图排版方式 */
   photoLayout?: PhotoLayout;
+  /** 信纸底纹 */
+  paper?: PaperKey;
 }
 
 export type PhotoLayout = 'grid' | 'large' | 'carousel';
+
+/** 信纸底纹（15-backgrounds；undefined = 无信纸） */
+export type PaperKey = 'paper-white' | 'mist-blue' | 'mint-leaves' | 'lilac-air' | 'night-sky' | 'ocean' | 'forest' | 'ink' | 'scrapbook' | 'geometric';
 
 /** 日记本（分组） */
 export interface Notebook {

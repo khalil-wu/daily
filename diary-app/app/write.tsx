@@ -7,16 +7,17 @@ import {
   AudioLines, BookOpen, Check, ChevronDown, Cloud, Eye, EyeOff,
   MapPin, Minus, RefreshCw, Smile, Sparkles, Square, Tag as TagIcon, Users,
 } from 'lucide-react-native';
-import { EDITOR_ICONS } from '../src/data/assets';
+import { EDITOR_ICONS, PAPER_IMAGES, PAPER_THUMBS } from '../src/data/assets';
+import { Image as ExpoImage } from 'expo-image';
 import { AssetIcon } from '../src/components/AssetIcon';
 import { useTheme } from '../src/theme/ThemeProvider';
 import { actions, openTutorial, useStore } from '../src/store/store';
-import type { Entry, MoodKey, PhotoLayout } from '../src/store/types';
+import type { Entry, MoodKey, PaperKey, PhotoLayout } from '../src/store/types';
 import {
   getEditorDraft, markAutoSaved, startEditorSession, updateEditorDraft, useEditorDraft,
   removeEditorAudio, removeEditorPhoto, removeEditorVideo, clearEditorSession,
 } from '../src/store/editorSession';
-import { DAILY_PROMPTS, DEFAULT_NOTEBOOK_ID, MOODS, MOOD_ORDER, TEMPLATES, WEATHERS, moodMeta, moodTint, weatherMeta } from '../src/data/constants';
+import { DAILY_PROMPTS, DEFAULT_NOTEBOOK_ID, MOODS, MOOD_ORDER, PAPERS, TEMPLATES, WEATHERS, moodMeta, moodTint, paperColors, weatherMeta } from '../src/data/constants';
 import { Chip, NavBar, PillAction, Screen, TextAction, goBack, haptic } from '../src/components/ui';
 import { MoodIcon, WeatherIcon } from '../src/components/MoodIcon';
 import { AudioClipCard } from '../src/components/AudioPlayer';
@@ -28,7 +29,7 @@ import { RememberPanel } from '../src/components/RememberPanel';
 import { useFeedback } from '../src/components/feedback';
 import { DateTimeSheet } from '../src/components/DateTimeSheet';
 import { HiddenAccessBoundary } from '../src/components/HiddenAccessBoundary';
-import { FadeIn, PopDialog, PressableScale, useReducedMotion } from '../src/components/motion';
+import { BottomSheet, FadeIn, PopDialog, PressableScale, useReducedMotion } from '../src/components/motion';
 import { setTourHandler, useTourTarget } from '../src/components/tour';
 import { fmtAgo, fmtMonthDayTime, WEEK_CN } from '../src/utils/date';
 import { wordCount } from '../src/utils/text';
@@ -46,7 +47,7 @@ export default function WriteScreen() {
 
 function WriteEditor() {
   const params = useLocalSearchParams<{ id?: string; template?: string; date?: string; action?: string; prompt?: string; mood?: string; tour?: string }>();
-  const { c, t, fs, lineHeight, contentWidth, dark, r } = useTheme();
+  const { c, t, fs, lineHeight, contentWidth, dark, r, frameInk } = useTheme();
   const { toast } = useFeedback();
   const tags = useStore(s => s.tags);
   const people = useStore(s => s.people);
@@ -62,6 +63,7 @@ function WriteEditor() {
   const [exitError, setExitError] = useState('');
   const [dateModal, setDateModal] = useState(false);
   const [nbModal, setNbModal] = useState(false);
+  const [paperSheet, setPaperSheet] = useState(false);
   const [viewerIdx, setViewerIdx] = useState<number | null>(null);
   const [promptTipIdx, setPromptTipIdx] = useState(0);
   const [selection, setSelection] = useState({ start: 0, end: 0 });
@@ -380,7 +382,7 @@ function WriteEditor() {
   toggleDictationRef.current = toggleDictation;
 
   // 插入富文本格式标记
-  const applyFormat = (kind: 'h' | 'b' | 'i' | 'u' | 'quote' | 'todo' | 'ul' | 'ol' | 'hr') => {
+  const applyFormat = (kind: 'h' | 'b' | 'i' | 'u' | 's' | 'hl' | 'quote' | 'todo' | 'ul' | 'ol' | 'hr') => {
     if (!entry) return;
     haptic('light');
     const text = entry.body;
@@ -389,9 +391,9 @@ function WriteEditor() {
     const sel = text.slice(start, end);
     let nextText = text;
     let select: [number, number] = [end, end];
-    if (kind === 'b' || kind === 'i' || kind === 'u') {
-      const wrap = kind === 'b' ? '**' : kind === 'i' ? '*' : '__';
-      const inner = sel || (kind === 'b' ? '重点文字' : kind === 'i' ? '斜体' : '下划线');
+    if (kind === 'b' || kind === 'i' || kind === 'u' || kind === 's' || kind === 'hl') {
+      const wrap = kind === 'b' ? '**' : kind === 'i' ? '*' : kind === 'u' ? '__' : kind === 's' ? '~~' : '==';
+      const inner = sel || (kind === 'b' ? '重点文字' : kind === 'i' ? '斜体' : kind === 'u' ? '下划线' : kind === 's' ? '删除线' : '高亮');
       nextText = `${text.slice(0, start)}${wrap}${inner}${wrap}${text.slice(end)}`;
       // 没有选中文字时，选中占位词，直接打字就能替换
       select = sel ? [start + wrap.length * 2 + inner.length, start + wrap.length * 2 + inner.length] : [start + wrap.length, start + wrap.length + inner.length];
@@ -441,6 +443,16 @@ function WriteEditor() {
   const words = useMemo(() => (entry ? wordCount(entry.title) + wordCount(entry.body) : 0), [entry?.title, entry?.body]);
   const goalPct = goals.enabled ? Math.min(100, Math.round((words / Math.max(1, goals.dailyWords)) * 100)) : 0;
 
+  const paper = entry?.paper;
+  const pcol = useMemo(() => paperColors(paper), [paper]);
+  // 信纸底图随 paper 变化才重渲染，不跟每次击键
+  const paperBg = useMemo(
+    () =>
+      paper && PAPER_IMAGES[paper] ? (
+        <ExpoImage source={PAPER_IMAGES[paper] as any} style={StyleSheet.absoluteFill} contentFit="cover" cachePolicy="memory-disk" transition={120} pointerEvents="none" />
+      ) : null,
+    [paper],
+  );
   if (!entry) return <Screen edges={['top']}><View /></Screen>;
 
   const d = new Date(entry.createdAt);
@@ -732,6 +744,9 @@ function WriteEditor() {
           )}
         </View>
 
+        {/* 标题 + 正文：信纸底纹容器 */}
+        <View style={paperBg ? { borderRadius: r(18), overflow: 'hidden', paddingHorizontal: 18, paddingVertical: 20, marginBottom: 8 } : undefined}>
+          {paperBg}
         {/* 标题输入 */}
         <TextInput
           accessibilityLabel="日记标题"
@@ -739,7 +754,7 @@ function WriteEditor() {
           value={entry.title}
           onChangeText={title => updateEditorDraft({ title: title.replace(/[\r\n]+/g, '') })}
           placeholder="标题（可选）"
-          placeholderTextColor={c.textMuted}
+          placeholderTextColor={pcol?.placeholder ?? c.textMuted}
           multiline
           scrollEnabled={false}
           submitBehavior="blurAndSubmit"
@@ -752,7 +767,7 @@ function WriteEditor() {
               fontSize: fs(22),
               lineHeight: fs(32),
               minHeight: fs(44),
-              color: c.text,
+              color: pcol?.text ?? c.text,
               ...(Platform.OS === 'android' ? { includeFontPadding: false } : {}),
               paddingTop: 8,
               paddingBottom: 8,
@@ -770,6 +785,7 @@ function WriteEditor() {
               {entry.body.trim() ? (
                 <RichBody
                   body={entry.body}
+                  colors={pcol ? { text: pcol.text, sub: pcol.sub, muted: pcol.placeholder } : undefined}
                   onToggleTodo={lineIdx => setBody(toggleTodoAtLine(entry.body, lineIdx), { step: true })}
                 />
               ) : (
@@ -792,20 +808,22 @@ function WriteEditor() {
               }}
               onSelectionChange={e => { selectionRef.current = e.nativeEvent.selection; setSelection(e.nativeEvent.selection); }}
               placeholder="写下此刻的想法…"
-              placeholderTextColor={c.textMuted}
+              placeholderTextColor={pcol?.placeholder ?? c.textMuted}
+              selectionColor={pcol?.caret}
               multiline
               textAlignVertical="top"
               style={{
                 fontFamily: t.bodySerif.fontFamily,
                 fontSize: fs(16),
                 lineHeight: fs(16) * lineHeight,
-                color: c.text,
+                color: pcol?.text ?? c.text,
                 minHeight: 160,
                 paddingVertical: 4,
                 outlineStyle: 'none',
               } as any}
             />
           )}
+        </View>
         </View>
 
         {/* 空白写作灵感引导条 */}
@@ -1008,6 +1026,8 @@ function WriteEditor() {
                 { asset: EDITOR_ICONS.bold, label: '加粗', onPress: () => applyFormat('b') },
                 { asset: EDITOR_ICONS.italic, label: '斜体', onPress: () => applyFormat('i') },
                 { asset: EDITOR_ICONS.underline, label: '下划线', onPress: () => applyFormat('u') },
+                { asset: EDITOR_ICONS.strike, label: '删除线', onPress: () => applyFormat('s') },
+                { asset: EDITOR_ICONS.highlight, label: '高亮', onPress: () => applyFormat('hl') },
                 { asset: EDITOR_ICONS.quote, label: '引用', onPress: () => applyFormat('quote') },
                 { asset: EDITOR_ICONS.checklist, label: '待办', onPress: () => applyFormat('todo') },
                 { asset: EDITOR_ICONS.bullets, label: '无序列表', onPress: () => applyFormat('ul') },
@@ -1039,6 +1059,17 @@ function WriteEditor() {
             style={{ width: 44, height: 44, borderRadius: r(10), alignItems: 'center', justifyContent: 'center', backgroundColor: formatOpen ? c.primaryFaint : 'transparent' }}
           >
             <AssetIcon source={EDITOR_ICONS.font} size={20} color={formatOpen ? c.primaryDark : c.text} />
+          </PressableScale>
+          <PressableScale
+            scaleTo={0.9}
+            onPress={() => {
+              haptic('light');
+              setPaperSheet(true);
+            }}
+            accessibilityLabel="信纸"
+            style={{ width: 44, height: 44, borderRadius: r(10), alignItems: 'center', justifyContent: 'center', backgroundColor: paperSheet ? c.primaryFaint : 'transparent' }}
+          >
+            <AssetIcon source={EDITOR_ICONS.palette} size={20} color={paperSheet || entry.paper ? c.primaryDark : c.text} />
           </PressableScale>
           <View style={{ width: StyleSheet.hairlineWidth, height: 18, backgroundColor: c.divider, marginHorizontal: 4 }} />
 
@@ -1156,6 +1187,54 @@ function WriteEditor() {
           updateEditorDraft({ createdAt: ts });
         }}
       />
+
+      {/* 信纸选择 */}
+      <BottomSheet visible={paperSheet} onClose={() => setPaperSheet(false)} title="选择信纸">
+        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10, paddingTop: 4 }}>
+          {[{ key: undefined as PaperKey | undefined, name: '无' }, ...PAPERS].map(p => {
+            const on = (entry.paper ?? undefined) === p.key;
+            return (
+              <Pressable
+                key={p.key ?? 'none'}
+                accessibilityRole="radio"
+                accessibilityLabel={`信纸：${p.name}`}
+                accessibilityState={{ checked: on }}
+                aria-checked={on}
+                onPress={() => {
+                  haptic('light');
+                  updateEditorDraft({ paper: p.key });
+                }}
+                style={{ width: '22.5%', minWidth: 64, alignItems: 'center' }}
+              >
+                <View
+                  style={{
+                    width: '100%',
+                    aspectRatio: 2 / 3,
+                    borderRadius: r(10),
+                    overflow: 'hidden',
+                    backgroundColor: c.inputBg,
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    ...(on ? frameInk : { borderWidth: 1, borderColor: c.divider }),
+                  }}
+                >
+                  {p.key ? (
+                    <ExpoImage source={PAPER_THUMBS[p.key] as any} style={{ width: '100%', height: '100%' }} contentFit="cover" cachePolicy="memory-disk" transition={0} />
+                  ) : (
+                    <Minus size={18} color={c.textMuted} />
+                  )}
+                  {on && (
+                    <View style={{ position: 'absolute', top: 4, right: 4, width: 18, height: 18, borderRadius: 9, backgroundColor: c.primary, alignItems: 'center', justifyContent: 'center' }}>
+                      <Check size={11} color={c.textOnPrimary} strokeWidth={3} />
+                    </View>
+                  )}
+                </View>
+                <Text style={{ fontSize: fs(12), color: on ? c.primaryDark : c.textSub, marginTop: 6 }}>{p.name}</Text>
+              </Pressable>
+            );
+          })}
+        </View>
+      </BottomSheet>
 
       <PhotoViewer photos={entry.photos} initialIndex={viewerIdx ?? 0} visible={viewerIdx !== null} onClose={() => setViewerIdx(null)} />
     </Screen>

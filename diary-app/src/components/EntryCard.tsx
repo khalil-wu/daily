@@ -13,6 +13,8 @@ import { excerpt } from '../utils/text';
 import { Photo } from './ui';
 import { PressableScale } from './motion';
 import { MoodIcon, WeatherIcon } from './MoodIcon';
+import { Image as ExpoImage } from 'expo-image';
+import { PAPER_THUMBS } from '../data/assets';
 import { HighlightText } from './RichBody';
 
 interface Props {
@@ -141,6 +143,12 @@ function EntryListCardInner({ entry, onPress, onLongPress, query, compactDate, n
             }
       }
     >
+      {entry.paper && PAPER_THUMBS[entry.paper] && (
+        // 信纸书脊：3px 侧边条，避开圆角两端
+        <View pointerEvents="none" style={{ position: 'absolute', left: 0, top: 10, bottom: 10, width: 3, borderRadius: 1.5, overflow: 'hidden' }}>
+          <ExpoImage source={PAPER_THUMBS[entry.paper] as any} style={{ width: '100%', height: '100%' }} contentFit="cover" transition={0} />
+        </View>
+      )}
       {grouped && !grouped.first && (
         <View pointerEvents="none" style={{ position: 'absolute', top: 0, left: 14 + 46 + 12, right: 14, height: StyleSheet.hairlineWidth, backgroundColor: c.divider }} />
       )}
