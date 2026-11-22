@@ -23,7 +23,8 @@ try {
   page.on('pageerror', error => errors.push(error.message));
   await page.goto(`${base}/write?id=workflow`);
   await page.getByLabel('日记正文', { exact: true }).waitFor();
-  await page.getByText('模板', { exact: true }).click();
+  await page.getByRole('button', { name: '展开格式工具', exact: true }).click();
+  await page.getByRole('button', { name: '模板', exact: true }).click();
   const preview = page.getByRole('button', { name: /^预览/ }).first();
   await preview.click();
   await page.getByText('模板会追加到现有正文末尾，并保留你已填写的标题。', { exact: true }).waitFor();

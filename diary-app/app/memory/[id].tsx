@@ -1,37 +1,25 @@
 import React, { useMemo, useRef, useState } from 'react';
-import { Animated, Platform, Pressable, ScrollView, Share, StyleSheet, View, type NativeScrollEvent, type NativeSyntheticEvent } from 'react-native';
+import { Animated, Platform, Pressable, Share, StyleSheet, View, type NativeScrollEvent, type NativeSyntheticEvent } from 'react-native';
 import { Text } from '../../src/components/text';
 import { router, useLocalSearchParams } from 'expo-router';
-import {
-  ChevronLeft, ChevronRight, Copy, Edit3, EyeOff, FileDown, Heart,
-  MapPin, MoreHorizontal, Pin, Share2, Trash2, X,
-} from 'lucide-react-native';
+import { Copy, EyeOff, FileDown, Heart, MoreHorizontal, Pin, Share2, Trash2, X } from 'lucide-react-native';
 import { useTheme } from '../../src/theme/ThemeProvider';
 import { actions, scopeEntries, useEntry, useStore } from '../../src/store/store';
 import { EntryReader } from '../../src/components/EntryReader';
 import { PageTurner, type PageRole, type PageTurnerHandle } from '../../src/components/PageTurner';
 import type { Entry } from '../../src/store/types';
-import { DEFAULT_NOTEBOOK_ID, moodMeta, moodTint, paperColors, weatherMeta } from '../../src/data/constants';
-import { PAPER_IMAGES } from '../../src/data/assets';
-import { Image as ExpoImage } from 'expo-image';
-import { Chip, EmptyState, IconButton, NavBar, Photo, Screen, goBack, haptic } from '../../src/components/ui';
-import { MoodIcon, WeatherIcon } from '../../src/components/MoodIcon';
-import { RichBody } from '../../src/components/RichBody';
-import { AudioClipCard } from '../../src/components/AudioPlayer';
-import { VideoBadge, VideoClipCard } from '../../src/components/VideoPlayer';
+import { moodMeta, moodTint } from '../../src/data/constants';
+import { EmptyState, IconButton, NavBar, Photo, PillAction, Screen, goBack, haptic } from '../../src/components/ui';
+import { MoodIcon } from '../../src/components/MoodIcon';
+import { VideoBadge } from '../../src/components/VideoPlayer';
 import { PhotoViewer } from '../../src/components/PhotoViewer';
-import { PhotoLayoutView } from '../../src/components/PhotoLayout';
 import { useFeedback } from '../../src/components/feedback';
 import { PopDialog } from '../../src/components/motion';
-import { fmtAgo, fmtMonthDay, fmtMonthDayTime, fmtTime, WEEK_CN } from '../../src/utils/date';
+import { fmtMonthDayTime, fmtTime, WEEK_CN } from '../../src/utils/date';
 import { entryToMarkdown, exportTextFile } from '../../src/utils/transfer';
-import { clamp, plainText, wordCount } from '../../src/utils/text';
-import { toggleTodoAtLine } from '../../src/utils/richtext';
+import { clamp, plainText } from '../../src/utils/text';
 import { entryCover } from '../../src/utils/video';
 import { posterUri } from '../../src/services/videoStore';
-import { canSendEntry } from '../../src/utils/ai/privacy';
-import { startReply, useAIStatus, useReplyJob } from '../../src/services/ai';
-import { IMAGES } from '../../src/data/assets';
 import { HiddenAccessBoundary } from '../../src/components/HiddenAccessBoundary';
 
 /** 14. 日记详情页（阅读进度 / 待办直接勾选 / 多图排版 / 上一篇下一篇） */
@@ -42,15 +30,11 @@ export default function MemoryDetailScreen() {
 
 function MemoryDetailContent() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const { c, t, fs, contentWidth, dark, r, frame } = useTheme();
+  const { c, t, fs, dark, r, frame } = useTheme();
   const { toast, confirm, sheet } = useFeedback();
   const entry = useEntry(id);
   const entries = useStore(s => s.entries);
   const tags = useStore(s => s.tags);
-  const people = useStore(s => s.people);
-  const notebooks = useStore(s => s.notebooks);
-  const aiStatus = useAIStatus();
-  const replyJob = useReplyJob(id);
   const [viewerIdx, setViewerIdx] = useState<number | null>(null);
   const [shareOpen, setShareOpen] = useState(false);
   const readProgress = useRef(new Animated.Value(0)).current;
@@ -103,14 +87,6 @@ function MemoryDetailContent() {
     [prevEntry, nextEntry, onTurn, onScroll, openViewer],
   );
 
-  const paperBg = React.useMemo(
-    () =>
-      entry?.paper && PAPER_IMAGES[entry.paper] ? (
-        <ExpoImage source={PAPER_IMAGES[entry.paper] as any} style={StyleSheet.absoluteFill} contentFit="cover" cachePolicy="memory-disk" transition={120} pointerEvents="none" />
-      ) : null,
-    [entry?.paper],
-  );
-
   if (!entry) {
     return (
       <Screen edges={['top']}>
@@ -123,13 +99,7 @@ function MemoryDetailContent() {
   }
 
   const mood = moodMeta(entry.mood);
-  const weather = weatherMeta(entry.weather);
-  const notebook = notebooks.find(n => n.id === (entry.notebookId || DEFAULT_NOTEBOOK_ID));
   const d = new Date(entry.createdAt);
-  const padH = Math.round(28 - contentWidth * 14);
-  const words = wordCount(entry.title) + wordCount(entry.body);
-  const pcol = paperColors(entry.paper);
-  const readMinutes = Math.max(1, Math.ceil(words / 350));
   // 分享卡配图：有照片用照片，只有视频时用视频封面
   const shareCover = entryCover(entry);
 
@@ -157,6 +127,7 @@ function MemoryDetailContent() {
 
   const openMore = () => {
     sheet([
+      { label: '分享日签卡', icon: Share2, onPress: () => setShareOpen(true) },
       {
         label: entry.pinned ? '取消置顶' : '置顶日记',
         icon: Pin,
@@ -207,11 +178,32 @@ function MemoryDetailContent() {
   return (
     <Screen edges={['top', 'bottom']} enter="page">
       <NavBar
-        right={<IconButton icon={MoreHorizontal} label="更多" onPress={openMore} />}
+        right={
+          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={entry.favorite ? '取消收藏' : '收藏'}
+              accessibilityState={{ selected: entry.favorite }}
+              hitSlop={4}
+              onPress={() => {
+                haptic('light');
+                const next = actions.toggleFavorite(entry.id);
+                toast(next ? '已添加到我的收藏' : '已取消收藏');
+              }}
+              style={({ pressed }) => ({ width: 44, height: 44, alignItems: 'center', justifyContent: 'center', opacity: pressed ? 0.6 : 1 })}
+            >
+              <Heart size={21} color={entry.favorite ? c.danger : c.text} fill={entry.favorite ? c.danger : 'none'} strokeWidth={1.8} />
+            </Pressable>
+            <IconButton icon={MoreHorizontal} label="更多" onPress={openMore} />
+            <View style={{ marginLeft: 4 }}>
+              <PillAction label="编辑" onPress={() => router.push({ pathname: '/write', params: { id: entry.id } })} />
+            </View>
+          </View>
+        }
       />
 
       {/* 顶部线性阅读进度条 */}
-      <View style={{ height: 2, backgroundColor: c.divider, width: '100%' }}>
+      <View style={{ height: 1.5, backgroundColor: c.divider, width: '100%' }}>
         <Animated.View style={{ height: '100%', width: readProgress.interpolate({ inputRange: [0, 1], outputRange: ['0%', '100%'] }), backgroundColor: c.primary }} />
       </View>
 
@@ -224,45 +216,6 @@ function MemoryDetailContent() {
         onDragged={onDragged}
         renderPage={renderPage}
       />
-
-      {/* 底部操作栏：分享 / 收藏 / 编辑 */}
-      <View
-        style={{
-          flexDirection: 'row',
-          alignItems: 'center',
-          justifyContent: 'space-around',
-          height: 58,
-          borderTopWidth: StyleSheet.hairlineWidth,
-          borderTopColor: c.divider,
-          backgroundColor: c.card,
-        }}
-      >
-        <Pressable accessibilityRole="button" accessibilityLabel="分享" onPress={() => setShareOpen(true)} style={{ minHeight: 44, minWidth: 56, alignItems: 'center', justifyContent: 'center', gap: 3, paddingHorizontal: 18 }}>
-          <Share2 size={19} color={c.textSub} strokeWidth={1.8} />
-          <Text style={{ fontSize: fs(11), color: c.textSub }}>分享</Text>
-        </Pressable>
-
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel={entry.favorite ? '取消收藏' : '收藏'}
-          onPress={() => {
-            haptic('light');
-            const next = actions.toggleFavorite(entry.id);
-            toast(next ? '已添加到我的收藏' : '已取消收藏');
-          }}
-          style={{ minHeight: 44, minWidth: 56, alignItems: 'center', justifyContent: 'center', gap: 3, paddingHorizontal: 18 }}
-        >
-          <Heart size={19} color={entry.favorite ? c.danger : c.textSub} fill={entry.favorite ? c.danger : 'none'} strokeWidth={1.8} />
-          <Text style={{ fontSize: fs(11), color: entry.favorite ? c.danger : c.textSub }}>
-            {entry.favorite ? '已收藏' : '收藏'}
-          </Text>
-        </Pressable>
-
-        <Pressable accessibilityRole="button" accessibilityLabel="编辑" onPress={() => router.push({ pathname: '/write', params: { id: entry.id } })} style={{ minHeight: 44, minWidth: 56, alignItems: 'center', justifyContent: 'center', gap: 3, paddingHorizontal: 18 }}>
-          <Edit3 size={19} color={c.textSub} strokeWidth={1.8} />
-          <Text style={{ fontSize: fs(11), color: c.textSub }}>编辑</Text>
-        </Pressable>
-      </View>
 
       <PhotoViewer photos={entry.photos} initialIndex={viewerIdx ?? 0} visible={viewerIdx !== null} onClose={() => setViewerIdx(null)} />
 

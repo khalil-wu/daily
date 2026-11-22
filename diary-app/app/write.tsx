@@ -1,15 +1,14 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Animated, AppState, Easing, Image, Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Animated, AppState, Easing, Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { Text, TextInput } from '../src/components/text';
 import { router, useLocalSearchParams } from 'expo-router';
-import { LinearGradient } from 'expo-linear-gradient';
 import {
-  AudioLines, BookOpen, Check, ChevronDown, Cloud, Eye, EyeOff, Feather,
-  MapPin, Minus, Smile, Square, Tag as TagIcon, Users,
+  AudioLines, Bold, BookOpen, CalendarDays, Check, ChevronDown, Cloud, Eye, EyeOff, Heading, Highlighter,
+  Image as ImageIcon, Italic, LayoutTemplate, List, ListOrdered, ListTodo, MapPin, Mic, Minus, Palette,
+  Quote, Redo2, Smile, Sparkles, Square, Strikethrough, Tag as TagIcon, Type, Underline, Undo2, Users, Video,
 } from 'lucide-react-native';
-import { EDITOR_ICONS, IMAGES, PAPER_IMAGES, PAPER_THUMBS } from '../src/data/assets';
+import { PAPER_IMAGES, PAPER_THUMBS } from '../src/data/assets';
 import { Image as ExpoImage } from 'expo-image';
-import { AssetIcon } from '../src/components/AssetIcon';
 import { useTheme } from '../src/theme/ThemeProvider';
 import { actions, openTutorial, useStore } from '../src/store/store';
 import type { Entry, MoodKey, PaperKey, PhotoLayout } from '../src/store/types';
@@ -48,7 +47,7 @@ export default function WriteScreen() {
 
 function WriteEditor() {
   const params = useLocalSearchParams<{ id?: string; template?: string; date?: string; action?: string; mood?: string; tour?: string; notebook?: string }>();
-  const { c, t, fs, lineHeight, contentWidth, dark, r, ink, frameInk } = useTheme();
+  const { c, t, fs, lineHeight, contentWidth, dark, r } = useTheme();
   const { toast } = useFeedback();
   const tags = useStore(s => s.tags);
   const people = useStore(s => s.people);
@@ -517,56 +516,36 @@ function WriteEditor() {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ paddingHorizontal: readingPadH, paddingTop: 12, paddingBottom: 48 }}
       >
-        {/* 顶部杂志大日期头 + 日记本胶囊 */}
-        <View style={{ flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between', gap: 12 }}>
+        {/* 一行写清「哪天、写进哪本」：轻点即可补记日期或换本 */}
+        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
           <Pressable
             accessibilityRole="button"
             accessibilityLabel={`日期：${dateLabel}，轻点修改`}
             onPress={() => setDateModal(true)}
-            style={{ flexDirection: 'row', alignItems: 'flex-end', gap: 10, flex: 1, minWidth: 0, minHeight: 44 }}
+            hitSlop={4}
+            style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 6, minHeight: 44, flexShrink: 1, opacity: pressed ? 0.6 : 1 })}
           >
-            <Text style={[t.h1, { fontSize: fs(36), lineHeight: fs(44), fontVariant: ['tabular-nums'] }]}>{d.getDate()}</Text>
-            <View style={{ paddingBottom: 4, flex: 1, minWidth: 0 }}>
-              <Text style={{ fontSize: fs(11.5), color: c.textMuted }}>{d.getFullYear()}年</Text>
-              <Text numberOfLines={1} style={{ fontSize: fs(12.5), color: c.textSub, fontWeight: '500', marginTop: 2 }}>{dateLabel}</Text>
-            </View>
+            <CalendarDays size={15} color={c.textMuted} strokeWidth={1.8} />
+            <Text numberOfLines={1} style={{ fontSize: fs(13.5), color: c.textSub, fontVariant: ['tabular-nums'] }}>{dateLabel}</Text>
           </Pressable>
           {activeNb && (
             <Pressable
               accessibilityRole="button"
               accessibilityLabel={`日记本：${activeNb.name}，轻点切换`}
               onPress={() => setNbModal(true)}
-              style={{ minHeight: 44, justifyContent: 'center' }}
+              hitSlop={4}
+              style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 6, minHeight: 44, opacity: pressed ? 0.6 : 1 })}
             >
-              <View
-                style={{
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  gap: 6,
-                  height: 30,
-                  paddingHorizontal: 11,
-                  borderRadius: r(999),
-                  backgroundColor: activeNb.id !== DEFAULT_NOTEBOOK_ID ? c.primaryFaint : c.card,
-                  borderWidth: 1,
-                  borderColor: activeNb.id !== DEFAULT_NOTEBOOK_ID ? c.primary : c.divider,
-                }}
-              >
-                <View style={{ width: 7, height: 7, borderRadius: 3.5, backgroundColor: activeNb.color }} />
-                <Text numberOfLines={1} style={{ fontSize: fs(12), color: activeNb.id !== DEFAULT_NOTEBOOK_ID ? c.primaryDark : c.textSub, fontWeight: '500', maxWidth: 100 }}>
-                  {activeNb.name}
-                </Text>
-                <ChevronDown size={13} color={activeNb.id !== DEFAULT_NOTEBOOK_ID ? c.primaryDark : c.textMuted} />
-              </View>
+              <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: activeNb.color }} />
+              <Text numberOfLines={1} style={{ fontSize: fs(13.5), color: c.textSub, maxWidth: 120 }}>{activeNb.name}</Text>
+              <ChevronDown size={14} color={c.textMuted} />
             </Pressable>
           )}
         </View>
 
-        <View style={{ height: StyleSheet.hairlineWidth, backgroundColor: c.divider, marginTop: 10, marginBottom: 4 }} />
-
         {/* 纤巧元信息行：心情、天气、地点、标签、和谁、模板 */}
-        <View ref={metaTarget} collapsable={false} style={{ marginBottom: 8 }}>
-          <View style={{ position: 'relative' }}>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 6, paddingRight: 28 }} style={{ flexGrow: 0, flexShrink: 0 }}>
+        <View ref={metaTarget} collapsable={false} style={{ marginBottom: 6 }}>
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', columnGap: 6 }}>
               <Chip
                 tone={mood ? 'soft' : undefined}
                 size="sm"
@@ -601,7 +580,11 @@ function WriteEditor() {
                 tone={entry.tags.length ? 'soft' : undefined}
                 size="sm"
                 icon={TagIcon}
-                label={entry.tags.length ? `${entry.tags.length} 个标签` : '标签'}
+                label={
+                  entry.tags.length === 0
+                    ? '标签'
+                    : entry.tags.slice(0, 2).map(id => `#${tags.find(tg => tg.id === id)?.name ?? ''}`).join(' ') + (entry.tags.length > 2 ? ` +${entry.tags.length - 2}` : '')
+                }
                 selected={entry.tags.length > 0}
                 onPress={() => router.push('/picker/tags')}
               />
@@ -619,20 +602,6 @@ function WriteEditor() {
                 selected={entry.people.length > 0}
                 onPress={() => router.push('/picker/people')}
               />
-              <Chip
-                size="sm"
-                icon={<AssetIcon source={EDITOR_ICONS.sticker} size={14} color={c.textSub} />}
-                label="模板"
-                onPress={() => router.push('/templates')}
-              />
-            </ScrollView>
-            <LinearGradient
-              pointerEvents="none"
-              colors={['transparent', c.bg]}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 0 }}
-              style={{ position: 'absolute', right: 0, top: 0, bottom: 0, width: 26 }}
-            />
           </View>
 
           {/* 内联快选行：心情 / 天气，一行点完即收起；末尾保留完整选择页入口 */}
@@ -836,41 +805,19 @@ function WriteEditor() {
             />
           )}
         </View>
-        </View>
-
-        {/* 已选标签与身边人展示（置于正文后，不打断开篇视线） */}
-        {(entry.tags.length > 0 || entry.people.length > 0) && (
-          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 14 }}>
-            {entry.people.map(pid => {
-              const p = people.find(x => x.id === pid);
-              if (!p) return null;
-              return (
-                <Chip
-                  tone="soft"
-                  key={pid}
-                  size="sm"
-                  selected
-                  label={p.name}
-                  onRemove={() => updateEditorDraft({ people: entry.people.filter(x => x !== pid) })}
-                />
-              );
-            })}
-            {entry.tags.map(tid => {
-              const tg = tags.find(x => x.id === tid);
-              if (!tg) return null;
-              return (
-                <Chip
-                  tone="soft"
-                  key={tid}
-                  size="sm"
-                  selected
-                  label={`#${tg.name}`}
-                  onRemove={() => updateEditorDraft({ tags: entry.tags.filter(x => x !== tid) })}
-                />
-              );
-            })}
-          </View>
+        {!previewMode && !entry.title.trim() && !entry.body.trim() && (
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="从模板开始"
+            onPress={() => router.push('/templates')}
+            hitSlop={6}
+            style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 6, alignSelf: 'flex-start', minHeight: 44, opacity: pressed ? 0.6 : 1 })}
+          >
+            <LayoutTemplate size={15} color={pcol?.sub ?? c.textSub} strokeWidth={1.8} />
+            <Text style={{ fontSize: fs(13.5), color: pcol?.sub ?? c.textSub }}>不知道写什么？从模板开始</Text>
+          </Pressable>
         )}
+        </View>
 
         {/* 危机干预热线提示：移出「记得」面板后仍在正文下方温和可见 */}
         {crisis && <CrisisNotice style={{ marginTop: 14 }} />}
@@ -998,8 +945,8 @@ function WriteEditor() {
             >
               <View style={{ flexDirection: 'row', alignItems: 'center', paddingRight: 6, marginRight: 4, borderRightWidth: StyleSheet.hairlineWidth, borderRightColor: c.divider }}>
                 {[
-                  { asset: EDITOR_ICONS.undo, label: '撤销', on: history.canUndo, onPress: undo },
-                  { asset: EDITOR_ICONS.redo, label: '重做', on: history.canRedo, onPress: redo },
+                  { icon: Undo2, label: '撤销', on: history.canUndo, onPress: undo },
+                  { icon: Redo2, label: '重做', on: history.canRedo, onPress: redo },
                 ].map(tool => (
                   <Pressable
                     key={tool.label}
@@ -1010,30 +957,27 @@ function WriteEditor() {
                     hitSlop={4}
                     style={({ pressed }) => ({ width: 44, height: 44, borderRadius: r(10), alignItems: 'center', justifyContent: 'center', opacity: tool.on ? 1 : 0.3, backgroundColor: pressed ? c.bgDeep : 'transparent' })}
                   >
-                    <AssetIcon source={tool.asset} size={20} color={c.text} />
+                    <tool.icon size={19} color={c.text} strokeWidth={1.8} />
                   </Pressable>
                 ))}
               </View>
               <ScrollView horizontal showsHorizontalScrollIndicator={false} keyboardShouldPersistTaps="always" contentContainerStyle={{ flexDirection: 'row', alignItems: 'center', paddingRight: 6 }} style={{ flex: 1 }}>
                 {[
-                  { asset: EDITOR_ICONS.heading, label: '小标题', onPress: () => applyFormat('h') },
-                  { asset: EDITOR_ICONS.bold, label: '加粗', onPress: () => applyFormat('b') },
-                  { asset: EDITOR_ICONS.italic, label: '斜体', onPress: () => applyFormat('i') },
-                  { asset: EDITOR_ICONS.underline, label: '下划线', onPress: () => applyFormat('u') },
-                  { asset: EDITOR_ICONS.strike, label: '删除线', onPress: () => applyFormat('s') },
-                  { asset: EDITOR_ICONS.highlight, label: '高亮', onPress: () => applyFormat('hl') },
-                  { asset: EDITOR_ICONS.quote, label: '引用', onPress: () => applyFormat('quote') },
-                  { asset: EDITOR_ICONS.checklist, label: '待办', onPress: () => applyFormat('todo') },
-                  { asset: EDITOR_ICONS.bullets, label: '无序列表', onPress: () => applyFormat('ul') },
-                  { asset: EDITOR_ICONS.numbered, label: '有序列表', onPress: () => applyFormat('ol') },
+                  { icon: LayoutTemplate, label: '模板', onPress: () => router.push('/templates') },
+                  { icon: Heading, label: '小标题', onPress: () => applyFormat('h') },
+                  { icon: Bold, label: '加粗', onPress: () => applyFormat('b') },
+                  { icon: Italic, label: '斜体', onPress: () => applyFormat('i') },
+                  { icon: Underline, label: '下划线', onPress: () => applyFormat('u') },
+                  { icon: Strikethrough, label: '删除线', onPress: () => applyFormat('s') },
+                  { icon: Highlighter, label: '高亮', onPress: () => applyFormat('hl') },
+                  { icon: Quote, label: '引用', onPress: () => applyFormat('quote') },
+                  { icon: ListTodo, label: '待办', onPress: () => applyFormat('todo') },
+                  { icon: List, label: '无序列表', onPress: () => applyFormat('ul') },
+                  { icon: ListOrdered, label: '有序列表', onPress: () => applyFormat('ol') },
                   { icon: Minus, label: '分割线', onPress: () => applyFormat('hr') },
                 ].map(tool => (
                   <Pressable key={tool.label} accessibilityRole="button" accessibilityLabel={tool.label} onPress={tool.onPress} hitSlop={4} style={({ pressed }) => ({ width: 44, height: 44, borderRadius: r(10), alignItems: 'center', justifyContent: 'center', backgroundColor: pressed ? c.bgDeep : 'transparent' })}>
-                    {'asset' in tool && tool.asset ? (
-                      <AssetIcon source={tool.asset} size={20} color={c.text} />
-                    ) : (
-                      tool.icon && <tool.icon size={19} color={c.text} strokeWidth={2} />
-                    )}
+                    <tool.icon size={19} color={c.text} strokeWidth={1.8} />
                   </Pressable>
                 ))}
               </ScrollView>
@@ -1053,7 +997,7 @@ function WriteEditor() {
             aria-expanded={formatOpen}
             style={{ width: 44, height: 44, borderRadius: r(10), alignItems: 'center', justifyContent: 'center', backgroundColor: formatOpen ? c.primaryFaint : 'transparent' }}
           >
-            <AssetIcon source={EDITOR_ICONS.font} size={20} color={formatOpen ? c.primaryDark : c.text} />
+            <Type size={19} color={formatOpen ? c.primaryDark : c.textSub} strokeWidth={1.8} />
           </PressableScale>
           <PressableScale
             scaleTo={0.9}
@@ -1064,16 +1008,16 @@ function WriteEditor() {
             accessibilityLabel="信纸"
             style={{ width: 44, height: 44, borderRadius: r(10), alignItems: 'center', justifyContent: 'center', backgroundColor: paperSheet ? c.primaryFaint : 'transparent' }}
           >
-            <AssetIcon source={EDITOR_ICONS.palette} size={20} color={paperSheet || entry.paper ? c.primaryDark : c.text} />
+            <Palette size={19} color={paperSheet || entry.paper ? c.primaryDark : c.textSub} strokeWidth={1.8} />
           </PressableScale>
           <View style={{ width: StyleSheet.hairlineWidth, height: 18, backgroundColor: c.divider, marginHorizontal: 4 }} />
 
           {/* 心情、地点天气、标签已经在顶部胶囊栏里，这里只留顶部没有的媒体入口 */}
           <View ref={attachTarget} collapsable={false} style={{ flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-around' }}>
             {[
-              { asset: EDITOR_ICONS.photo, label: '图片', active: false, onPress: () => router.push('/picker/photos') },
-              { asset: EDITOR_ICONS.video, label: '视频', active: false, onPress: () => router.push('/picker/video') },
-              { asset: EDITOR_ICONS.audio, label: '录音', active: false, onPress: () => router.push('/picker/audio') },
+              { icon: ImageIcon, label: '图片', active: false, onPress: () => router.push('/picker/photos') },
+              { icon: Video, label: '视频', active: false, onPress: () => router.push('/picker/video') },
+              { icon: Mic, label: '录音', active: false, onPress: () => router.push('/picker/audio') },
               ...(dictationSupported
                 ? [{ icon: AudioLines, label: dictating ? '停止听写' : '听写', active: dictating, onPress: toggleDictation }]
                 : []),
@@ -1085,11 +1029,7 @@ function WriteEditor() {
                 accessibilityLabel={att.label}
                 style={{ width: 44, height: 44, borderRadius: r(10), alignItems: 'center', justifyContent: 'center', backgroundColor: att.active ? c.dangerSoft : 'transparent' }}
               >
-                {'asset' in att && att.asset ? (
-                  <AssetIcon source={att.asset} size={21} color={att.active ? c.danger : c.primaryDark} />
-                ) : (
-                  att.icon && <att.icon size={20} color={att.active ? c.danger : c.primaryDark} strokeWidth={1.85} />
-                )}
+                <att.icon size={20} color={att.active ? c.danger : c.textSub} strokeWidth={1.8} />
               </PressableScale>
             ))}
           </View>
@@ -1105,11 +1045,7 @@ function WriteEditor() {
             aria-expanded={rememberOpen}
             style={{ width: 44, height: 44, borderRadius: r(10), alignItems: 'center', justifyContent: 'center', backgroundColor: rememberOpen ? c.primaryFaint : 'transparent' }}
           >
-            {ink.on ? (
-              <Image source={IMAGES.companionBird} style={{ width: 24, height: 24 }} resizeMode="contain" />
-            ) : (
-              <Feather size={18} color={rememberOpen ? c.primaryDark : c.text} strokeWidth={1.8} />
-            )}
+            <Sparkles size={19} color={rememberOpen ? c.primaryDark : c.textSub} strokeWidth={1.8} />
           </PressableScale>
           <PressableScale
             scaleTo={0.9}
@@ -1118,7 +1054,7 @@ function WriteEditor() {
             aria-pressed={previewMode}
             style={{ width: 44, height: 44, borderRadius: r(10), alignItems: 'center', justifyContent: 'center', backgroundColor: previewMode ? c.primaryFaint : 'transparent' }}
           >
-            {previewMode ? <EyeOff size={17} color={c.primaryDark} strokeWidth={1.8} /> : <Eye size={17} color={c.text} strokeWidth={1.8} />}
+            {previewMode ? <EyeOff size={19} color={c.primaryDark} strokeWidth={1.8} /> : <Eye size={19} color={c.textSub} strokeWidth={1.8} />}
           </PressableScale>
         </View>
       </View>
@@ -1226,7 +1162,8 @@ function WriteEditor() {
                     backgroundColor: c.inputBg,
                     alignItems: 'center',
                     justifyContent: 'center',
-                    ...(on ? frameInk : { borderWidth: 1, borderColor: c.divider }),
+                    borderWidth: on ? 2 : 1,
+                    borderColor: on ? c.primary : c.divider,
                   }}
                 >
                   {p.key ? (
