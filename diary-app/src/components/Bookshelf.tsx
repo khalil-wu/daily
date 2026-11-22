@@ -200,21 +200,21 @@ export function Bookshelf() {
       flip.setValue(0);
       edges.setValue(0);
       leaves.forEach(l => l.setValue(0));
-      // 一条连续的时间线（约 760ms）：飞出 → 封面翻开 → 三页连翻 → 书页铺满，各段相互重叠，不停顿
+      // 一条连续的时间线（约 620ms）：飞出 → 封面翻开 → 三页连翻 → 书页铺满，各段相互重叠，不停顿
       Animated.parallel([
-        Animated.timing(fade, { toValue: 1, duration: 200, useNativeDriver: ND }),
-        Animated.timing(fly, { toValue: 1, duration: 280, easing: Easing.out(Easing.cubic), useNativeDriver: ND }),
+        Animated.timing(fade, { toValue: 1, duration: 180, useNativeDriver: ND }),
+        Animated.timing(fly, { toValue: 1, duration: 240, easing: Easing.out(Easing.cubic), useNativeDriver: ND }),
         Animated.sequence([
-          Animated.delay(60),
-          Animated.timing(flip, { toValue: 165, duration: 360, easing: Easing.inOut(Easing.cubic), useNativeDriver: ND }),
+          Animated.delay(40),
+          Animated.timing(flip, { toValue: 165, duration: 300, easing: Easing.inOut(Easing.cubic), useNativeDriver: ND }),
         ]),
         Animated.sequence([
-          Animated.delay(290),
-          Animated.stagger(55, leaves.map(l => Animated.timing(l, { toValue: 170, duration: 180, easing: Easing.inOut(Easing.cubic), useNativeDriver: ND }))),
+          Animated.delay(230),
+          Animated.stagger(45, leaves.map(l => Animated.timing(l, { toValue: 170, duration: 160, easing: Easing.inOut(Easing.cubic), useNativeDriver: ND }))),
         ]),
         Animated.sequence([
-          Animated.delay(520),
-          Animated.timing(expand, { toValue: 1, duration: 240, easing: Easing.inOut(Easing.cubic), useNativeDriver: ND }),
+          Animated.delay(410),
+          Animated.timing(expand, { toValue: 1, duration: 210, easing: Easing.inOut(Easing.cubic), useNativeDriver: ND }),
         ]),
       ]).start(({ finished }) => {
         if (!finished) return;
@@ -222,7 +222,7 @@ export function Bookshelf() {
         enterBook(id);
       });
     }
-    const focusTimer = setTimeout(() => titleRef.current?.focus?.(), reduced ? 200 : 700);
+    const focusTimer = setTimeout(() => titleRef.current?.focus?.(), reduced ? 200 : 600);
     return () => clearTimeout(focusTimer);
   }, [open, fly, flip, fade, edges, expand, leaves, reduced, stopAll, enterBook]);
 

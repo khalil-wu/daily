@@ -1,27 +1,24 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Animated, FlatList, Platform, Pressable, RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
+import { FlatList, Platform, Pressable, RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
 import { Text } from '../../src/components/text';
 import { router, useNavigation } from 'expo-router';
 import {
-  AudioLines, ChevronDown, CloudOff, FileText, FolderInput, Heart,
-  Image as ImageIcon, LayoutGrid, Library, List, Lock, Pin, Plus, Search, Trash2, X,
+  ChevronDown, ChevronLeft, CloudOff, FileText, FolderInput, Heart,
+  Image as ImageIcon, LayoutGrid, List, Lock, Pin, Search, Trash2,
 } from 'lucide-react-native';
 import { useTheme } from '../../src/theme/ThemeProvider';
 import { actions, inNotebook, openTutorial, useHydrated, useStore } from '../../src/store/store';
-import { Chip, EmptyState, IconButton, InkPress, Screen, UnderlineTabs, haptic } from '../../src/components/ui';
+import { Chip, EmptyState, IconButton, Screen, UnderlineTabs, haptic } from '../../src/components/ui';
 import { EntryGridCard, EntryListCard } from '../../src/components/EntryCard';
 import { SwipeRow, closeOpenSwipeRow, type SwipeAction } from '../../src/components/SwipeRow';
 import { leaveBook, useOpenSearch } from '../../src/components/BookScope';
 import { OnThisDay } from '../../src/components/OnThisDay';
-import { animateNextLayout, BottomSheet, CrumpleRow, FadeIn, ND, PressableScale, useReducedMotion, SPRING } from '../../src/components/motion';
+import { animateNextLayout, BottomSheet, CrumpleRow, FadeIn, PressableScale, useReducedMotion } from '../../src/components/motion';
 import { setTourHandler, useTourTarget } from '../../src/components/tour';
 import { HomeSkeleton } from '../../src/components/Skeleton';
 import { MoodIcon } from '../../src/components/MoodIcon';
 import { useFeedback } from '../../src/components/feedback';
-import { IMAGES, EDITOR_ICONS } from '../../src/data/assets';
-import { AssetIcon } from '../../src/components/AssetIcon';
 import { DAILY_QUOTES, MOODS } from '../../src/data/constants';
-import { isDictationSupported } from '../../src/utils/dictation';
 import { groupEntriesByDate } from '../../src/utils/grouping';
 import type { Entry, MoodKey } from '../../src/store/types';
 
@@ -30,11 +27,10 @@ type FlatListRow =
   | { type: 'header'; key: string; title: string; count: number }
   | { type: 'entry'; key: string; entry: Entry; index: number; first: boolean; last: boolean };
 
-const USE_NATIVE = ND;
 
 /** 9-11. 首页（列表分组虚拟化 / 左滑撤销 / 日记本切换 / 写作目标 / 快捷入口） */
 export default function HomeScreen() {
-  const { c, t, fs, dark, look, r, frame, ink } = useTheme();
+  const { c, t, fs, r, frame } = useTheme();
   const { toast, sheet } = useFeedback();
   const reducedMotion = useReducedMotion();
   const hydrated = useHydrated();
@@ -59,18 +55,13 @@ export default function HomeScreen() {
   const [filterTag, setFilterTag] = useState<string | null>(null);
   const [filterMood, setFilterMood] = useState<MoodKey | null>(null);
   const [dropOpen, setDropOpen] = useState(false);
-  const [fabOpen, setFabOpen] = useState(false);
-  const [fabMounted, setFabMounted] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
-  // 听写只在真正支持的环境里给入口（Expo Go / 不支持的原生构建不显示）
-  const dictationSupported = useMemo(() => isDictationSupported(), []);
 
   const openSearch = useOpenSearch();
   const navigation = useNavigation();
   const listRef = useRef<FlatList<any>>(null);
   const titleTarget = useTourTarget('home.title');
   const toolsTarget = useTourTarget('home.tools');
-  const fabTarget = useTourTarget('home.fab');
 
   const scrollToTop = useCallback((animated = true) => {
     listRef.current?.scrollToOffset({ offset: 0, animated });
@@ -87,7 +78,6 @@ export default function HomeScreen() {
   // 导览开始前：收起菜单、回到顶部，保证聚光灯对准的控件都在屏幕里
   useEffect(() => {
     setTourHandler('home.prepare', () => {
-      setFabOpen(false);
       setDropOpen(false);
       closeOpenSwipeRow();
       scrollToTop(false);
@@ -95,25 +85,6 @@ export default function HomeScreen() {
     return () => setTourHandler('home.prepare', null);
   }, [scrollToTop]);
 
-  // 快捷新建菜单：弹簧展开，收起时先播完动画再卸载
-  const fabAnim = useRef(new Animated.Value(0)).current;
-  useEffect(() => {
-    fabAnim.stopAnimation();
-    if (reducedMotion) {
-      fabAnim.setValue(fabOpen ? 1 : 0);
-      setFabMounted(fabOpen);
-      return;
-    }
-    if (fabOpen) {
-      setFabMounted(true);
-      Animated.spring(fabAnim, { toValue: 1, useNativeDriver: USE_NATIVE, ...SPRING.pop }).start();
-    } else {
-      Animated.timing(fabAnim, { toValue: 0, duration: 160, useNativeDriver: USE_NATIVE }).start(({ finished }) => {
-        if (finished) setFabMounted(false);
-      });
-    }
-    return () => fabAnim.stopAnimation();
-  }, [fabOpen, fabAnim, reducedMotion]);
 
   const currentNotebook = useMemo(
     () => (activeNotebook ? notebooks.find(n => n.id === activeNotebook) : undefined),
@@ -295,11 +266,6 @@ export default function HomeScreen() {
     toast('已导入示例日记', { message: '你可以自由浏览、编辑或随时删除它们' });
   }, [toast]);
 
-  const moodsUsed = useMemo(
-    () => new Set(notebookEntries.filter(e => e.status === 'published' && e.mood).map(e => e.mood!)),
-    [notebookEntries],
-  );
-
   const activeFilterLabel = useMemo(() => {
     const parts: string[] = [];
     if (filterTag) parts.push(`#${tags.find(x => x.id === filterTag)?.name ?? filterTag}`);
@@ -309,67 +275,10 @@ export default function HomeScreen() {
 
   const showToday = tab === 'all' && !filterTag && !filterMood;
 
-  // 心情快捷筛选行：问候卡之下、「最近记录」之上；有筛选时问候卡隐藏它仍留在顶部
-  const moodChips = useMemo(() => {
-    if (tab !== 'all' || moodsUsed.size < 2) return null;
-    return (
-      <View style={{ flexShrink: 0, marginBottom: 12 }}>
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          style={{ flexGrow: 0, flexShrink: 0, marginHorizontal: -20 }}
-          contentContainerStyle={{ gap: 8, paddingHorizontal: 20 }}
-        >
-          {MOODS.filter(m => moodsUsed.has(m.key)).map(m => (
-            <Chip
-              key={m.key}
-              size="sm"
-              label={m.label}
-              icon={<MoodIcon mood={m.key} size={14} />}
-              selected={filterMood === m.key}
-              onPress={() => {
-                haptic('light');
-                setFilterMood(cur => (cur === m.key ? null : m.key));
-              }}
-            />
-          ))}
-        </ScrollView>
-      </View>
-    );
-  }, [tab, moodsUsed, filterMood]);
-
-  // 目录页抬头：翻开书看到的第一页是这本书自己的目录，而不是一个通用列表
-  const bookHeading = useMemo(() => {
-    const pub = notebookEntries.filter(e => e.status === 'published');
-    if (!pub.length) return null;
-    const times = pub.map(e => e.createdAt);
-    const f = (ts: number) => { const d = new Date(ts); return `${d.getFullYear()}.${d.getMonth() + 1}`; };
-    const from = f(Math.min(...times));
-    const to = f(Math.max(...times));
-    return (
-      <View style={{ alignItems: 'center', paddingTop: 6, paddingBottom: 18 }}>
-        <Text style={{ fontSize: fs(10.5), color: c.textMuted, letterSpacing: 6 }}>目 录</Text>
-        <Text textRole="reading" numberOfLines={2} style={[t.display, { fontSize: fs(26), lineHeight: fs(36), textAlign: 'center', marginTop: 6 }]}>
-          {currentNotebook ? currentNotebook.name : '全部日记'}
-        </Text>
-        <Text style={{ fontSize: fs(12), color: c.textSub, marginTop: 4 }}>
-          {from === to ? from : `${from} — ${to}`} · 共 {pub.length} 篇
-        </Text>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 12 }}>
-          <View style={{ width: 44, height: 1, backgroundColor: c.border }} />
-          <View style={{ width: 5, height: 5, transform: [{ rotate: '45deg' }], backgroundColor: currentNotebook?.color ?? c.primary }} />
-          <View style={{ width: 44, height: 1, backgroundColor: c.border }} />
-        </View>
-      </View>
-    );
-  }, [notebookEntries, currentNotebook, c, fs, t.display]);
-
   const listHeader = useMemo(() => {
     return (
       <View>
-        {showToday && bookHeading}
         {showToday && <OnThisDay />}
-        {moodChips}
 
         {homeView === 'card' && (
           <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
@@ -381,7 +290,7 @@ export default function HomeScreen() {
         )}
       </View>
     );
-  }, [showToday, tab, c, fs, homeView, filtered.length, moodChips, bookHeading]);
+  }, [showToday, tab, c, fs, homeView, filtered.length]);
 
   // 列表底部「每日一句」（Diarly 首页名言卡）：衬线居中排版，按日轮换
   const listFooter = useMemo(() => {
@@ -434,11 +343,10 @@ export default function HomeScreen() {
   const renderListRow = useCallback(
     ({ item }: { item: FlatListRow }) => {
       if (item.type === 'header') {
-        // 设计稿1 #9：分组标题用衬线小标题，与卡片拉开层级
         return (
-          <View style={{ flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between', marginTop: 16, marginBottom: 10, paddingHorizontal: 2 }}>
-            <Text style={[t.h2, { fontSize: fs(15.5) }]}>{item.title}</Text>
-            <Text style={{ fontSize: fs(11.5), color: c.textMuted }}>{item.count} 篇</Text>
+          <View style={{ flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between', marginTop: 14, marginBottom: 8, paddingHorizontal: 4 }}>
+            <Text accessibilityRole="header" style={{ fontSize: fs(13), color: c.textSub, fontWeight: '600' }}>{item.title}</Text>
+            <Text style={{ fontSize: fs(12), color: c.textMuted }}>{item.count} 篇</Text>
           </View>
         );
       }
@@ -452,14 +360,11 @@ export default function HomeScreen() {
             borderTopRightRadius: item.first ? r(18) : 0,
             borderBottomLeftRadius: item.last ? r(18) : 0,
             borderBottomRightRadius: item.last ? r(18) : 0,
-            borderLeftWidth: look.flat ? 1 : dark ? 0 : StyleSheet.hairlineWidth,
-            borderRightWidth: look.flat ? 1 : dark ? 0 : StyleSheet.hairlineWidth,
-            borderTopWidth: look.flat ? (item.first ? 1 : 0) : dark || !item.first ? 0 : StyleSheet.hairlineWidth,
-            borderBottomWidth: look.flat ? (item.last ? 1 : 0) : dark || !item.last ? 0 : StyleSheet.hairlineWidth,
-            borderColor: look.flat ? c.border : c.divider,
-            ...(item.last && !dark && !look.flat
-              ? { shadowColor: c.shadow, shadowOpacity: 0.045, shadowRadius: 16, shadowOffset: { width: 0, height: 4 }, elevation: 1 }
-              : {}),
+            borderLeftWidth: StyleSheet.hairlineWidth,
+            borderRightWidth: StyleSheet.hairlineWidth,
+            borderTopWidth: item.first ? StyleSheet.hairlineWidth : 0,
+            borderBottomWidth: item.last ? StyleSheet.hairlineWidth : 0,
+            borderColor: c.divider,
           }}
         >
           <SwipeRow actions={makeSwipeActions(item.entry)} radius={item.first && item.last ? r(18) : 0}>
@@ -475,7 +380,7 @@ export default function HomeScreen() {
         </View>
       );
     },
-    [c.card, c.border, c.divider, c.shadow, c.textMuted, dark, fs, look.flat, r, t.h2, makeSwipeActions, openEntry, openEntrySheet, removingIds, doTrash],
+    [c.card, c.divider, c.textSub, c.textMuted, fs, r, makeSwipeActions, openEntry, openEntrySheet, removingIds, doTrash],
   );
 
   const renderGridItem = useCallback(
@@ -507,10 +412,10 @@ export default function HomeScreen() {
             haptic('light');
             leaveBook();
           }}
-          style={{ height: 32, paddingHorizontal: 10, borderRadius: 16, flexDirection: 'row', alignItems: 'center', gap: 5, backgroundColor: c.inputBg }}
+          style={{ height: 44, marginLeft: -8, paddingRight: 6, flexDirection: 'row', alignItems: 'center' }}
         >
-          <Library size={16} color={c.text} strokeWidth={1.9} />
-          <Text style={{ fontSize: fs(13), color: c.text, fontWeight: '600' }}>书架</Text>
+          <ChevronLeft size={24} color={c.text} strokeWidth={1.8} />
+          <Text style={{ fontSize: fs(15), color: c.text }}>书架</Text>
         </Pressable>
 
         <Pressable
@@ -527,7 +432,7 @@ export default function HomeScreen() {
           {currentNotebook && (
             <View style={{ width: 9, height: 9, borderRadius: 5, backgroundColor: currentNotebook.color }} />
           )}
-          <Text style={[t.h3, { fontSize: fs(15), flexShrink: 1, color: c.textSub }]} numberOfLines={1}>
+          <Text style={[t.h3, { fontSize: fs(16), flexShrink: 1 }]} numberOfLines={1}>
             {currentNotebook ? currentNotebook.name : '全部日记'}
           </Text>
           <ChevronDown size={15} color={c.textMuted} />
@@ -577,7 +482,6 @@ export default function HomeScreen() {
         <HomeSkeleton />
       ) : filtered.length === 0 ? (
         <View style={{ flex: 1, paddingTop: 14, paddingHorizontal: 20, paddingBottom: 40 }}>
-          {moodChips}
           <View style={{ flex: 1, justifyContent: 'center' }}>
           <EmptyState
             illustration="emptyBook"
@@ -622,7 +526,7 @@ export default function HomeScreen() {
           ListHeaderComponent={listHeader}
           ListFooterComponent={listFooter}
           showsVerticalScrollIndicator={false}
-          contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 14, paddingBottom: 112 }}
+          contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 10, paddingBottom: 32 }}
           initialNumToRender={8}
           maxToRenderPerBatch={6}
           windowSize={5}
@@ -642,7 +546,7 @@ export default function HomeScreen() {
           ListFooterComponent={listFooter}
           columnWrapperStyle={{ justifyContent: 'space-between', marginBottom: 12 }}
           showsVerticalScrollIndicator={false}
-          contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 14, paddingBottom: 112 }}
+          contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 10, paddingBottom: 32 }}
           initialNumToRender={8}
           maxToRenderPerBatch={6}
           windowSize={5}
@@ -651,165 +555,6 @@ export default function HomeScreen() {
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => void onRefresh()} tintColor={c.primary} colors={[c.primary]} />}
         />
       )}
-
-      {/* 悬浮写作按钮 & 5 项快捷新建菜单 */}
-      {fabMounted && (
-        <Animated.View
-          style={[
-            StyleSheet.absoluteFill,
-            { zIndex: 20, backgroundColor: dark ? 'rgba(0,0,0,0.45)' : 'rgba(24,24,22,0.18)', opacity: fabAnim.interpolate({ inputRange: [0, 1], outputRange: [0, 1], extrapolate: 'clamp' }) },
-          ]}
-        >
-          <Pressable style={{ flex: 1 }} onPress={() => setFabOpen(false)} accessibilityLabel="收起新建菜单" />
-          <Animated.View
-            style={{
-              position: 'absolute',
-              right: 20,
-              bottom: 86,
-              width: 168,
-              backgroundColor: c.card,
-              borderRadius: r(16),
-              paddingVertical: 6,
-              borderWidth: look.flat ? 1 : StyleSheet.hairlineWidth,
-              borderColor: look.flat ? c.border : c.divider,
-              shadowColor: c.shadow,
-              shadowOpacity: dark || look.flat ? 0 : 0.14,
-              shadowRadius: 18,
-              shadowOffset: { width: 0, height: 6 },
-              elevation: dark || look.flat ? 0 : 8,
-              transformOrigin: 'right bottom',
-              transform: [
-                { scale: fabAnim.interpolate({ inputRange: [0, 1], outputRange: [0.82, 1] }) },
-                { translateY: fabAnim.interpolate({ inputRange: [0, 1], outputRange: [12, 0] }) },
-              ],
-            }}
-          >
-            {[
-              { label: '写日记', asset: EDITOR_ICONS.write, onPress: () => router.push('/write') },
-              { label: '用模板', asset: EDITOR_ICONS.sticker, onPress: () => router.push('/templates') },
-              { label: '录音记录', asset: EDITOR_ICONS.audio, onPress: () => router.push({ pathname: '/write', params: { action: 'audio' } }) },
-              { label: '拍照记录', asset: EDITOR_ICONS.photo, onPress: () => router.push({ pathname: '/write', params: { action: 'photo' } }) },
-              { label: '拍视频', asset: EDITOR_ICONS.video, onPress: () => router.push({ pathname: '/write', params: { action: 'video' } }) },
-              ...(dictationSupported
-                ? [{ label: '语音听写', icon: AudioLines, onPress: () => router.push({ pathname: '/write', params: { action: 'dictate' } }) }]
-                : []),
-            ].map((item, idx) => (
-              <Pressable
-                key={item.label}
-                onPress={() => {
-                  haptic('light');
-                  setFabOpen(false);
-                  item.onPress();
-                }}
-                style={({ pressed }) => ({
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  gap: 11,
-                  paddingHorizontal: 14,
-                  paddingVertical: 10,
-                  borderTopWidth: idx > 0 ? StyleSheet.hairlineWidth : 0,
-                  borderTopColor: c.divider,
-                  backgroundColor: pressed ? c.cardAlt : 'transparent',
-                })}
-              >
-                <View style={{ width: 32, height: 32, borderRadius: r(10), backgroundColor: c.primaryFaint, alignItems: 'center', justifyContent: 'center' }}>
-                  {'asset' in item && item.asset ? (
-                    <AssetIcon source={item.asset} size={17} color={c.primaryDark} />
-                  ) : (
-                    item.icon && <item.icon size={16} color={c.primaryDark} strokeWidth={1.85} />
-                  )}
-                </View>
-                <Text style={{ fontSize: fs(14), color: c.text }}>{item.label}</Text>
-              </Pressable>
-            ))}
-          </Animated.View>
-        </Animated.View>
-      )}
-
-      <View ref={fabTarget} collapsable={false} style={{ position: 'absolute', right: 20, bottom: 20, zIndex: 25, alignItems: 'center', gap: 10 }}>
-        {!fabOpen && (
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel="更多记录方式"
-            hitSlop={6}
-            onPress={() => {
-              haptic('light');
-              setFabOpen(true);
-            }}
-            style={({ pressed }) => ({ width: 36, height: 36, borderRadius: 18, backgroundColor: c.card, borderWidth: 1, borderColor: ink.on ? ink.line : c.border, alignItems: 'center', justifyContent: 'center', opacity: pressed ? 0.7 : 1 })}
-          >
-            <Plus size={18} color={c.text} strokeWidth={1.9} />
-          </Pressable>
-        )}
-        {ink.on ? (
-          <InkPress
-            offset={3}
-            radius={29}
-            underlay={dark ? '#000000' : ink.line}
-            onPress={() => {
-              haptic('medium');
-              // 点一下就开始写；更多记录方式放在上面的小按钮和长按里
-              if (fabOpen) setFabOpen(false);
-              else router.push('/write');
-            }}
-            onLongPress={() => {
-              haptic('medium');
-              setFabOpen(true);
-            }}
-            accessibilityLabel={fabOpen ? '收起新建菜单' : '写日记'}
-            accessibilityHint="长按可选择模板、录音或拍照" 
-            faceStyle={{
-              width: 58,
-              height: 58,
-              borderRadius: 29,
-              backgroundColor: c.primary,
-              borderWidth: 1.5,
-              borderColor: ink.line,
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
-          >
-            {fabOpen ? (
-              <X size={26} color="#182326" strokeWidth={2.3} />
-            ) : (
-              <AssetIcon source={EDITOR_ICONS.write} size={26} color="#182326" />
-            )}
-          </InkPress>
-        ) : (
-          <PressableScale
-            scaleTo={0.9}
-            onPress={() => {
-              haptic('medium');
-              // 点一下就开始写；更多记录方式放在上面的小按钮和长按里
-              if (fabOpen) setFabOpen(false);
-              else router.push('/write');
-            }}
-            onLongPress={() => {
-              haptic('medium');
-              setFabOpen(true);
-            }}
-            accessibilityLabel={fabOpen ? '收起新建菜单' : '写日记'}
-            accessibilityHint="长按可选择模板、录音或拍照" 
-            style={{
-              width: 56,
-              height: 56,
-              borderRadius: 28,
-              backgroundColor: c.primary,
-              alignItems: 'center',
-              justifyContent: 'center',
-              shadowColor: c.primaryDark,
-              shadowOpacity: dark || look.flat ? 0 : 0.28,
-              shadowRadius: 12,
-              shadowOffset: { width: 0, height: 5 },
-              elevation: dark || look.flat ? 0 : 5,
-            }}
-          >
-            <Animated.View style={{ transform: [{ rotate: fabAnim.interpolate({ inputRange: [0, 1], outputRange: ['0deg', '45deg'] }) }] }}>
-              <Plus size={26} color={c.textOnPrimary} strokeWidth={2.3} />
-            </Animated.View>
-          </PressableScale>
-        )}
-      </View>
 
       {/* 顶部标题下拉面板：日记本切换 + 内容空间 + 筛选 */}
       <BottomSheet visible={dropOpen} onClose={() => setDropOpen(false)} title="筛选与内容空间" maxHeight={0.82}>

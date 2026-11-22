@@ -7,7 +7,6 @@ import {
   MapPin, MoreHorizontal, Pin, Share2, Trash2, X,
 } from 'lucide-react-native';
 import { useTheme } from '../../src/theme/ThemeProvider';
-import { BookSpine } from '../../src/components/BookScope';
 import { actions, scopeEntries, useEntry, useStore } from '../../src/store/store';
 import { EntryReader } from '../../src/components/EntryReader';
 import { PageTurner, type PageRole, type PageTurnerHandle } from '../../src/components/PageTurner';
@@ -206,7 +205,7 @@ function MemoryDetailContent() {
   };
 
   return (
-    <Screen edges={['top', 'bottom']} enter="page" overlay={<BookSpine />}>
+    <Screen edges={['top', 'bottom']} enter="page">
       <NavBar
         right={<IconButton icon={MoreHorizontal} label="更多" onPress={openMore} />}
       />

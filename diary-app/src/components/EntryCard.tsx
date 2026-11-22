@@ -150,7 +150,7 @@ function EntryListCardInner({ entry, onPress, onLongPress, query, compactDate, n
         </View>
       )}
       {grouped && !grouped.first && (
-        <View pointerEvents="none" style={{ position: 'absolute', top: 0, left: 14 + 46 + 12, right: 14, height: StyleSheet.hairlineWidth, backgroundColor: c.divider }} />
+        <View pointerEvents="none" style={{ position: 'absolute', top: 0, left: 14 + 40 + 14, right: 14, height: StyleSheet.hairlineWidth, backgroundColor: c.divider }} />
       )}
       {!compactDate && (
         <View
@@ -158,8 +158,8 @@ function EntryListCardInner({ entry, onPress, onLongPress, query, compactDate, n
             width: 36,
             alignItems: 'center',
             paddingTop: 2,
-            marginRight: grouped ? 12 : 10,
-            ...(grouped ? { borderRightWidth: StyleSheet.hairlineWidth, borderRightColor: c.divider, width: 46, paddingRight: 12 } : {}),
+            marginRight: grouped ? 14 : 10,
+            ...(grouped ? { width: 40 } : {}),
           }}
         >
           <Text style={{ fontSize: fs(10.5), color: c.textMuted }}>{month}</Text>

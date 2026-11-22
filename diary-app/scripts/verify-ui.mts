@@ -50,7 +50,7 @@ try {
     await page.screenshot({ path: `${out}/home-${viewport.width}.png` });
     const overflow = await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth);
     assert.equal(overflow, false, 'no horizontal page overflow');
-    for (const name of ['日历', '回顾', '统计', '日记']) {
+    for (const name of ['日历', '回顾', '我的', '日记']) {
       await page.getByRole('tab', { name, exact: true }).last().click();
       await page.waitForTimeout(100);
       assert.equal(await page.getByRole('tab', { name, exact: true }).last().getAttribute('aria-selected'), 'true');

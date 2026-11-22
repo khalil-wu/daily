@@ -504,7 +504,7 @@ export function Group({ children, title, footer, style }: { children: React.Reac
   const items = React.Children.toArray(children).filter(Boolean);
   return (
     <View style={[{ marginBottom: 14 }, style]}>
-      {!!title && <Text style={{ fontSize: fs(12.5), letterSpacing: 0.4, color: c.textSub, marginBottom: 8, marginLeft: 6, fontWeight: '500' }}>{title}</Text>}
+      {!!title && <Text style={{ fontSize: fs(13), color: c.textSub, marginBottom: 8, marginLeft: 4, fontWeight: '600' }}>{title}</Text>}
       <Card padded={false} style={{ overflow: 'hidden' }}>
         {items.map((child, i) => (
           <View key={i}>
@@ -543,17 +543,17 @@ export function Row({ icon: Icon, iconColor, title, subtitle, value, onPress, ri
     {Icon && (
       <View
         style={{
-          width: 34,
-          height: 34,
-          borderRadius: r(10),
+          width: 30,
+          height: 30,
+          borderRadius: r(9),
           backgroundColor: danger ? c.dangerSoft : c.primaryFaint,
           alignItems: 'center',
           justifyContent: 'center',
-          marginRight: 13,
+          marginRight: 12,
           flexShrink: 0,
         }}
       >
-        <Icon size={17} color={danger ? c.danger : iconColor ?? c.primaryDark} strokeWidth={1.85} />
+        <Icon size={16} color={danger ? c.danger : iconColor ?? c.primaryDark} strokeWidth={1.85} />
       </View>
     )}
     <View style={{ flex: 1, minWidth: 0 }}>
@@ -625,7 +625,7 @@ export function Switch({ value, onChange, disabled, label }: { value: boolean; o
 
 /** 灰底白块分段控件（时间线 / 年度 / 那年今日）—— 白块随选中项滑动 */
 export function Segmented<K extends string>({ items, value, onChange, style }: { items: { key: K; label: string }[]; value: K; onChange: (k: K) => void; style?: StyleProp<ViewStyle> }) {
-  const { c, fs, r, dark, look, ink } = useTheme();
+  const { c, fs, r, dark } = useTheme();
   const reduced = useReducedMotion();
   const [w, setW] = useState(0);
   const idx = Math.max(0, items.findIndex(it => it.key === value));
@@ -658,9 +658,8 @@ export function Segmented<K extends string>({ items, value, onChange, style }: {
         <Animated.View
           pointerEvents="none"
           style={{
-            position: 'absolute', left: 3, top: 3, bottom: 3, width: itemW, borderRadius: r(10), backgroundColor: c.card,
-            borderWidth: ink.on ? 1.25 : look.flat ? 1 : 0, borderColor: ink.on ? ink.line : c.border,
-            shadowColor: c.shadow, shadowOpacity: dark || look.flat ? 0 : 0.08, shadowRadius: 4, shadowOffset: { width: 0, height: 1 }, elevation: dark || look.flat ? 0 : 1,
+            position: 'absolute', left: 3, top: 3, bottom: 3, width: itemW, borderRadius: r(10), backgroundColor: dark ? c.cardAlt : c.card,
+            shadowColor: '#000000', shadowOpacity: dark ? 0 : 0.07, shadowRadius: 6, shadowOffset: { width: 0, height: 1 }, elevation: dark ? 0 : 1,
             transform: [{ translateX }],
           }}
         />
@@ -680,7 +679,7 @@ export function Segmented<K extends string>({ items, value, onChange, style }: {
             }}
             style={{ flex: 1, minHeight: control.target, paddingHorizontal: 5, paddingVertical: 8, borderRadius: r(10), alignItems: 'center', justifyContent: 'center', backgroundColor: on && itemW === 0 ? c.card : 'transparent' }}
           >
-            <Text style={{ fontSize: fs(13), color: on ? c.primaryDark : c.textSub, fontWeight: on ? '600' : '400', textAlign: 'center' }}>{it.label}</Text>
+            <Text style={{ fontSize: fs(13.5), color: on ? c.text : c.textSub, fontWeight: on ? '600' : '400', textAlign: 'center' }}>{it.label}</Text>
           </Pressable>
         );
       })}

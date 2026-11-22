@@ -50,7 +50,7 @@ for (const [name, appearance] of [
   const context = await browser.newContext({ viewport: { width: 390, height: 844 }, reducedMotion: 'reduce' });
   await context.addInitScript(initial => localStorage.setItem('jide-diary:state:v1', JSON.stringify(initial)), { ...state, appearance: { ...state.appearance, ...appearance } });
   const page = await context.newPage();
-  for (const route of ['/', '/write?id=audit-entry', '/settings/appearance', '/stats', '/picker/mood']) {
+  for (const route of ['/', '/write?id=audit-entry', '/settings/appearance', '/review', '/picker/mood']) {
     await page.goto(base + route, { waitUntil: 'networkidle' });
     const slug = `theme-${name}-${route.split('?')[0].replaceAll('/', '-') || 'home'}`;
     await page.screenshot({ path: `docs/qa/pages/screenshots/${slug}.png` });

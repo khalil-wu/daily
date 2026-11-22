@@ -53,24 +53,10 @@ export function ThemeProvider({ children, fontsReady = true }: { children: React
     const look = stylePreset(ap.style);
     const c = buildPalette(dark, ap.accent, look.key);
     const r = (n: number) => scaleRadius(n, look);
-    const inkLook = look.key === 'companion';
-    const ink = { on: inkLook, line: dark ? '#6F878F' : '#243238', soft: c.divider };
-    // 墨线是点缀不是默认：陪伴风普通容器只用 1px 柔和分隔线
-    const frame: ViewStyle = inkLook
-      ? { borderWidth: 1, borderColor: c.divider, shadowOpacity: 0, elevation: 0 }
-      : {
-          borderWidth: look.flat ? 1 : StyleSheet.hairlineWidth,
-          borderColor: look.flat ? c.border : c.divider,
-          shadowColor: c.shadow,
-          shadowOpacity: dark || look.flat ? 0 : 0.045,
-          shadowRadius: 16,
-          shadowOffset: { width: 0, height: 4 },
-          elevation: dark || look.flat ? 0 : 1,
-        };
-    // 主视觉才上粗墨线 + 硬位移「贴纸影」
-    const frameInk: ViewStyle = inkLook
-      ? { borderWidth: 1.5, borderColor: ink.line, boxShadow: `0px 3px 0px ${dark ? '#000000' : ink.line}` }
-      : frame;
+    // 简约留白：所有风格共用同一套轻边界卡片，不再使用粗墨线、硬位移投影与装饰贴纸
+    const ink = { on: false, line: dark ? '#6F878F' : '#243238', soft: c.divider };
+    const frame: ViewStyle = { borderWidth: StyleSheet.hairlineWidth, borderColor: c.divider, shadowOpacity: 0, elevation: 0 };
+    const frameInk: ViewStyle = frame;
     const scale = FONT_SCALE[ap.fontScale] ?? 1;
     const lh = LINE_HEIGHT[ap.lineHeight] ?? 1.8;
     const fs = (n: number) => Math.round(n * scale * 10) / 10;

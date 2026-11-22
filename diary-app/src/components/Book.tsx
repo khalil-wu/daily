@@ -1,10 +1,9 @@
 import React from 'react';
 import { StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 import { Text } from './text';
-import { Image as ExpoImage } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import Svg, { Polygon } from 'react-native-svg';
-import { useIllustrations, useTheme } from '../theme/ThemeProvider';
+import { useTheme } from '../theme/ThemeProvider';
 import { mixHex } from '../theme/palette';
 import { Photo } from './ui';
 
@@ -24,8 +23,7 @@ export function BookCover({
   photoTilt?: string;
   style?: StyleProp<ViewStyle>;
 }) {
-  const { c, t, fs, r, ink, frameInk } = useTheme();
-  const pack = useIllustrations();
+  const { c, t, fs, r } = useTheme();
   const spine = mixHex(color, '#000000', 0.18);
   const band = mixHex(color, '#000000', 0.28);
   return (
@@ -40,7 +38,7 @@ export function BookCover({
           overflow: 'hidden',
           backgroundColor: color,
         },
-        ink.on ? frameInk : { boxShadow: '0px 6px 14px rgba(0,0,0,0.12)' },
+        { boxShadow: '0px 6px 14px rgba(0,0,0,0.12)' },
         style,
       ]}
     >
@@ -59,8 +57,8 @@ export function BookCover({
             width: '76%',
             backgroundColor: '#FFFDF8',
             borderRadius: r(8),
-            borderWidth: 1.25,
-            borderColor: ink.on ? ink.line : c.border,
+            borderWidth: StyleSheet.hairlineWidth,
+            borderColor: c.border,
             paddingHorizontal: 10,
             paddingVertical: 8,
             alignItems: 'center',
@@ -70,8 +68,8 @@ export function BookCover({
           <Text style={{ fontSize: fs(11), color: '#545B60', marginTop: 3 }}>{count} 篇</Text>
         </View>
       </View>
-      {photo ? (
-        /* 最近照片拍立得 + 和纸胶带 */
+      {photo && (
+        /* 最近照片拍立得 */
         <View
           style={{
             position: 'absolute',
@@ -83,25 +81,13 @@ export function BookCover({
             padding: 4,
             paddingBottom: 12,
             transform: [{ rotate: photoTilt }],
-            boxShadow: '0px 2px 0px rgba(0,0,0,0.18)',
+            boxShadow: '0px 2px 6px rgba(0,0,0,0.16)',
           }}
           accessibilityElementsHidden
           importantForAccessibility="no-hide-descendants"
         >
           <Photo uri={photo} style={{ flex: 1 }} radius={0} />
-          <View style={{ position: 'absolute', top: -4, alignSelf: 'center', width: 16, height: 6, backgroundColor: 'rgba(255,255,255,0.7)', transform: [{ rotate: '-8deg' }] }} />
         </View>
-      ) : (
-        /* 风格插画贴纸 */
-        <ExpoImage
-          source={pack.memorySticker as any}
-          style={{ position: 'absolute', right: 8, bottom: 8, width: 46, height: 46, transform: [{ rotate: '6deg' }] }}
-          contentFit="contain"
-          cachePolicy="memory-disk"
-          transition={0}
-          accessibilityElementsHidden
-          importantForAccessibility="no-hide-descendants"
-        />
       )}
     </View>
   );

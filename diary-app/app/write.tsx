@@ -25,7 +25,6 @@ import { VideoClipCard } from '../src/components/VideoPlayer';
 import { PhotoViewer } from '../src/components/PhotoViewer';
 import { PhotoLayoutView } from '../src/components/PhotoLayout';
 import { RichBody } from '../src/components/RichBody';
-import { BookSpine } from '../src/components/BookScope';
 import { CrisisNotice, RememberSheet } from '../src/components/RememberPanel';
 import { useFeedback } from '../src/components/feedback';
 import { DateTimeSheet } from '../src/components/DateTimeSheet';
@@ -487,7 +486,7 @@ function WriteEditor() {
         : undefined;
 
   return (
-    <Screen edges={['top', 'bottom']} keyboard enter="rise" overlay={<BookSpine notebookId={entry.notebookId} />}>
+    <Screen edges={['top', 'bottom']} keyboard enter="rise">
       <NavBar
         title={params.id ? '编辑日记' : '新建日记'}
         subtitle={subtitleText}

@@ -158,12 +158,16 @@ try {
   const largeState = seedState();
   largeState.entries = Array.from({ length: 5000 }, (_, index) => actions.newEntry({ id: `large-${index}`, title: `长列表日记 ${index}`, body: '长列表回归数据', createdAt: Date.now() - index * 86400000, status: 'published' }));
   const large = await seededContext(largeState);
-  await large.page.goto(`${baseURL}/review`);
-  await large.page.getByRole('tab', { name: '时间线', exact: true }).click();
-  await large.page.getByRole('button', { name: /长列表日记 0$/ }).waitFor();
-  const mounted = await large.page.getByRole('button', { name: /长列表日记/ }).count();
-  assert.ok(mounted < 100, `Expected virtualized timeline, mounted ${mounted} entries`);
-  results.push(`5000 篇时间线仅挂载 ${mounted} 个可视附近条目`);
+  await large.page.goto(baseURL);
+  await large.page.getByRole('button', { name: /^日记本 全部日记/ }).click();
+  await large.page.getByRole('button', { name: /^长列表日记 0，/ }).waitFor();
+  const mounted = await large.page.getByRole('button', { name: /^长列表日记 \d+，/ }).count();
+  assert.ok(mounted < 100, `Expected virtualized diary list, mounted ${mounted} entries`);
+  results.push(`5000 篇日记列表仅挂载 ${mounted} 个可视附近条目`);
+  await large.page.getByRole('tab', { name: '回顾', exact: true }).click();
+  await large.page.getByRole('tab', { name: '年', exact: true }).click();
+  await large.page.getByText('一年里的每一天', { exact: true }).waitFor();
+  results.push('5000 篇日记的回顾年视图可正常打开');
   await large.context.close();
 
   assert.deepEqual(errors, [], `Browser runtime errors: ${errors.join('; ')}`);

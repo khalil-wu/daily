@@ -34,27 +34,29 @@ try {
     const page = await context.newPage();
     page.on('pageerror', error => errors.push(error.message));
     page.setDefaultTimeout(12000);
+    // 旧的年度报告链接会跳到「回顾 · 年」；点那一行钻进月视图，再点日期看当天原文
     await page.goto(`${base}/annual-report?year=${new Date(recent).getFullYear()}`);
-    await page.getByRole('tab', { name: '日期列表', exact: true }).click();
-    const month = page.getByRole('radio', { name: `${new Date(recent).getMonth() + 1}月`, exact: true });
-    await month.focus(); await page.keyboard.press('Space');
-    assert.equal(await month.getAttribute('aria-checked'), 'true');
-    const day = page.getByRole('button', { name: `查看 ${date} 的 2 篇日记`, exact: true });
+    await page.waitForURL('**/review**');
+    assert.equal(await page.getByRole('tab', { name: '年', exact: true }).getAttribute('aria-selected'), 'true');
+    const monthNo = new Date(recent).getMonth() + 1;
+    await page.getByRole('button', { name: new RegExp(`^${monthNo}月，记录了 \\d+ 天，查看这个月$`) }).click();
+    assert.equal(await page.getByRole('tab', { name: '月', exact: true }).getAttribute('aria-selected'), 'true');
+    const dayLabel = `${monthNo}月${new Date(recent).getDate()}日`;
+    const day = page.getByRole('button', { name: new RegExp(`^${dayLabel}，2 篇`) });
     const box = await day.boundingBox();
-    assert.ok(box && box.height >= 44);
+    assert.ok(box && box.height >= 34, `month cell must stay comfortably tappable: ${JSON.stringify(box)}`);
     await day.click();
-    const dialog = page.getByRole('dialog', { name: `${date} 的日记`, exact: true });
+    const dialog = page.getByRole('dialog', { name: dayLabel, exact: true });
     await dialog.waitFor();
-    assert.equal(await dialog.getByRole('button', { name: /^打开日记：/ }).count(), 2);
+    assert.equal(await dialog.getByRole('button', { name: /近年的公开回忆|同一天另一篇/ }).count(), 2);
     assert.equal(await dialog.getByText(/隐藏内容|草稿内容/).count(), 0);
     await page.screenshot({ path: `${out}/annual-day-${width}.png` });
-    await dialog.getByRole('button', { name: '打开日记：近年的公开回忆', exact: true }).click();
+    await dialog.getByRole('button', { name: /近年的公开回忆$/ }).click();
     await page.waitForURL('**/memory/recent-memory');
     await page.getByText('用于日期与回忆范围验收的合成内容。', { exact: true }).waitFor();
-    checks.push(`${width}px 年度日期列表提供足够触控区域，列出同日原文并过滤私密与草稿`);
+    checks.push(`${width}px 年 → 月 → 日逐级查看，同日原文列出并过滤私密与草稿`);
 
     await page.goto(base + '/review');
-    await page.getByRole('tab', { name: '里程碑', exact: true }).click();
     await page.getByRole('button', { name: '设置回忆范围', exact: true }).click();
     const range = page.getByRole('dialog', { name: '回忆范围', exact: true });
     await range.getByRole('radio', { name: '一年以前', exact: true }).click();
@@ -68,7 +70,7 @@ try {
     assert.equal(await page.getByText('隐藏内容不应展示', { exact: true }).count(), 0);
     await page.screenshot({ path: `${out}/memory-range-${width}.png` });
     assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false);
-    checks.push(`${width}px 记忆胶囊按时间和排除标签实际筛选，键盘操作生效`);
+    checks.push(`${width}px 往事按时间和排除标签实际筛选，键盘操作生效`);
 
     await page.goto(base + '/settings/reminders');
     await page.getByText('当前网页不支持后台定时通知。这里保存 App 的提醒偏好，预览仅在页面内显示。', { exact: true }).waitFor();

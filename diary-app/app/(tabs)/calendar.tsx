@@ -1,17 +1,16 @@
 import React, { useCallback, useMemo, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Pressable, ScrollView, View } from 'react-native';
 import { Text } from '../../src/components/text';
 import { router } from 'expo-router';
-import { PenLine, Search } from 'lucide-react-native';
+import { ChevronRight, PenLine, Search } from 'lucide-react-native';
 import { useTheme } from '../../src/theme/ThemeProvider';
 import { useBookEntries } from '../../src/store/store';
 import { ScreenTitle, useOpenSearch } from '../../src/components/BookScope';
 import { Button, Card, Divider, IconButton, Screen } from '../../src/components/ui';
 import { CalendarMonth } from '../../src/components/Charts';
 import { EntryListCard } from '../../src/components/EntryCard';
-import { useCountUp } from '../../src/components/motion';
 import { MoodIcon } from '../../src/components/MoodIcon';
-import { moodMeta, moodTint } from '../../src/data/constants';
+import { moodMeta } from '../../src/data/constants';
 import { dayKey, fmtMonthDayWeek } from '../../src/utils/date';
 import { fmtNumber, wordCount } from '../../src/utils/text';
 import type { MoodKey } from '../../src/store/types';
@@ -19,7 +18,7 @@ import { calendarEntryDate } from '../../src/utils/calendar';
 
 /** 12. 日历页 */
 export default function CalendarScreen() {
-  const { c, t, fs, dark, r } = useTheme();
+  const { c, t, fs, r } = useTheme();
   const entries = useBookEntries();
   const openSearch = useOpenSearch();
   const now = new Date();
@@ -110,31 +109,22 @@ export default function CalendarScreen() {
           />
         </Card>
 
-        {/* 本月小结 */}
-        <Card style={{ marginTop: 14, padding: 14 }}>
-          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
-            <Text style={{ fontSize: fs(12.5), color: c.textSub, fontWeight: '500' }}>
-              {month + 1}月小结
-            </Text>
-            {monthDomMood && (
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 9, paddingVertical: 3, borderRadius: r(999), backgroundColor: moodTint(monthDomMood, dark) }}>
-                <MoodIcon mood={monthDomMood.key} size={13} />
-                <Text style={{ fontSize: fs(11), color: c.text }}>主导 · {monthDomMood.label}</Text>
-              </View>
-            )}
-          </View>
-          <View style={{ flexDirection: 'row' }}>
-            {[
-              { label: '记录篇数', num: monthSummary.count, unit: '篇' },
-              { label: '记录天数', num: monthSummary.days, unit: '天' },
-              { label: '本月字数', num: monthSummary.words, unit: '字' },
-            ].map((col, idx) => (
-              <MonthStat key={col.label} label={col.label} num={col.num} unit={col.unit} divider={idx > 0} />
-            ))}
-          </View>
-        </Card>
+        {/* 本月一行小结：详细的月度回顾在「回顾 · 月」 */}
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={`${month + 1}月记录 ${monthSummary.count} 篇，${monthSummary.days} 天，${monthSummary.words} 字，查看月度回顾`}
+          onPress={() => router.navigate({ pathname: '/review', params: { scope: 'month' } })}
+          style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 8, minHeight: 44, paddingHorizontal: 4, marginTop: 6, opacity: pressed ? 0.6 : 1 })}
+        >
+          {monthDomMood && <MoodIcon mood={monthDomMood.key} size={18} />}
+          <Text style={{ flex: 1, fontSize: fs(13), color: c.textSub, fontVariant: ['tabular-nums'] }} numberOfLines={1}>
+            {month + 1}月 · {monthSummary.count} 篇 · {monthSummary.days} 天 · {fmtNumber(monthSummary.words)} 字
+          </Text>
+          <Text style={{ fontSize: fs(12.5), color: c.primaryDark }}>月度回顾</Text>
+          <ChevronRight size={14} color={c.primaryDark} />
+        </Pressable>
 
-        <Divider style={{ marginVertical: 16 }} />
+        <Divider style={{ marginTop: 6, marginBottom: 16 }} />
 
         <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
           <Text style={[t.h3, { fontSize: fs(15) }]}>{fmtMonthDayWeek(selectedDate)}</Text>
@@ -175,22 +165,5 @@ export default function CalendarScreen() {
         </View>
       </ScrollView>
     </Screen>
-  );
-}
-
-/** 月小结数字：挂载/切换月份时滚动到位（减弱动态时直接显示） */
-function MonthStat({ label, num, unit, divider }: { label: string; num: number; unit: string; divider: boolean }) {
-  const { c, fs } = useTheme();
-  const v = useCountUp(num, 500);
-  return (
-    <View style={{ flex: 1, alignItems: 'center', borderLeftWidth: divider ? StyleSheet.hairlineWidth : 0, borderLeftColor: c.divider }}>
-      <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 2 }}>
-        <Text numberOfLines={1} style={{ fontSize: fs(18), color: c.text, fontWeight: '600', fontVariant: ['tabular-nums'] }}>
-          {fmtNumber(v)}
-        </Text>
-        <Text numberOfLines={1} style={{ fontSize: fs(11.5), color: c.textMuted }}>{unit}</Text>
-      </View>
-      <Text numberOfLines={1} style={{ fontSize: fs(11), color: c.textMuted, marginTop: 3 }}>{label}</Text>
-    </View>
   );
 }
