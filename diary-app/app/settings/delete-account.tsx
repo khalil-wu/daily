@@ -29,7 +29,7 @@ export default function DeleteAccountScreen() {
   };
 
   return (
-    <Screen edges={['top', 'bottom']}>
+    <Screen enter="page" edges={['top', 'bottom']}>
       <NavBar title="注销账号" />
 
       <View style={{ flex: 1, paddingHorizontal: 26, justifyContent: 'space-between', paddingVertical: 24 }}>

@@ -137,7 +137,7 @@ export default function MemoryMapScreen() {
     else { setCluster(names); setSelected(null); }
   };
 
-  return <Screen edges={['top', 'bottom']}>
+  return <Screen enter="page" edges={['top', 'bottom']}>
     <NavBar title="足迹地图" subtitle={groups.length ? `${groups.length} 处地点 · ${located.length} 处有坐标` : undefined} />
     <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 6, paddingBottom: 36 }}>
       {groups.length === 0 ? <View style={{ flex: 1, justifyContent: 'center', paddingTop: 80 }}>

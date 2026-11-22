@@ -82,7 +82,7 @@ export default function MeScreen() {
   };
 
   return (
-    <Screen edges={[]}>
+    <Screen enter="page" edges={[]}>
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 36 }}>
         {/* 顶部线绘湖畔小鸟封面 + 柔和渐变融合 */}
         <View style={{ height: 196, width: '100%', overflow: 'hidden', backgroundColor: dark ? c.bgDeep : '#FFFFFF' }}>

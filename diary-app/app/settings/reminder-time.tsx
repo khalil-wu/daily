@@ -48,7 +48,7 @@ export default function ReminderTimeScreen() {
   };
 
   return (
-    <Screen edges={['top', 'bottom']}>
+    <Screen enter="page" edges={['top', 'bottom']}>
       <NavBar
         title="设置提醒时间"
         left={<TextAction label="取消" onPress={goBack} />}

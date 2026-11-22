@@ -41,7 +41,7 @@ export default function SettingsIndexScreen() {
   };
 
   return (
-    <Screen edges={['top', 'bottom']}>
+    <Screen enter="page" edges={['top', 'bottom']}>
       <NavBar variant="large" title="设置" />
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 32 }}>
         <Group title="账号">

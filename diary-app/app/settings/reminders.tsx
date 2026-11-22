@@ -63,7 +63,7 @@ export default function RemindersScreen() {
   };
 
   return (
-    <Screen edges={['top', 'bottom']}>
+    <Screen enter="page" edges={['top', 'bottom']}>
       <NavBar variant="large" title="提醒设置" />
       <ScrollView keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 36 }}>
         {Platform.OS === 'web' && <Text style={{ fontSize: fs(13), color: c.textSub, lineHeight: fs(20), marginBottom: 16 }}>当前网页不支持后台定时通知。这里保存 App 的提醒偏好，预览仅在页面内显示。</Text>}

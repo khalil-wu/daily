@@ -81,7 +81,7 @@ export default function DraftsScreen() {
   );
 
   return (
-    <Screen edges={['top', 'bottom']}>
+    <Screen enter="page" edges={['top', 'bottom']}>
       <NavBar
         title="草稿箱"
         right={

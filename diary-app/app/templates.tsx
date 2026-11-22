@@ -36,7 +36,7 @@ export default function TemplatesScreen() {
     } else router.replace({ pathname: '/write', params: { template: tpl.id } });
   };
   return (
-    <Screen edges={['top', 'bottom']}>
+    <Screen enter="page" edges={['top', 'bottom']}>
       <NavBar title="模板中心" />
       <Text style={[t.sub, { paddingHorizontal: 20, marginBottom: 8 }]}>先看看内容，再选择适合今天的记录方式。</Text>
       <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ flexGrow: 0 }} contentContainerStyle={{ paddingHorizontal: 20, gap: 8, paddingVertical: 8 }}>

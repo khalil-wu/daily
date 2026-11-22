@@ -176,7 +176,7 @@ export default function VideoPickerScreen() {
   };
 
   return (
-    <Screen edges={['top', 'bottom']}>
+    <Screen enter="rise" edges={['top', 'bottom']}>
       <NavBar
         title="添加视频"
         right={<PillAction label={picked.length ? `完成 (${picked.length})` : '完成'} onPress={done} disabled={busy} />}

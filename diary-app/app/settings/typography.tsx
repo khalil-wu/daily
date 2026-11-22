@@ -27,7 +27,7 @@ export default function TypographyScreen() {
   const selectedWidth = WIDTH_STOPS.reduce((best, stop) => Math.abs(stop.val - contentWidth) < Math.abs(best.val - contentWidth) ? stop : best).val;
 
   return (
-    <Screen edges={['top', 'bottom']}>
+    <Screen enter="page" edges={['top', 'bottom']}>
       <NavBar variant="large" title="字体与排版" />
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 36, gap: 22 }}>
         {/* 字体 */}

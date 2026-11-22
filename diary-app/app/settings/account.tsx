@@ -93,7 +93,7 @@ export default function AccountSyncScreen() {
     .join('、');
 
   return (
-    <Screen edges={['top', 'bottom']}>
+    <Screen enter="page" edges={['top', 'bottom']}>
       <NavBar variant="large" title="账号与同步" />
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 36 }}>
         <View style={{ gap: 12, marginBottom: 18 }}>

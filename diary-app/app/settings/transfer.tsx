@@ -79,7 +79,7 @@ function TransferScreenContent() {
   };
 
   return (
-    <Screen edges={['top', 'bottom']}>
+    <Screen enter="page" edges={['top', 'bottom']}>
       <NavBar variant="large" title="导入与导出" />
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 36 }}>
         <Group title="导入日记（从其他格式文件）">

@@ -18,7 +18,7 @@ export default function AboutScreen() {
   const [permOpen, setPermOpen] = useState(false);
 
   return (
-    <Screen edges={['top', 'bottom']}>
+    <Screen enter="page" edges={['top', 'bottom']}>
       <NavBar variant="large" title="关于记得日记" />
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 36 }}>
         <View style={{ alignItems: 'center', paddingVertical: 22 }}>

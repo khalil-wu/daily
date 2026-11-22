@@ -21,7 +21,7 @@ function HiddenEntriesList() {
   );
 
   return (
-    <Screen edges={['top', 'bottom']}>
+    <Screen enter="page" edges={['top', 'bottom']}>
       <NavBar title="隐藏日记" />
       {list.length === 0 ? (
         <View style={{ flex: 1, justifyContent: 'center' }}>

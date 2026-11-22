@@ -70,7 +70,7 @@ export default function FavoritesScreen() {
   );
 
   return (
-    <Screen edges={['top', 'bottom']}>
+    <Screen enter="page" edges={['top', 'bottom']}>
       <NavBar
         title="我的收藏"
         right={list.length > 0 ? <TextAction label={manage ? '完成' : '管理'} onPress={() => setManage(v => !v)} /> : undefined}

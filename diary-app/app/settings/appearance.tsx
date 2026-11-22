@@ -28,7 +28,7 @@ export default function AppearanceScreen() {
   const ap = useStore(s => s.appearance);
   const lightPalette = buildPalette(false, ap.accent, look.key);
   const darkPalette = buildPalette(true, ap.accent, look.key);
-  return <Screen edges={['top', 'bottom']}>
+  return <Screen enter="page" edges={['top', 'bottom']}>
     <NavBar variant="large" title="外观主题" />
     <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 36, gap: 24 }}>
       <View style={{ gap: 12 }}><Text style={t.h3}>显示模式</Text><View style={{ flexDirection: 'row', gap: 8 }}>

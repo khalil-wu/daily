@@ -80,7 +80,7 @@ export default function PhotoPickerScreen() {
   };
 
   return (
-    <Screen edges={['top', 'bottom']}>
+    <Screen enter="rise" edges={['top', 'bottom']}>
       <NavBar title="选择照片" right={<PillAction label={busy ? '保存照片中…' : `完成 (${selected.length})`} disabled={busy} onPress={done} />} />
       <View style={{ paddingHorizontal: 20, paddingBottom: 12, gap: 10 }}>
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>

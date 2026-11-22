@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, Animated, AppState, Image, Platform, StyleSheet, useWindowDimensions, View, type ViewStyle } from 'react-native';
 import { Text } from '../src/components/text';
+import { PaperCurtain } from '../src/components/curtain';
 import { Stack, router, usePathname } from 'expo-router';
 import { useFonts } from 'expo-font';
 import * as Notifications from 'expo-notifications';
@@ -128,6 +129,7 @@ function AppShell() {
   const content = (
     <View style={{ flex: 1, backgroundColor: c.bg }}>
       <StatusBar style={dark ? 'light' : 'dark'} />
+      <PaperCurtain />
       <View
         {...(Platform.OS === 'web' ? { inert: locked } : {})}
         accessibilityElementsHidden={locked}
@@ -145,7 +147,7 @@ function AppShell() {
         <Stack.Screen name="auth/register" />
         <Stack.Screen name="auth/forgot" />
         <Stack.Screen name="shelf" options={{ animation: 'none' }} />
-        <Stack.Screen name="(tabs)" options={{ animation: reduced ? 'none' : 'fade', animationDuration: 180 }} />
+        <Stack.Screen name="(tabs)" options={{ animation: 'none' }} />
         <Stack.Screen name="me" />
         <Stack.Screen name="write" options={{ animation: reduced ? 'none' : 'slide_from_bottom' }} />
         <Stack.Screen name="saved" options={{ animation: reduced ? 'none' : 'fade' }} />

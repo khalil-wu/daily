@@ -76,7 +76,7 @@ export default function SearchScreen() {
   );
 
   return (
-    <Screen edges={['top', 'bottom']}>
+    <Screen enter="page" edges={['top', 'bottom']}>
       <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 14, paddingVertical: 6, gap: 6 }}>
         <Pressable accessibilityRole="button" accessibilityLabel="返回" onPress={goBack} style={{ width: 44, height: 44, alignItems: 'center', justifyContent: 'center', marginLeft: -8 }}>
           <ChevronLeft size={24} color={c.text} strokeWidth={1.8} />

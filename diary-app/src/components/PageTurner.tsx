@@ -135,19 +135,25 @@ export const PageTurner = forwardRef<PageTurnerHandle, Props>(function PageTurne
 
 function PageLayer({ role, prog, width, reduced, children }: { role: PageRole; prog: SharedValue<number>; width: SharedValue<number>; reduced: boolean; children: React.ReactNode }) {
   const { c } = useTheme();
+  // 角色放进共享值：翻页提交时同一层会从「下一页」变成「当前页」，
+  // 角色与进度必须在同一帧生效，否则旧页会闪回一帧
+  const roleSV = useSharedValue(role);
+  useLayoutEffect(() => {
+    roleSV.value = role;
+  }, [role, roleSV]);
   const angle = useDerivedValue(() => {
     const p = prog.value;
-    if (role === 'cur') return p < 0 ? p * 180 : 0;
-    if (role === 'prev') return p > 0 ? -180 + p * 180 : -180;
+    if (roleSV.value === 'cur') return p < 0 ? p * 180 : 0;
+    if (roleSV.value === 'prev') return p > 0 ? -180 + p * 180 : -180;
     return 0;
   });
 
   const layerStyle = useAnimatedStyle(() => {
     const p = prog.value;
     if (reduced) {
-      return { opacity: role === 'cur' ? 1 - Math.abs(p) : role === 'next' ? Math.max(0, -p) : Math.max(0, p) };
+      return { opacity: roleSV.value === 'cur' ? 1 - Math.abs(p) : roleSV.value === 'next' ? Math.max(0, -p) : Math.max(0, p) };
     }
-    if (role === 'next') return { opacity: 1 };
+    if (roleSV.value === 'next') return { opacity: 1, transform: [{ perspective: 1400 }, { translateX: 0 }, { rotateY: '0deg' }, { translateX: 0 }] };
     const a = angle.value;
     const w = width.value;
     return {
@@ -155,12 +161,12 @@ function PageLayer({ role, prog, width, reduced, children }: { role: PageRole; p
       transform: [{ perspective: 1400 }, { translateX: -w / 2 }, { rotateY: `${a}deg` }, { translateX: w / 2 }],
     };
   });
-  const faceStyle = useAnimatedStyle(() => ({ opacity: reduced || role === 'next' || angle.value > -90 ? 1 : 0 }));
-  const backStyle = useAnimatedStyle(() => ({ opacity: !reduced && role !== 'next' && angle.value <= -90 ? 1 : 0 }));
-  const turnShade = useAnimatedStyle(() => ({ opacity: reduced || role === 'next' ? 0 : interpolate(Math.abs(angle.value), [0, 90, 180], [0, 0.25, 0]) }));
+  const faceStyle = useAnimatedStyle(() => ({ opacity: reduced || roleSV.value === 'next' || angle.value > -90 ? 1 : 0 }));
+  const backStyle = useAnimatedStyle(() => ({ opacity: !reduced && roleSV.value !== 'next' && angle.value <= -90 ? 1 : 0 }));
+  const turnShade = useAnimatedStyle(() => ({ opacity: reduced || roleSV.value === 'next' ? 0 : interpolate(Math.abs(angle.value), [0, 90, 180], [0, 0.25, 0]) }));
   const castShadow = useAnimatedStyle(() => {
     const p = prog.value;
-    const amount = role === 'next' ? Math.max(0, -p) : role === 'cur' ? Math.max(0, p) : 0;
+    const amount = roleSV.value === 'next' ? Math.max(0, -p) : roleSV.value === 'cur' ? Math.max(0, p) : 0;
     return { opacity: reduced ? 0 : interpolate(amount, [0, 0.5, 1], [0, 0.6, 0]) };
   });
 

@@ -40,7 +40,7 @@ export default function PersonDetailScreen() {
 
   if (!person || !summary) {
     return (
-      <Screen edges={['top', 'bottom']}>
+      <Screen enter="page" edges={['top', 'bottom']}>
         <NavBar title="身边人" />
         <View style={{ flex: 1, justifyContent: 'center' }}>
           <EmptyState illustration="emptyBook" title="没有找到这个人" desc="TA 可能已被移除。" action="返回" onAction={goBack} />
@@ -111,7 +111,7 @@ export default function PersonDetailScreen() {
   ];
 
   return (
-    <Screen edges={['top', 'bottom']}>
+    <Screen enter="page" edges={['top', 'bottom']}>
       <NavBar
         title={person.name}
         right={<IconButton icon={PenLine} label="编辑" onPress={openEdit} />}

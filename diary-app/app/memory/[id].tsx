@@ -205,7 +205,7 @@ function MemoryDetailContent() {
   };
 
   return (
-    <Screen edges={['top', 'bottom']}>
+    <Screen edges={['top', 'bottom']} enter="page">
       <NavBar
         right={<IconButton icon={MoreHorizontal} label="更多" onPress={openMore} />}
       />

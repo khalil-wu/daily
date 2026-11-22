@@ -178,7 +178,7 @@ export default function AudioRecorderScreen() {
   };
 
   return (
-    <Screen edges={['top', 'bottom']}>
+    <Screen enter="rise" edges={['top', 'bottom']}>
       <NavBar title="录音记录" />
 
       <View style={{ flex: 1, alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 28, paddingVertical: 32 }}>

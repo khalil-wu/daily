@@ -50,7 +50,7 @@ export default function PeoplePickerScreen() {
   const groups = groupPeopleByRelation(summarizePeople(entries, people));
 
   return (
-    <Screen edges={['top', 'bottom']}>
+    <Screen enter="rise" edges={['top', 'bottom']}>
       <NavBar title="和谁在一起" />
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 10, paddingBottom: 24 }}>
         {people.length === 0 && (

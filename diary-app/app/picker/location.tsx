@@ -90,7 +90,7 @@ export default function LocationPickerScreen() {
   };
 
   return (
-    <Screen edges={['top', 'bottom']} keyboard>
+    <Screen enter="rise" edges={['top', 'bottom']} keyboard>
       <NavBar title="天气与地点" />
       <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled" contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 8, paddingBottom: 28 }}>
         <Text style={t.h3}>天气</Text>

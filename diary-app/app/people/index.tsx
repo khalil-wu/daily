@@ -41,7 +41,7 @@ export default function PeopleScreen() {
   };
 
   return (
-    <Screen edges={['top', 'bottom']}>
+    <Screen enter="page" edges={['top', 'bottom']}>
       <NavBar
         title="身边人"
         right={

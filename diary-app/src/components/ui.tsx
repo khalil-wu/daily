@@ -20,6 +20,7 @@ import { control, radius } from '../theme/tokens';
 import { photoSource, type IllustrationName } from '../data/assets';
 import { usePhotoUri } from '../utils/usePhotoUri';
 import { ND, PressableScale, SPRING, useReducedMotion } from './motion';
+import { ScreenEnter } from './curtain';
 
 let lastHapticAt = 0;
 
@@ -80,9 +81,11 @@ interface ScreenProps {
   scrollProps?: ScrollViewProps;
   /** 铺满整个容器（含安全区与两侧留白）的浮层 */
   overlay?: React.ReactNode;
+  /** web 入场过渡（原生端由系统转场负责） */
+  enter?: 'page' | 'rise' | 'fade';
 }
 
-export function Screen({ children, scroll, edges = ['top'], style, contentStyle, header, footer, keyboard, bg, scrollProps, overlay }: ScreenProps) {
+export function Screen({ children, scroll, edges = ['top'], style, contentStyle, header, footer, keyboard, bg, scrollProps, overlay, enter }: ScreenProps) {
   const { c } = useTheme();
   const insets = useSafeAreaInsets();
   const maxW = 680;
@@ -99,13 +102,14 @@ export function Screen({ children, scroll, edges = ['top'], style, contentStyle,
   ) : (
     <View style={[{ flex: 1 }, contentStyle]}>{children}</View>
   );
-  const inner = (
+  const column = (
     <View style={{ flex: 1, width: '100%', maxWidth: maxW, alignSelf: 'center' }}>
       {header}
       {body}
       {footer}
     </View>
   );
+  const inner = enter ? <ScreenEnter kind={enter}>{column}</ScreenEnter> : column;
   return (
     <SafeAreaView edges={edges} style={[{ flex: 1, backgroundColor: bg ?? c.bg }, style]}>
       {keyboard ? (

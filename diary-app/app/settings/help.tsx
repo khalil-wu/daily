@@ -79,7 +79,7 @@ export default function HelpScreen() {
   };
 
   return (
-    <Screen edges={['top', 'bottom']} keyboard>
+    <Screen enter="page" edges={['top', 'bottom']} keyboard>
       <NavBar variant="large" title="帮助与教程" />
       <ScrollView keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 36 }}>
         <Group title="新手导览" footer="导览会用光圈指出真实的按钮位置，随时可以跳过。">

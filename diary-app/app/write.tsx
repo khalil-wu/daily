@@ -163,7 +163,10 @@ function WriteEditor() {
         ? { title: tpl.title, body: tpl.body, tags: tpl.tags, template: tpl.id }
         : undefined,
     });
+    // 新建日记：进来就能直接打字，不用再点一下正文
+    const focusTimer = existing || tpl ? undefined : setTimeout(() => bodyRef.current?.focus(), 320);
     return () => {
+      clearTimeout(focusTimer);
       dictationRef.current?.stop();
       dictationRef.current = null;
       // 系统返回、手势退出也保留最后一次输入，不依赖防抖计时器是否已触发。
@@ -483,7 +486,7 @@ function WriteEditor() {
         : undefined;
 
   return (
-    <Screen edges={['top', 'bottom']} keyboard>
+    <Screen edges={['top', 'bottom']} keyboard enter="rise">
       <NavBar
         title={params.id ? '编辑日记' : '新建日记'}
         subtitle={subtitleText}

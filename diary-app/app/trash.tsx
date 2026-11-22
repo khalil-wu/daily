@@ -179,7 +179,7 @@ function TrashContents() {
   );
 
   return (
-    <Screen edges={['top', 'bottom']}>
+    <Screen enter="page" edges={['top', 'bottom']}>
       <NavBar
         title="最近删除"
         right={

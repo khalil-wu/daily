@@ -66,7 +66,7 @@ export default function AnnualReportScreen() {
   };
 
   return (
-    <Screen edges={['top', 'bottom']}>
+    <Screen enter="page" edges={['top', 'bottom']}>
       <NavBar title={book ? `${book.name} · 年度回顾` : '年度回顾'} />
 
       {/* 年份切换栏 */}

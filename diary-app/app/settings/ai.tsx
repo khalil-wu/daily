@@ -84,7 +84,7 @@ export default function AISettingsScreen() {
   const host = apiHost(baseUrl || ai.baseUrl);
 
   return (
-    <Screen edges={['top', 'bottom']}>
+    <Screen enter="page" edges={['top', 'bottom']}>
       <NavBar variant="large" title="记得" subtitle="它读你写的，问你、帮你整理、给你回信" />
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 36 }}>
         {/* 简介卡 */}

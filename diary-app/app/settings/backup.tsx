@@ -201,7 +201,7 @@ function BackupScreenContent() {
   };
 
   return (
-    <Screen edges={['top', 'bottom']}>
+    <Screen enter="page" edges={['top', 'bottom']}>
       <NavBar variant="large" title="备份与恢复" />
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 36 }}>
         <Group footer={cloudConfigured() ? '同步按账号独立保存；在「账号与同步」中开启附件后，照片、视频与录音也会上传，失败时会保留本机版本。' : '目前还没有接入云端服务器：同步只保存当前本机账号的快照，换手机请用下面的「手动备份」带走数据。'}>

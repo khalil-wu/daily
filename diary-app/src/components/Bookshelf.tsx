@@ -7,6 +7,7 @@ import Reanimated, {
 } from 'react-native-reanimated';
 import { Text } from './text';
 import { router, useFocusEffect } from 'expo-router';
+import { PAPER, showCurtain } from './curtain';
 import { ArrowLeft, ArrowRight, Check, Edit3, FolderOpen, MoreHorizontal, PenLine, Plus, Search, Trash2, X } from 'lucide-react-native';
 import { Image as ExpoImage } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -146,23 +147,26 @@ export function Bookshelf() {
       Animated.timing(fade, { toValue: 0, duration: 150, useNativeDriver: ND }).start(({ finished }) => finished && setOpen(null));
       return;
     }
-    const steps: Animated.CompositeAnimation[] = [];
-    if (expandedRef.current) steps.push(Animated.timing(expand, { toValue: 0, duration: 240, easing: Easing.inOut(Easing.cubic), useNativeDriver: ND }));
-    steps.push(Animated.stagger(50, [2, 1, 0].map(i => Animated.timing(leaves[i], { toValue: 0, duration: 160, easing: Easing.inOut(Easing.cubic), useNativeDriver: ND }))));
-    steps.push(Animated.timing(flip, { toValue: 0, duration: 300, easing: Easing.inOut(Easing.cubic), useNativeDriver: ND }));
-    steps.push(
-      Animated.parallel([
-        Animated.timing(fly, { toValue: 0, duration: 280, easing: Easing.out(Easing.cubic), useNativeDriver: ND }),
-        Animated.timing(fade, { toValue: 0, duration: 220, useNativeDriver: ND }),
+    // 合上要比翻开快：回来的动作不该让人等。书页瞬间收回书本大小，封面合拢的同时飞回原位
+    expand.setValue(0);
+    edges.setValue(0);
+    leaves.forEach(l => l.setValue(0));
+    Animated.parallel([
+      Animated.timing(flip, { toValue: 0, duration: 250, easing: Easing.inOut(Easing.cubic), useNativeDriver: ND }),
+      Animated.sequence([
+        Animated.delay(110),
+        Animated.parallel([
+          Animated.timing(fly, { toValue: 0, duration: 300, easing: Easing.out(Easing.cubic), useNativeDriver: ND }),
+          Animated.timing(fade, { toValue: 0, duration: 260, useNativeDriver: ND }),
+        ]),
       ]),
-    );
-    Animated.sequence(steps).start(({ finished }) => {
+    ]).start(({ finished }) => {
       if (finished) {
         expandedRef.current = false;
         setOpen(null);
       }
     });
-  }, [fly, flip, fade, expand, leaves, reduced, stopAll]);
+  }, [fly, flip, fade, edges, expand, leaves, reduced, stopAll]);
 
   const enterBook = React.useCallback(
     (id: string | null) => {
@@ -170,6 +174,8 @@ export function Bookshelf() {
       enteredRef.current = true;
       setEntered(true);
       actions.setActiveNotebook(id);
+      // 书页已铺满：用同一张纸色的纸幕接住，路由在纸下切换，书内页面就绪后纸幕淡出
+      showCurtain(PAPER);
       router.push('/(tabs)');
     },
     [],
@@ -194,27 +200,26 @@ export function Bookshelf() {
       flip.setValue(0);
       edges.setValue(0);
       leaves.forEach(l => l.setValue(0));
+      // 一条连续的时间线（约 760ms）：飞出 → 封面翻开 → 三页连翻 → 书页铺满，各段相互重叠，不停顿
       Animated.parallel([
-        Animated.timing(fade, { toValue: 1, duration: 250, useNativeDriver: ND }),
-        Animated.timing(fly, { toValue: 1, duration: 320, easing: Easing.out(Easing.cubic), useNativeDriver: ND }),
+        Animated.timing(fade, { toValue: 1, duration: 200, useNativeDriver: ND }),
+        Animated.timing(fly, { toValue: 1, duration: 280, easing: Easing.out(Easing.cubic), useNativeDriver: ND }),
         Animated.sequence([
-          Animated.delay(140),
-          Animated.timing(flip, { toValue: 165, duration: 440, easing: Easing.inOut(Easing.cubic), useNativeDriver: ND }),
+          Animated.delay(60),
+          Animated.timing(flip, { toValue: 165, duration: 360, easing: Easing.inOut(Easing.cubic), useNativeDriver: ND }),
         ]),
         Animated.sequence([
-          Animated.delay(400),
-          Animated.stagger(70, leaves.map(l => Animated.timing(l, { toValue: 170, duration: 220, easing: Easing.inOut(Easing.cubic), useNativeDriver: ND }))),
+          Animated.delay(290),
+          Animated.stagger(55, leaves.map(l => Animated.timing(l, { toValue: 170, duration: 180, easing: Easing.inOut(Easing.cubic), useNativeDriver: ND }))),
         ]),
         Animated.sequence([
-          Animated.delay(560),
-          Animated.timing(edges, { toValue: 1, duration: 120, useNativeDriver: ND }),
+          Animated.delay(520),
+          Animated.timing(expand, { toValue: 1, duration: 240, easing: Easing.inOut(Easing.cubic), useNativeDriver: ND }),
         ]),
       ]).start(({ finished }) => {
         if (!finished) return;
         expandedRef.current = true;
-        Animated.timing(expand, { toValue: 1, duration: 240, easing: Easing.inOut(Easing.cubic), useNativeDriver: ND }).start(({ finished: done }) => {
-          if (done) enterBook(id);
-        });
+        enterBook(id);
       });
     }
     const focusTimer = setTimeout(() => titleRef.current?.focus?.(), reduced ? 200 : 700);
@@ -401,7 +406,7 @@ export function Bookshelf() {
   const edgesOpacity = Animated.multiply(edges, expand.interpolate({ inputRange: [0, 0.35], outputRange: [1, 0], extrapolate: 'clamp' }));
 
   const overlayNode = (
-    <View ref={rootRef} collapsable={false} pointerEvents="box-none" style={StyleSheet.absoluteFill} onLayout={e => setBox({ w: e.nativeEvent.layout.width, h: e.nativeEvent.layout.height })}>
+    <View ref={rootRef} collapsable={false} pointerEvents="box-none" style={StyleSheet.absoluteFill} onLayout={e => { const { width: w, height: h } = e.nativeEvent.layout; if (w > 0 && h > 0) setBox({ w, h }); }}>
       {open && (
         <View style={StyleSheet.absoluteFill} accessibilityViewIsModal accessibilityLabel={`日记本：${open.name}`}>
           <Animated.View style={[StyleSheet.absoluteFill, { backgroundColor: c.overlay, opacity: fade }]}>
@@ -430,7 +435,7 @@ export function Bookshelf() {
               ))}
             </Animated.View>
 
-            <TitlePage name={open.name} color={open.color} range={bookInfo.range} count={bookInfo.count} titleRef={titleRef} onClose={closeBook} />
+            <TitlePage fade={expand.interpolate({ inputRange: [0, 0.55], outputRange: [1, 0], extrapolate: 'clamp' })} name={open.name} color={open.color} range={bookInfo.range} count={bookInfo.count} titleRef={titleRef} onClose={closeBook} />
 
             {!reduced && [0, 1, 2].map(i => (
               <Animated.View
@@ -544,7 +549,7 @@ export function Bookshelf() {
           onLayout={e => {
             containerTop.value = e.nativeEvent.layout.y;
             const w = e.nativeEvent.layout.width;
-            if (Math.abs(w - shelfW) > 0.5) setShelfW(w);
+            if (w > 0 && Math.abs(w - shelfW) > 0.5) setShelfW(w);
           }}
           style={{ height: shelfRows * rowStride, userSelect: 'none', WebkitTouchCallout: 'none', WebkitUserSelect: 'none' } as any}
         >
@@ -656,10 +661,11 @@ export function Bookshelf() {
 }
 
 /** 翻开后的扉页：纸底 + 书脊条 + 书名、起止年月与篇数 */
-function TitlePage({ name, color, range, count, titleRef, onClose }: { name: string; color: string; range: string; count: number; titleRef: any; onClose: () => void }) {
+function TitlePage({ name, color, range, count, titleRef, onClose, fade }: { fade: Animated.AnimatedInterpolation<number>; name: string; color: string; range: string; count: number; titleRef: any; onClose: () => void }) {
   const { t, r, fs } = useTheme();
   return (
     <View style={[StyleSheet.absoluteFill, { borderRadius: r(12), overflow: 'hidden', backgroundColor: '#F7F4EC' }]}>
+      <Animated.View style={[StyleSheet.absoluteFill, { opacity: fade }]}>
       <ExpoImage source={PAPER_IMAGES['paper-white'] as any} style={StyleSheet.absoluteFill} contentFit="cover" cachePolicy="memory-disk" transition={120} pointerEvents="none" />
       <View style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: 12, backgroundColor: mixHex(color, '#000000', 0.18), borderTopLeftRadius: r(12), borderBottomLeftRadius: r(12) }} />
       <View style={{ position: 'absolute', left: 12, top: 0, bottom: 0, width: 1, backgroundColor: 'rgba(0,0,0,0.08)' }} />
@@ -682,6 +688,7 @@ function TitlePage({ name, color, range, count, titleRef, onClose }: { name: str
         {count > 0 && <Text style={{ fontSize: fs(13), color: PAGE_SUB, marginTop: 4 }}>{`共 ${count} 篇`}</Text>}
         <Illustration name="memorySticker" size={72} style={{ marginTop: 22 }} />
       </View>
+      </Animated.View>
     </View>
   );
 }
@@ -814,9 +821,15 @@ function DraggableBook({ id, init, geo, ctx, reduced, color, onLift, onDrop, chi
 
   useAnimatedReaction(
     () => ({ s: order.value.indexOf(id) + 1, g: geoSV.value }),
-    cur => {
+    (cur, prev) => {
       if (active.value || cur.s <= 0) return;
       const p = slotPosition(cur.s, cur.g);
+      // 只有「换了格子」才用弹簧让位；尺寸变化（回到书架、窗口缩放）直接就位，不让整排书晃动
+      if (!prev || prev.s === cur.s) {
+        sx.value = p.x;
+        sy.value = p.y;
+        return;
+      }
       sx.value = reduced ? withTiming(p.x, { duration: 120 }) : withSpring(p.x, SETTLE);
       sy.value = reduced ? withTiming(p.y, { duration: 120 }) : withSpring(p.y, SETTLE);
     },
