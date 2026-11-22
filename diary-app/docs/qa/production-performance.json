@@ -1,28 +1,28 @@
 {
   "base": "http://39.105.19.77",
-  "at": "2026-11-22T08:53:35.891Z",
-  "firstInteractiveMs": 564,
+  "at": "2026-11-22T14:14:04.518Z",
+  "firstInteractiveMs": 426,
   "fontRequests": [
     {
       "url": "http://39.105.19.77/fonts/NotoSerifSC-SemiBold-ui-65ebcb49a614710d.woff2",
       "bytes": 678516,
-      "durationMs": 162
+      "durationMs": 141
     }
   ],
-  "transferBytes": 2529989,
+  "transferBytes": 2404083,
   "paints": [
     {
       "name": "first-paint",
-      "ms": 112
+      "ms": 68
     },
     {
       "name": "first-contentful-paint",
-      "ms": 564
+      "ms": 368
     }
   ],
   "overflow": false,
   "language": "zh-CN",
-  "expectedEntry": "_expo/static/js/web/entry-eba286dd56d3b1f8050604cff78e6c64.js",
+  "expectedEntry": "_expo/static/js/web/entry-42b655f2f194051da203d0b590a87184.js",
   "entryMatches": true,
   "localSaveVerified": true,
   "feedbackDraftAvailable": true,
@@ -35,7 +35,7 @@
       "type": "text/css"
     },
     {
-      "url": "http://39.105.19.77/_expo/static/js/web/entry-eba286dd56d3b1f8050604cff78e6c64.js",
+      "url": "http://39.105.19.77/_expo/static/js/web/entry-42b655f2f194051da203d0b590a87184.js",
       "encoding": "gzip",
       "cache": "max-age=31536000, public, immutable",
       "type": "application/javascript"
@@ -53,7 +53,7 @@
       "type": "text/css"
     },
     {
-      "url": "http://39.105.19.77/_expo/static/js/web/entry-eba286dd56d3b1f8050604cff78e6c64.js",
+      "url": "http://39.105.19.77/_expo/static/js/web/entry-42b655f2f194051da203d0b590a87184.js",
       "encoding": "gzip",
       "cache": "max-age=31536000, public, immutable",
       "type": "application/javascript"
@@ -77,7 +77,7 @@
       "type": "text/css"
     },
     {
-      "url": "http://39.105.19.77/_expo/static/js/web/entry-eba286dd56d3b1f8050604cff78e6c64.js",
+      "url": "http://39.105.19.77/_expo/static/js/web/entry-42b655f2f194051da203d0b590a87184.js",
       "encoding": "gzip",
       "cache": "max-age=31536000, public, immutable",
       "type": "application/javascript"
