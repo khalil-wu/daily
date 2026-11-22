@@ -255,7 +255,7 @@ export default function RootLayout() {
 
   const hydrated = useHydrated();
   if (!hydrated) {
-    return <View style={{ flex: 1, backgroundColor: '#F7FAFA', alignItems: 'center', justifyContent: 'center' }}><ActivityIndicator color="#227C84" accessibilityLabel="正在打开日记" /></View>;
+    return <View style={{ flex: 1, backgroundColor: '#F7F4EC', alignItems: 'center', justifyContent: 'center' }}><ActivityIndicator color="#227C84" accessibilityLabel="正在打开日记" /></View>;
   }
 
   return (

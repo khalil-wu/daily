@@ -21,7 +21,7 @@ test('moveId 与 slot 几何：位置居中、最近格子命中', () => {
   const g: ShelfGeo = { tileW: 100, tileH: 133, cols: 2, width: 350, total: 5, gap: 20, rowStride: 170 };
   assert.deepEqual(slotPosition(0, g), { x: 65, y: 0 });
   assert.deepEqual(slotPosition(1, g), { x: 185, y: 0 });
-  assert.deepEqual(slotPosition(4, g), { x: 125, y: 340 });
+  assert.deepEqual(slotPosition(4, g), { x: 65, y: 340 });
   assert.equal(nearestSlot(240, 60, 1, 3, g), 1);
   assert.equal(nearestSlot(100, 250, 1, 3, g), 2);
 });

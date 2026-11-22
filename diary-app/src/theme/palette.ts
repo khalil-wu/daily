@@ -145,8 +145,8 @@ export const STYLES: StylePreset[] = [
   {
     key: 'companion', name: '线绘陪伴', desc: '手绘墨线、清新青调与小鸟陪伴', accent: 'teal', radius: 0.9, pill: 999, flat: true,
     light: {
-      bg: '#F7FAFA', bgDeep: '#EAF4F5', card: '#FFFFFF', cardAlt: '#F1FCFD', divider: '#D6E7E9', border: '#C6DADD',
-      text: '#1C2629', textSub: '#526267', textMuted: '#7E8F95', inputBg: '#EFF7F8', overlay: 'rgba(24,34,37,0.46)', shadow: '#1C2629',
+      bg: '#F7F4EC', bgDeep: '#EEE9DD', card: '#FFFDF8', cardAlt: '#FAF6EC', divider: '#E4DDCC', border: '#CFC6B2',
+      text: '#1C2629', textSub: '#575E5C', textMuted: '#858A84', inputBg: '#F1ECDF', overlay: 'rgba(24,34,37,0.46)', shadow: '#1C2629',
     },
     dark: {
       bg: '#101618', bgDeep: '#0B1012', card: '#182124', cardAlt: '#1E292D', divider: '#28363B', border: '#3F565E',

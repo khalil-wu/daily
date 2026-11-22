@@ -10,11 +10,11 @@
     "icon": "./assets/ink-companion/illustrations/app-icon-1024.png",
     "orientation": "portrait",
     "userInterfaceStyle": "automatic",
-    "backgroundColor": "#F7FAFA",
+    "backgroundColor": "#F7F4EC",
     "splash": {
       "image": "./assets/ink-companion/illustrations/splash-bird.png",
       "resizeMode": "contain",
-      "backgroundColor": "#F7FAFA"
+      "backgroundColor": "#F7F4EC"
     },
     "ios": {
       "supportsTablet": true,

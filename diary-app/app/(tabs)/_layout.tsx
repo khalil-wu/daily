@@ -1,8 +1,8 @@
 import React from 'react';
-import { BackHandler } from 'react-native';
+import { BackHandler, View } from 'react-native';
 import { Tabs, useFocusEffect } from 'expo-router';
 import { JideTabBar } from '../../src/components/TabBar';
-import { leaveBook } from '../../src/components/BookScope';
+import { BookSpine, leaveBook } from '../../src/components/BookScope';
 import { hideCurtain } from '../../src/components/curtain';
 
 export default function TabsLayout() {
@@ -19,11 +19,14 @@ export default function TabsLayout() {
   );
 
   return (
+    <View style={{ flex: 1 }}>
     <Tabs screenOptions={{ headerShown: false, animation: 'fade', freezeOnBlur: true, lazy: true }} tabBar={props => <JideTabBar {...props} />}>
       <Tabs.Screen name="index" options={{ title: '日记' }} />
       <Tabs.Screen name="calendar" options={{ title: '日历' }} />
       <Tabs.Screen name="review" options={{ title: '回顾' }} />
       <Tabs.Screen name="stats" options={{ title: '统计' }} />
     </Tabs>
+    <BookSpine />
+    </View>
   );
 }

@@ -33,7 +33,8 @@ export function slotPosition(slot: number, g: ShelfGeo): { x: number; y: number 
   'worklet';
   const row = Math.floor(slot / g.cols);
   const col = slot - row * g.cols;
-  const inRow = Math.min(g.cols, g.total - row * g.cols);
+  // 书从左往右排，最后一行不居中——真实书架就是这样摆的
+  const inRow = g.cols;
   const rowW = inRow * g.tileW + (inRow - 1) * g.gap;
   return { x: (g.width - rowW) / 2 + col * (g.tileW + g.gap), y: row * g.rowStride };
 }
