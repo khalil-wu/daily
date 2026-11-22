@@ -174,11 +174,11 @@ export function Jelly({ active, style, children }: { active: boolean; style?: St
 
 /**
  * 行的纸团折叠动画：active 变 true 后 forward（默认）揉成纸团再回调删除，
- * reverse 时从纸团展开再回调恢复。超时兜底保证动作不丢。
+ * reverse 时（恢复）整行轻轻上浮淡出再回调。超时兜底保证动作不丢。
  */
 export function CrumpleRow({ active, reverse = false, onDone, style, children }: { active: boolean; reverse?: boolean; onDone: () => void; style?: StyleProp<ViewStyle>; children: React.ReactNode }) {
   const reduced = useReducedMotion();
-  const v = useRef(new Animated.Value(reverse ? 1 : 0)).current;
+  const v = useRef(new Animated.Value(0)).current;
   const called = useRef(false);
   const fired = () => {
     if (called.current) return;
@@ -193,8 +193,8 @@ export function CrumpleRow({ active, reverse = false, onDone, style, children }:
     }
     const timer = setTimeout(fired, 400);
     const anim = Animated.timing(v, {
-      toValue: reverse ? 0 : 1,
-      duration: reverse ? 220 : 240,
+      toValue: 1,
+      duration: reverse ? 200 : 240,
       easing: reverse ? Easing.out(Easing.cubic) : Easing.in(Easing.cubic),
       useNativeDriver: ND,
     });
@@ -210,10 +210,15 @@ export function CrumpleRow({ active, reverse = false, onDone, style, children }:
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [active, reduced]);
-  const sx = v.interpolate({ inputRange: [0, 1], outputRange: [1, reverse ? 0.6 : 0.35] });
-  const sy = v.interpolate({ inputRange: [0, 1], outputRange: [1, reverse ? 0.6 : 0.3] });
-  const rot = v.interpolate({ inputRange: [0, 1], outputRange: ['0deg', reverse ? '-8deg' : '-18deg'] });
-  const opacity = reverse ? 1 : v.interpolate({ inputRange: [0, 0.7, 1], outputRange: [1, 0.85, 0] });
+  if (reverse) {
+    const lift = v.interpolate({ inputRange: [0, 1], outputRange: [0, -10] });
+    const fade = v.interpolate({ inputRange: [0, 1], outputRange: [1, 0] });
+    return <Animated.View style={[style, { opacity: fade, transform: [{ translateY: lift }] }]}>{children}</Animated.View>;
+  }
+  const sx = v.interpolate({ inputRange: [0, 1], outputRange: [1, 0.35] });
+  const sy = v.interpolate({ inputRange: [0, 1], outputRange: [1, 0.3] });
+  const rot = v.interpolate({ inputRange: [0, 1], outputRange: ['0deg', '-18deg'] });
+  const opacity = v.interpolate({ inputRange: [0, 0.7, 1], outputRange: [1, 0.85, 0] });
   return <Animated.View style={[style, { opacity, transform: [{ scaleX: sx }, { scaleY: sy }, { rotate: rot }] }]}>{children}</Animated.View>;
 }
 
