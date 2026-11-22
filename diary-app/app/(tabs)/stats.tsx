@@ -2,13 +2,14 @@ import React, { useMemo, useState } from 'react';
 import { Pressable, ScrollView, View } from 'react-native';
 import { Text } from '../../src/components/text';
 import { router } from 'expo-router';
-import { ChevronRight, Flame, MapPin, Search, Sparkles } from 'lucide-react-native';
+import { Flame, MapPin, Search } from 'lucide-react-native';
 import { useTheme } from '../../src/theme/ThemeProvider';
 import { useActiveBook, useBookEntries, useStore } from '../../src/store/store';
 import { ScreenTitle, useOpenSearch } from '../../src/components/BookScope';
 import { Card, IconButton, Screen, Segmented } from '../../src/components/ui';
 import { useCountUp } from '../../src/components/motion';
 import { MoodIcon, WeatherIcon } from '../../src/components/MoodIcon';
+import { YearbookSpineCard } from '../../src/components/stationery';
 import {
   ActivityHeatmap,
   LengthDistributionBar,
@@ -86,29 +87,12 @@ export default function StatsScreen() {
         <View style={{ gap: 14 }}>
         {sub === 'overview' && (
           <>
-            {/* 年度回顾入口卡 */}
-            <Card
+            {/* 年度回顾入口卡（布面烫金书脊票签） */}
+            <YearbookSpineCard
+              year={currentYear}
+              bookName={book?.name}
               onPress={() => router.push('/annual-report')}
-              style={{ backgroundColor: c.primaryFaint, borderColor: c.primarySoft, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 14 }}
-            >
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, flex: 1, minWidth: 0 }}>
-                <View style={{ width: 38, height: 38, borderRadius: 19, backgroundColor: c.card, alignItems: 'center', justifyContent: 'center' }}>
-                  <Sparkles size={18} color={c.primaryDark} />
-                </View>
-                <View style={{ flex: 1, minWidth: 0 }}>
-                  <Text style={[t.h3, { fontSize: fs(14.5), color: c.primaryDark }]} numberOfLines={1}>
-                    {book ? `${book.name} · ${currentYear} 年度回顾` : `${currentYear} 年度回顾报告`}
-                  </Text>
-                  <Text style={{ fontSize: fs(11.5), color: c.textSub, marginTop: 2 }} numberOfLines={1}>
-                    情绪像素、年度词云与高光时刻
-                  </Text>
-                </View>
-              </View>
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 2, marginLeft: 8 }}>
-                <Text style={{ fontSize: fs(12.5), color: c.primaryDark, fontWeight: '600' }}>查看</Text>
-                <ChevronRight size={15} color={c.primaryDark} />
-              </View>
-            </Card>
+            />
 
             {/* 写作坚持卡片 */}
             <Card>
@@ -235,7 +219,6 @@ export default function StatsScreen() {
             <Card>
               <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
                 <Text style={[t.h3, { fontSize: fs(15) }]}>标签与情绪关联</Text>
-                <Sparkles size={15} color={c.primaryDark} />
               </View>
               {topTagMood && topTagName && (
                 <Text style={{ fontSize: fs(12.5), color: c.primaryDark, marginBottom: 12 }}>

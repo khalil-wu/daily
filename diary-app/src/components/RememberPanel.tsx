@@ -1,15 +1,15 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { ActivityIndicator, Animated, Easing, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import React, { useMemo, useState } from 'react';
+import { ActivityIndicator, Pressable, ScrollView, type StyleProp, StyleSheet, View, type ViewStyle } from 'react-native';
 import { Text } from './text';
 import { router } from 'expo-router';
-import { Check, ChevronDown, HeartHandshake, RefreshCw, Sparkles, Wand2 } from 'lucide-react-native';
+import { Check, Feather, HeartHandshake, RefreshCw, Wand2 } from 'lucide-react-native';
 import { useTheme } from '../theme/ThemeProvider';
 import { actions, useStore } from '../store/store';
 import { updateEditorDraft } from '../store/editorSession';
 import type { Entry, MoodKey } from '../store/types';
 import { moodMeta, relationLabel } from '../data/constants';
 import { useFeedback } from './feedback';
-import { BottomSheet, useReducedMotion } from './motion';
+import { BottomSheet } from './motion';
 import { RichBody } from './RichBody';
 import { plainText } from '../utils/text';
 import { detectNewPeople, matchPeopleInText } from '../utils/people';
@@ -22,22 +22,39 @@ import type { OrganizeResult } from '../utils/ai/parse';
 
 type TabKey = 'ask' | 'organize' | 'tidy';
 
+/** 心理危机关怀提示条：写作页正文下与助手面板共用，始终温和可见 */
+export function CrisisNotice({ style }: { style?: StyleProp<ViewStyle> }) {
+  const { c, fs, r } = useTheme();
+  return (
+    <View style={[{ flexDirection: 'row', gap: 8, backgroundColor: c.dangerSoft, borderRadius: r(12), padding: 12 }, style]}>
+      <HeartHandshake size={15} color={c.danger} style={{ marginTop: 1 }} />
+      <Text style={{ flex: 1, fontSize: fs(12), color: c.danger, lineHeight: fs(12) * 1.55 }}>
+        读到了一些不太好过的表达。如果最近真的撑得辛苦，现在就联系一个信任的人，或拨打 {HOTLINE.number}（{HOTLINE.name}，24 小时）。
+      </Text>
+    </View>
+  );
+}
+
+export interface RememberSheetProps {
+  visible: boolean;
+  onClose: () => void;
+  entry: Entry;
+  applyBody: (next: string, step?: boolean) => void;
+}
+
 /**
- * 「记得」面板：追问、整理、理顺口述。
- * 本机建议立刻出现；开启「记得」后，AI 的建议在同一位置补充进来。
+ * 「记得」底部抽屉：追问、整理、理顺口述。
+ * 移出正文流，保持书写纸面安静；本机建议立刻出现，开启「记得」后在同一位置补充。
  * AI 只问和整理，永远不替用户写。
  */
-export function RememberPanel({ entry, applyBody }: { entry: Entry; applyBody: (next: string, step?: boolean) => void }) {
-  const { c, t, fs, r } = useTheme();
-  const reduced = useReducedMotion();
+export function RememberSheet({ visible, onClose, entry, applyBody }: RememberSheetProps) {
+  const { c, fs, r } = useTheme();
   const { toast } = useFeedback();
   const tags = useStore(s => s.tags);
   const people = useStore(s => s.people);
   const aiStatus = useAIStatus();
   const aiReady = aiStatus === 'ready';
 
-  const [open, setOpen] = useState(false);
-  const anim = useRef(new Animated.Value(0)).current;
   const [tab, setTab] = useState<TabKey>('ask');
   const [busy, setBusy] = useState<null | 'ask' | 'organize' | 'tidy'>(null);
   const [seed, setSeed] = useState(0);
@@ -49,13 +66,10 @@ export function RememberPanel({ entry, applyBody }: { entry: Entry; applyBody: (
   const sendable = canSendEntry(entry);
   const crisis = useMemo(() => detectCrisis(body), [body]);
 
-  useEffect(() => {
-    if (reduced) { anim.setValue(open ? 1 : 0); return; }
-    const animation = Animated.timing(anim, { toValue: open ? 1 : 0, duration: 220, easing: Easing.out(Easing.cubic), useNativeDriver: false });
-    animation.start();
-    return () => animation.stop();
-  }, [anim, open, reduced]);
-  const toggle = () => setOpen(value => !value);
+  const handleClose = () => {
+    setTidied(null);
+    onClose();
+  };
 
   /* ---------- 追问 ---------- */
   const questions = useMemo(() => {
@@ -81,6 +95,7 @@ export function RememberPanel({ entry, applyBody }: { entry: Entry; applyBody: (
     const lead = cur.trim() ? `${cur.replace(/\s+$/, '')}\n\n` : '';
     applyBody(`${lead}> ${q}\n\n`, true);
     toast('已把问题放进正文');
+    onClose();
   };
 
   /* ---------- 整理 ---------- */
@@ -134,72 +149,120 @@ export function RememberPanel({ entry, applyBody }: { entry: Entry; applyBody: (
         ? '「记得」已开启，还差服务地址、模型或密钥'
         : null;
 
-  const S = {
-    head: { flexDirection: 'row' as const, alignItems: 'center' as const, gap: 5 },
-    label: { fontSize: fs(12), color: c.textSub, fontWeight: '500' as const },
-  };
+  const labelStyle = { fontSize: fs(12), color: c.textSub, fontWeight: '500' as const };
 
   return (
-    <View style={{ marginTop: 14, marginBottom: 14, backgroundColor: c.card, borderRadius: r(14), borderWidth: StyleSheet.hairlineWidth, borderColor: open ? c.primarySoft : c.divider, overflow: 'hidden' }}>
-      {/* 折叠头：永远只占一行 */}
-      <Pressable accessibilityRole="button" accessibilityState={{ expanded: open }} aria-expanded={open} accessibilityLabel={open ? '收起记得助手' : '展开记得助手'} onPress={toggle} style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 14, minHeight: 44, paddingVertical: 11 }}>
-        <Sparkles size={14} color={c.primaryDark} />
-        <Text style={{ fontSize: fs(13), color: c.primaryDark, fontWeight: '500', marginLeft: 6 }}>记得</Text>
-        <Text style={{ fontSize: fs(12), color: c.textMuted, marginLeft: 6, flex: 1 }} numberOfLines={1}>
-          {open ? '问你、帮你整理，不替你写' : '追问 · 整理 · 理顺口述'}
-        </Text>
-        <Animated.View style={{ transform: [{ rotate: anim.interpolate({ inputRange: [0, 1], outputRange: ['0deg', '180deg'] }) }] }}>
-          <ChevronDown size={16} color={c.textMuted} />
-        </Animated.View>
-      </Pressable>
+    <BottomSheet
+      visible={visible}
+      onClose={handleClose}
+      title={tidied !== null ? '理顺后的正文' : '记得 · 陪你理一理'}
+      maxHeight={0.8}
+    >
+      {tidied !== null ? (
+        <ScrollView style={{ flexShrink: 1 }} showsVerticalScrollIndicator={false}>
+          <RichBody body={tidied} />
+          <View style={{ flexDirection: 'row', gap: 10, marginTop: 18, marginBottom: 6 }}>
+            <Pressable
+              accessibilityRole="button"
+              onPress={() => setTidied(null)}
+              style={{ flex: 1, minHeight: 44, borderRadius: r(999), borderWidth: 1, borderColor: c.border, alignItems: 'center', justifyContent: 'center' }}
+            >
+              <Text style={{ fontSize: fs(14), color: c.textSub }}>保留原文</Text>
+            </Pressable>
+            <Pressable
+              accessibilityRole="button"
+              onPress={() => {
+                applyBody(tidied, true);
+                setTidied(null);
+                onClose();
+                toast('已替换为理顺后的文字，可撤销');
+              }}
+              style={{ flex: 1, minHeight: 44, borderRadius: r(999), backgroundColor: c.primary, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 5 }}
+            >
+              <Check size={15} color={c.textOnPrimary} />
+              <Text style={{ fontSize: fs(14), color: c.textOnPrimary, fontWeight: '600' }}>用这个</Text>
+            </Pressable>
+          </View>
+        </ScrollView>
+      ) : (
+        <View style={{ flexShrink: 1 }}>
+          <Text style={{ fontSize: fs(12), color: c.textMuted, marginBottom: 6 }}>
+            问你、帮你整理，不替你写
+          </Text>
 
-      <Animated.View accessibilityElementsHidden={!open} aria-hidden={!open} importantForAccessibility={open ? 'auto' : 'no-hide-descendants'} pointerEvents={open ? 'auto' : 'none'} style={{ height: anim.interpolate({ inputRange: [0, 1], outputRange: [0, 420] }), opacity: anim, overflow: 'hidden' }}>
-        <View style={{ height: 420, paddingHorizontal: 14, paddingBottom: 12 }}>
           {/* 页签 */}
-          <View style={{ flexDirection: 'row', gap: 16, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: c.divider }}>
+          <View style={{ flexDirection: 'row', gap: 18, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: c.divider }}>
             {([
               { key: 'ask', label: '追问' },
               { key: 'organize', label: '整理' },
               { key: 'tidy', label: '理顺口述' },
             ] as { key: TabKey; label: string }[]).map(it => (
-              <Pressable key={it.key} accessibilityRole="tab" accessibilityState={{ selected: tab === it.key }} aria-selected={tab === it.key} onPress={() => setTab(it.key)} style={{ paddingVertical: 8 }}>
-                <Text style={{ fontSize: fs(13), color: tab === it.key ? c.text : c.textMuted, fontWeight: tab === it.key ? '600' : '400' }}>{it.label}</Text>
-                <View style={{ height: 2, width: 14, marginTop: 5, borderRadius: 1, backgroundColor: tab === it.key ? c.primary : 'transparent' }} />
+              <Pressable
+                key={it.key}
+                accessibilityRole="tab"
+                accessibilityState={{ selected: tab === it.key }}
+                aria-selected={tab === it.key}
+                onPress={() => setTab(it.key)}
+                style={{ minHeight: 44, minWidth: 44, justifyContent: 'flex-end', paddingBottom: 8 }}
+              >
+                <Text style={{ fontSize: fs(13.5), color: tab === it.key ? c.text : c.textMuted, fontWeight: tab === it.key ? '600' : '400' }}>
+                  {it.label}
+                </Text>
+                <View style={{ height: 2, width: 16, marginTop: 6, borderRadius: 1, backgroundColor: tab === it.key ? c.primary : 'transparent' }} />
               </Pressable>
             ))}
           </View>
 
-          <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingTop: 12, paddingBottom: 6 }} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
-            {crisis && (
-              <View style={{ flexDirection: 'row', gap: 8, backgroundColor: c.dangerSoft, borderRadius: 12, padding: 10, marginBottom: 12 }}>
-                <HeartHandshake size={15} color={c.danger} style={{ marginTop: 1 }} />
-                <Text style={{ flex: 1, fontSize: fs(12), color: c.danger, lineHeight: fs(12) * 1.55 }}>
-                  读到了一些不太好过的表达。如果最近真的撑得辛苦，现在就联系一个信任的人，或拨打 {HOTLINE.number}（{HOTLINE.name}，24 小时）。
-                </Text>
-              </View>
-            )}
+          <ScrollView
+            style={{ maxHeight: 370 }}
+            contentContainerStyle={{ paddingTop: 14, paddingBottom: 8 }}
+            showsVerticalScrollIndicator={false}
+            keyboardShouldPersistTaps="handled"
+          >
+            {crisis && <CrisisNotice style={{ marginBottom: 12 }} />}
 
             {tab === 'ask' && (
               <View style={{ gap: 8 }}>
-                <Text style={S.label}>顺着你已经写的，接着问自己：</Text>
+                <Text style={labelStyle}>顺着你已经写的，接着问自己：</Text>
                 {questions.map((q, i) => (
                   <Pressable
                     key={`${i}-${q}`}
+                    accessibilityRole="button"
                     onPress={() => insertQuestion(q)}
-                    style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'flex-start', gap: 8, backgroundColor: c.cardAlt, borderRadius: r(10), padding: 12, opacity: pressed ? 0.75 : 1 })}
+                    style={({ pressed }) => ({
+                      flexDirection: 'row',
+                      alignItems: 'flex-start',
+                      gap: 8,
+                      minHeight: 44,
+                      backgroundColor: c.cardAlt,
+                      borderRadius: r(10),
+                      padding: 12,
+                      borderWidth: StyleSheet.hairlineWidth,
+                      borderColor: c.divider,
+                      opacity: pressed ? 0.75 : 1,
+                    })}
                   >
                     <Text style={{ flex: 1, fontSize: fs(13.5), color: c.text, lineHeight: fs(13.5) * 1.5 }}>{q}</Text>
-                    <Text style={{ fontSize: fs(11), color: c.primaryDark, marginTop: 2 }}>写入 ›</Text>
+                    <Text style={{ fontSize: fs(11.5), color: c.primaryDark, marginTop: 2 }}>写入 ›</Text>
                   </Pressable>
                 ))}
-                <View style={{ flexDirection: 'row', gap: 10, marginTop: 2 }}>
-                  <Pressable onPress={() => { setAiQuestions([]); setSeed(s => s + 1); }} style={{ flexDirection: 'row', alignItems: 'center', gap: 4, paddingVertical: 6 }}>
+                <View style={{ flexDirection: 'row', gap: 14, marginTop: 2 }}>
+                  <Pressable
+                    accessibilityRole="button"
+                    onPress={() => { setAiQuestions([]); setSeed(s => s + 1); }}
+                    style={{ flexDirection: 'row', alignItems: 'center', gap: 5, minHeight: 44, paddingRight: 6 }}
+                  >
                     <RefreshCw size={12} color={c.textSub} />
                     <Text style={{ fontSize: fs(12), color: c.textSub }}>换一批</Text>
                   </Pressable>
                   {aiReady && sendable && (
-                    <Pressable onPress={() => void askAI()} disabled={!!busy} style={{ flexDirection: 'row', alignItems: 'center', gap: 4, paddingVertical: 6, opacity: busy ? 0.5 : 1 }}>
-                      {busy === 'ask' ? <ActivityIndicator size={12} color={c.primaryDark} /> : <Sparkles size={12} color={c.primaryDark} />}
+                    <Pressable
+                      accessibilityRole="button"
+                      onPress={() => void askAI()}
+                      disabled={!!busy}
+                      style={{ flexDirection: 'row', alignItems: 'center', gap: 5, minHeight: 44, opacity: busy ? 0.5 : 1 }}
+                    >
+                      {busy === 'ask' ? <ActivityIndicator size={12} color={c.primaryDark} /> : <Feather size={12} color={c.primaryDark} />}
                       <Text style={{ fontSize: fs(12), color: c.primaryDark }}>让「记得」问得更深</Text>
                     </Pressable>
                   )}
@@ -211,10 +274,15 @@ export function RememberPanel({ entry, applyBody }: { entry: Entry; applyBody: (
               <View style={{ gap: 14 }}>
                 {suggest.titles.length > 0 && (
                   <View>
-                    <Text style={S.label}>标题</Text>
+                    <Text style={labelStyle}>标题</Text>
                     <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 6 }}>
                       {suggest.titles.map(title => (
-                        <Pressable key={title} onPress={() => updateEditorDraft({ title })} style={{ paddingHorizontal: 10, paddingVertical: 6, borderRadius: r(10), backgroundColor: c.cardAlt, borderWidth: StyleSheet.hairlineWidth, borderColor: c.divider }}>
+                        <Pressable
+                          key={title}
+                          accessibilityRole="button"
+                          onPress={() => updateEditorDraft({ title })}
+                          style={{ minHeight: 40, justifyContent: 'center', paddingHorizontal: 11, paddingVertical: 6, borderRadius: r(10), backgroundColor: c.cardAlt, borderWidth: StyleSheet.hairlineWidth, borderColor: c.divider }}
+                        >
                           <Text style={{ fontSize: fs(12.5), color: c.text }}>{title}</Text>
                         </Pressable>
                       ))}
@@ -223,19 +291,28 @@ export function RememberPanel({ entry, applyBody }: { entry: Entry; applyBody: (
                 )}
                 {suggest.mood && suggest.mood !== entry.mood && (
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                    <Text style={S.label}>心情</Text>
-                    <Pressable onPress={() => updateEditorDraft({ mood: suggest.mood })} style={{ paddingHorizontal: 10, paddingVertical: 6, borderRadius: r(10), backgroundColor: c.cardAlt, borderWidth: StyleSheet.hairlineWidth, borderColor: c.divider }}>
+                    <Text style={labelStyle}>心情</Text>
+                    <Pressable
+                      accessibilityRole="button"
+                      onPress={() => updateEditorDraft({ mood: suggest.mood })}
+                      style={{ minHeight: 40, justifyContent: 'center', paddingHorizontal: 11, paddingVertical: 6, borderRadius: r(10), backgroundColor: c.cardAlt, borderWidth: StyleSheet.hairlineWidth, borderColor: c.divider }}
+                    >
                       <Text style={{ fontSize: fs(12.5), color: c.text }}>{moodMeta(suggest.mood)?.label}</Text>
                     </Pressable>
                   </View>
                 )}
                 {suggest.tagIds.length > 0 && (
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-                    <Text style={S.label}>标签</Text>
+                    <Text style={labelStyle}>标签</Text>
                     {suggest.tagIds.map(id => {
                       const tg = tags.find(x => x.id === id);
                       return tg ? (
-                        <Pressable key={id} onPress={() => updateEditorDraft({ tags: [...entry.tags, id] })} style={{ paddingHorizontal: 10, paddingVertical: 6, borderRadius: r(10), backgroundColor: c.cardAlt, borderWidth: StyleSheet.hairlineWidth, borderColor: c.divider }}>
+                        <Pressable
+                          key={id}
+                          accessibilityRole="button"
+                          onPress={() => updateEditorDraft({ tags: [...entry.tags, id] })}
+                          style={{ minHeight: 40, justifyContent: 'center', paddingHorizontal: 11, paddingVertical: 6, borderRadius: r(10), backgroundColor: c.cardAlt, borderWidth: StyleSheet.hairlineWidth, borderColor: c.divider }}
+                        >
                           <Text style={{ fontSize: fs(12.5), color: c.text }}>#{tg.name}</Text>
                         </Pressable>
                       ) : null;
@@ -244,11 +321,16 @@ export function RememberPanel({ entry, applyBody }: { entry: Entry; applyBody: (
                 )}
                 {(suggest.peopleIds.length > 0 || suggest.newPeople.length > 0) && (
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-                    <Text style={S.label}>和谁</Text>
+                    <Text style={labelStyle}>和谁</Text>
                     {suggest.peopleIds.map(id => {
                       const p = people.find(x => x.id === id);
                       return p ? (
-                        <Pressable key={id} onPress={() => updateEditorDraft({ people: [...entry.people, id] })} style={{ paddingHorizontal: 10, paddingVertical: 6, borderRadius: r(10), backgroundColor: c.cardAlt, borderWidth: StyleSheet.hairlineWidth, borderColor: c.divider }}>
+                        <Pressable
+                          key={id}
+                          accessibilityRole="button"
+                          onPress={() => updateEditorDraft({ people: [...entry.people, id] })}
+                          style={{ minHeight: 40, justifyContent: 'center', paddingHorizontal: 11, paddingVertical: 6, borderRadius: r(10), backgroundColor: c.cardAlt, borderWidth: StyleSheet.hairlineWidth, borderColor: c.divider }}
+                        >
                           <Text style={{ fontSize: fs(12.5), color: c.text }}>{p.name}</Text>
                         </Pressable>
                       ) : null;
@@ -256,11 +338,12 @@ export function RememberPanel({ entry, applyBody }: { entry: Entry; applyBody: (
                     {suggest.newPeople.map(np => (
                       <Pressable
                         key={np.name}
+                        accessibilityRole="button"
                         onPress={() => {
                           const created = actions.addPerson(np.name, np.relation);
                           if (created) updateEditorDraft({ people: [...entry.people, created.id] });
                         }}
-                        style={{ paddingHorizontal: 10, paddingVertical: 6, borderRadius: r(10), backgroundColor: c.primaryFaint, borderWidth: StyleSheet.hairlineWidth, borderColor: c.primarySoft }}
+                        style={{ minHeight: 40, justifyContent: 'center', paddingHorizontal: 11, paddingVertical: 6, borderRadius: r(10), backgroundColor: c.cardAlt, borderWidth: 1, borderColor: c.primarySoft }}
                       >
                         <Text style={{ fontSize: fs(12.5), color: c.primaryDark }}>+ {np.name}（{relationLabel(np.relation)}）</Text>
                       </Pressable>
@@ -268,12 +351,19 @@ export function RememberPanel({ entry, applyBody }: { entry: Entry; applyBody: (
                   </View>
                 )}
                 {!suggest.titles.length && !suggest.mood && !suggest.tagIds.length && !suggest.peopleIds.length && !suggest.newPeople.length && (
-                  <Text style={{ fontSize: fs(12.5), color: c.textMuted }}>{body ? '能想到的都已经标上了' : '先写一点内容，这里会给出标题、心情、标签和身边人的建议'}</Text>
+                  <Text style={{ fontSize: fs(12.5), color: c.textMuted }}>
+                    {body ? '能想到的都已经标上了' : '先写一点内容，这里会给出标题、心情、标签和身边人的建议'}
+                  </Text>
                 )}
                 {aiReady && sendable && (
-                  <Pressable onPress={() => void organizeAI()} disabled={!!busy} style={{ flexDirection: 'row', alignItems: 'center', gap: 5, paddingVertical: 4, opacity: busy ? 0.5 : 1 }}>
+                  <Pressable
+                    accessibilityRole="button"
+                    onPress={() => void organizeAI()}
+                    disabled={!!busy}
+                    style={{ flexDirection: 'row', alignItems: 'center', gap: 5, minHeight: 44, alignSelf: 'flex-start', opacity: busy ? 0.5 : 1 }}
+                  >
                     {busy === 'organize' ? <ActivityIndicator size={12} color={c.primaryDark} /> : <Wand2 size={13} color={c.primaryDark} />}
-                    <Text style={{ fontSize: fs(12), color: c.primaryDark }}>让「记得」整理一遍</Text>
+                    <Text style={{ fontSize: fs(12.5), color: c.primaryDark }}>让「记得」整理一遍</Text>
                   </Pressable>
                 )}
               </View>
@@ -291,9 +381,14 @@ export function RememberPanel({ entry, applyBody }: { entry: Entry; applyBody: (
                 ) : !canTidy ? (
                   <Text style={{ fontSize: fs(12), color: c.textMuted }}>正文再多写一点（至少十几个字）就能理顺</Text>
                 ) : (
-                  <Pressable onPress={() => void tidyAI()} disabled={!!busy} style={{ flexDirection: 'row', alignItems: 'center', gap: 5, opacity: busy ? 0.5 : 1 }}>
+                  <Pressable
+                    accessibilityRole="button"
+                    onPress={() => void tidyAI()}
+                    disabled={!!busy}
+                    style={{ flexDirection: 'row', alignItems: 'center', gap: 5, minHeight: 44, alignSelf: 'flex-start', opacity: busy ? 0.5 : 1 }}
+                  >
                     {busy === 'tidy' ? <ActivityIndicator size={12} color={c.primaryDark} /> : <Wand2 size={13} color={c.primaryDark} />}
-                    <Text style={{ fontSize: fs(12), color: c.primaryDark }}>理顺这段文字</Text>
+                    <Text style={{ fontSize: fs(12.5), color: c.primaryDark }}>理顺这段文字</Text>
                   </Pressable>
                 )}
               </View>
@@ -301,7 +396,14 @@ export function RememberPanel({ entry, applyBody }: { entry: Entry; applyBody: (
 
             {/* 底部：AI 状态说明 / 去开启 */}
             {aiNote && (
-              <Pressable onPress={() => router.push('/settings/ai')} style={{ marginTop: 12, paddingTop: 10, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: c.divider }}>
+              <Pressable
+                accessibilityRole="button"
+                onPress={() => {
+                  onClose();
+                  router.push('/settings/ai');
+                }}
+                style={{ marginTop: 12, paddingTop: 10, minHeight: 44, justifyContent: 'center', borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: c.divider }}
+              >
                 <Text style={{ fontSize: fs(11.5), color: c.textMuted }}>
                   {aiNote} · <Text style={{ color: c.primaryDark }}>去设置 ›</Text>
                 </Text>
@@ -309,30 +411,9 @@ export function RememberPanel({ entry, applyBody }: { entry: Entry; applyBody: (
             )}
           </ScrollView>
         </View>
-      </Animated.View>
-
-      {/* 理顺结果预览：接受才替换正文 */}
-      <BottomSheet visible={tidied !== null} onClose={() => setTidied(null)} title="理顺后的正文" maxHeight={0.8}>
-        <ScrollView style={{ flexShrink: 1 }} showsVerticalScrollIndicator={false}>
-          {tidied !== null && <RichBody body={tidied} />}
-          <View style={{ flexDirection: 'row', gap: 10, marginTop: 18, marginBottom: 6 }}>
-            <Pressable onPress={() => setTidied(null)} style={{ flex: 1, minHeight: 44, borderRadius: r(999), borderWidth: 1, borderColor: c.border, alignItems: 'center', justifyContent: 'center' }}>
-              <Text style={{ fontSize: fs(14), color: c.textSub }}>保留原文</Text>
-            </Pressable>
-            <Pressable
-              onPress={() => {
-                if (tidied) applyBody(tidied, true);
-                setTidied(null);
-                toast('已替换为理顺后的文字，可撤销');
-              }}
-              style={{ flex: 1, minHeight: 44, borderRadius: r(999), backgroundColor: c.primary, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 5 }}
-            >
-              <Check size={15} color={c.textOnPrimary} />
-              <Text style={{ fontSize: fs(14), color: c.textOnPrimary, fontWeight: '600' }}>用这个</Text>
-            </Pressable>
-          </View>
-        </ScrollView>
-      </BottomSheet>
-    </View>
+      )}
+    </BottomSheet>
   );
 }
+
+export const RememberPanel = RememberSheet;

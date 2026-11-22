@@ -3,6 +3,8 @@ import { Pressable, StyleSheet, View, type TextStyle } from 'react-native';
 import { Text } from './text';
 import { Check } from 'lucide-react-native';
 import { useTheme } from '../theme/ThemeProvider';
+import { luminance } from '../theme/palette';
+import { SERIF } from '../theme/tokens';
 import { parseBlocks, parseInline } from '../utils/richtext';
 import { haptic } from './ui';
 
@@ -77,10 +79,11 @@ export function RichBody({
   /** 覆盖文字配色（如信纸底上固定的文字色） */
   colors?: { text?: string; sub?: string; muted?: string };
 }) {
-  const { c, t, fs, lineHeight, dark, r } = useTheme();
+  const { c, t, fs, lineHeight, dark } = useTheme();
   const tc = colors?.text ?? c.text;
   const tsc = colors?.sub ?? c.textSub;
   const tmc = colors?.muted ?? c.textMuted;
+  const onDarkPaper = colors?.text === '#EEF1FA';
   const baseStyle: TextStyle = serif
     ? { ...t.bodySerif, color: tc }
     : { fontSize: fs(15), color: tc, lineHeight: fs(15) * lineHeight };
@@ -95,11 +98,12 @@ export function RichBody({
         }
 
         if (block.type === 'divider') {
+          const ruleCol = colors?.muted ? `${colors.muted}55` : c.divider;
           return (
             <View key={block.lineIndex} style={{ paddingVertical: 12, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10 }}>
-              <View style={{ width: 42, height: StyleSheet.hairlineWidth, backgroundColor: c.divider }} />
-              <Text style={{ fontSize: 12, color: c.textMuted }}>·</Text>
-              <View style={{ width: 42, height: StyleSheet.hairlineWidth, backgroundColor: c.divider }} />
+              <View style={{ width: 42, height: StyleSheet.hairlineWidth, backgroundColor: ruleCol }} />
+              <Text style={{ fontSize: 12, color: tmc }}>·</Text>
+              <View style={{ width: 42, height: StyleSheet.hairlineWidth, backgroundColor: ruleCol }} />
             </View>
           );
         }
@@ -107,28 +111,46 @@ export function RichBody({
         if (block.type === 'heading') {
           return (
             <Text key={block.lineIndex} style={[headingStyle, { marginTop: i > 0 ? 10 : 0, marginBottom: 2, color: tc }]}>
-              {renderInline(block.text, headingStyle, c.primary, dark)}
+              {renderInline(block.text, headingStyle, c.primary, dark || onDarkPaper)}
             </Text>
           );
         }
 
         if (block.type === 'quote') {
           const qStyle: TextStyle = { ...baseStyle, color: tsc, fontStyle: 'italic' };
+          const markColor = onDarkPaper && luminance(c.primary) < 0.28 ? tsc : c.primary;
           return (
             <View
               key={block.lineIndex}
               style={{
-                borderLeftWidth: 3,
-                borderLeftColor: c.primary,
-                backgroundColor: dark ? c.cardAlt : c.primaryFaint,
-                paddingVertical: 8,
-                paddingHorizontal: 12,
-                borderTopRightRadius: r(10),
-                borderBottomRightRadius: r(10),
+                flexDirection: 'row',
+                alignItems: 'flex-start',
+                paddingLeft: 4,
+                paddingRight: 4,
+                paddingVertical: 3,
                 marginVertical: 2,
               }}
             >
-              <Text style={qStyle}>{renderInline(block.text, qStyle, c.primary, dark)}</Text>
+              <Text
+                accessibilityElementsHidden
+                importantForAccessibility="no-hide-descendants"
+                aria-hidden
+                style={{
+                  fontFamily: SERIF,
+                  fontSize: fs(28),
+                  lineHeight: fs(28),
+                  color: markColor,
+                  opacity: 0.65,
+                  width: 20,
+                  marginRight: 4,
+                  marginTop: -2,
+                }}
+              >
+                “
+              </Text>
+              <Text style={[qStyle, { flex: 1 }]}>
+                {renderInline(block.text, qStyle, markColor, dark || onDarkPaper)}
+              </Text>
             </View>
           );
         }

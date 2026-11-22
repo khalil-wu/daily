@@ -1,8 +1,8 @@
 import React, { useCallback, useMemo, useState } from 'react';
-import { ActivityIndicator, Platform, Pressable, ScrollView, SectionList, StyleSheet, View } from 'react-native';
+import { Platform, Pressable, ScrollView, SectionList, StyleSheet, View } from 'react-native';
 import { Text } from '../../src/components/text';
 import { router } from 'expo-router';
-import { Award, CheckCircle2, ChevronLeft, ChevronRight, Image as ImageIcon, Quote, RefreshCw, Search, Sparkles } from 'lucide-react-native';
+import { Award, Bookmark, CheckCircle2, ChevronLeft, ChevronRight, Image as ImageIcon, Search } from 'lucide-react-native';
 import { useTheme } from '../../src/theme/ThemeProvider';
 import { useBookEntries, useStore } from '../../src/store/store';
 import { ScreenTitle, useOpenSearch } from '../../src/components/BookScope';
@@ -11,6 +11,7 @@ import { useFeedback } from '../../src/components/feedback';
 import { BottomSheet, useCountUp } from '../../src/components/motion';
 import { MoodIcon } from '../../src/components/MoodIcon';
 import { MonthlyBarChart } from '../../src/components/Charts';
+import { fmtPostmarkRange, InkStampTag, NoteSlip, PostcardNote, QuoteSlip, YearbookFootprintPlate } from '../../src/components/stationery';
 import { computeMilestones, computeStats, findThrowbacks, type ThrowbackRange } from '../../src/utils/stats';
 import { excerpt, fmtNumber, wordCount } from '../../src/utils/text';
 import { fmtFullDate, fmtMonthDay } from '../../src/utils/date';
@@ -235,27 +236,14 @@ export default function ReviewScreen() {
                 </Pressable>
               </View>
 
-              <Card style={{ backgroundColor: dark ? c.cardAlt : c.primaryFaint, borderColor: c.primarySoft }}>
-                <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-                  <Text style={[t.h3, { color: c.primaryDark }]}>这一年的足迹</Text>
-                  <Pressable onPress={() => router.push({ pathname: '/annual-report', params: { year: String(activeYear) } })} style={{ flexDirection: 'row', alignItems: 'center', gap: 2 }}>
-                    <Text style={{ fontSize: fs(12.5), color: c.primaryDark, fontWeight: '600' }}>完整年度报告</Text>
-                    <ChevronRight size={14} color={c.primaryDark} />
-                  </Pressable>
-                </View>
-                <View style={{ flexDirection: 'row', marginTop: 14 }}>
-                  {[
-                    { label: '日记篇数', val: String(yearEntries.length) },
-                    { label: '写下文字', val: fmtNumber(yearStats.words) },
-                    { label: '影像瞬间', val: String(yearStats.photos.length) },
-                  ].map(col => (
-                    <View key={col.label} style={{ flex: 1 }}>
-                      <Text style={{ fontSize: fs(22), color: c.text, fontWeight: '600', fontVariant: ['tabular-nums'] }}>{col.val}</Text>
-                      <Text style={{ fontSize: fs(12), color: c.textSub, marginTop: 2 }}>{col.label}</Text>
-                    </View>
-                  ))}
-                </View>
-              </Card>
+              <YearbookFootprintPlate
+                stats={[
+                  { label: '日记篇数', val: String(yearEntries.length) },
+                  { label: '写下文字', val: fmtNumber(yearStats.words) },
+                  { label: '影像瞬间', val: String(yearStats.photos.length) },
+                ]}
+                onOpenReport={() => router.push({ pathname: '/annual-report', params: { year: String(activeYear) } })}
+              />
 
               <Card>
                 <Text style={[t.h3, { fontSize: fs(15), marginBottom: 4 }]}>月度记录分布</Text>
@@ -305,7 +293,7 @@ export default function ReviewScreen() {
             <View style={{ gap: 16, paddingTop: 4 }}>
                 <View>
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 4 }}>
-                    <Sparkles size={16} color={c.primaryDark} />
+                    <Bookmark size={16} color={c.primaryDark} />
                     <Text style={[t.h3, { fontSize: fs(15), flex: 1 }]}>记忆胶囊</Text>
                     <Pressable accessibilityRole="button" accessibilityLabel="设置回忆范围" onPress={() => setMemorySettingsOpen(true)} style={{ minHeight: 44, justifyContent: 'center', paddingHorizontal: 8 }}>
                       <Text style={{ fontSize: fs(13), color: c.primaryDark }}>回忆范围</Text>
@@ -456,61 +444,69 @@ function PeriodCard({ sel, entries, people, reviews, aiReady, busy, onGenerate, 
 
       {/* 「记得」写的回看 */}
       {review ? (
-        <Card style={{ padding: 16, backgroundColor: dark ? c.cardAlt : c.primaryFaint, borderColor: c.primarySoft, borderLeftWidth: 3, borderLeftColor: c.primary }}>
-          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
-              <Sparkles size={14} color={c.primaryDark} />
-              <Text style={[t.h3, { fontSize: fs(15), color: c.primaryDark }]}>记得的回看</Text>
-            </View>
-            <Pressable onPress={() => void onGenerate(kind, offset)} disabled={busy || !aiReady} style={{ flexDirection: 'row', alignItems: 'center', gap: 4, opacity: busy || !aiReady ? 0.5 : 1 }}>
-              {busy ? <ActivityIndicator size={11} color={c.primaryDark} /> : <RefreshCw size={11} color={c.primaryDark} />}
-              <Text style={{ fontSize: fs(11.5), color: c.primaryDark }}>{busy ? '回看ing' : '重新回看'}</Text>
-            </Pressable>
-          </View>
-          <Text style={{ fontSize: fs(14), color: c.text, lineHeight: fs(14) * 1.7, marginTop: 10 }}>{review.summary}</Text>
+        <PostcardNote
+          salutation="这一程的回看"
+          meta={`${period.label} · ${new Date(period.from).getMonth() + 1}月${new Date(period.from).getDate()}日 – ${new Date(period.to - 1).getMonth() + 1}月${new Date(period.to - 1).getDate()}日`}
+          postmark={fmtPostmarkRange(period.from, period.to - 1)}
+          body={review.summary}
+          actionLabel="重新回看"
+          actionBusy={busy}
+          actionDisabled={!aiReady}
+          onAction={aiReady ? () => void onGenerate(kind, offset) : undefined}
+        >
           {review.themes.length > 0 && (
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 12 }}>
               {review.themes.map(theme => (
-                <View key={theme} style={{ paddingHorizontal: 9, paddingVertical: 4, borderRadius: r(999), backgroundColor: c.card }}>
-                  <Text style={{ fontSize: fs(11.5), color: c.primaryDark }}>{theme}</Text>
-                </View>
+                <InkStampTag key={theme} label={theme} />
               ))}
             </View>
           )}
-          {!!review.moodLine && <Text style={{ fontSize: fs(12.5), color: c.textSub, marginTop: 10, fontStyle: 'italic' }}>{review.moodLine}</Text>}
-          {review.quote && (
-            <Pressable onPress={() => onOpenEntry(review.quote!.entryId)} style={{ flexDirection: 'row', gap: 6, marginTop: 12, backgroundColor: c.card, borderRadius: r(12), borderLeftWidth: 3, borderLeftColor: c.primary, padding: 10 }}>
-              <Quote size={13} color={c.textMuted} style={{ marginTop: 2 }} />
-              <Text style={{ flex: 1, fontSize: fs(12.5), color: c.textSub, lineHeight: fs(12.5) * 1.6, fontStyle: 'italic' }}>
-                {review.quote.text}
-                <Text style={{ color: c.primaryDark }}>{'  '}摘自那天的日记 ›</Text>
-              </Text>
-            </Pressable>
-          )}
-        </Card>
-      ) : (
-        <Card style={{ padding: 16 }}>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
-            <Sparkles size={14} color={c.primaryDark} />
-            <Text style={[t.h3, { fontSize: fs(15) }]}>记得的回看</Text>
-          </View>
-          {!enough ? (
-            <Text style={{ fontSize: fs(12.5), color: c.textSub, marginTop: 10, lineHeight: fs(12.5) * 1.6 }}>
-              {period.label}写了 {stats.count} 篇，写到 {MIN_REVIEW_ENTRIES} 篇就能让「记得」帮你回看这段时间。
+          {!!review.moodLine && (
+            <Text
+              textRole="reading"
+              style={{
+                fontFamily: t.bodySerif.fontFamily,
+                fontSize: fs(13),
+                lineHeight: Math.round(fs(13) * 1.65),
+                color: '#655B50',
+                marginTop: 10,
+                fontStyle: 'italic',
+              }}
+            >
+              {review.moodLine}
             </Text>
-          ) : !aiReady ? (
-            <Pressable onPress={onOpenSettings} style={{ marginTop: 10 }}>
-              <Text style={{ fontSize: fs(12.5), color: c.textSub, lineHeight: fs(12.5) * 1.6 }}>
-                {period.label}写了 {stats.count} 篇日记。开启「记得」后，它会读完这段时间的日记，写一份回看——这段时间在经历什么、反复出现的主题、一句摘录，和一个留给下一段的问题。<Text style={{ color: c.primaryDark }}> 去开启 ›</Text>
-              </Text>
-            </Pressable>
-          ) : (
-            <Pressable onPress={() => void onGenerate(kind, offset)} disabled={busy} style={{ flexDirection: 'row', alignItems: 'center', gap: 5, marginTop: 10, opacity: busy ? 0.6 : 1 }}>
-              {busy ? <ActivityIndicator size={13} color={c.primaryDark} /> : <Sparkles size={13} color={c.primaryDark} />}
-              <Text style={{ fontSize: fs(13), color: c.primaryDark, fontWeight: '500' }}>{busy ? '记得正在读这段时间的日记…' : `让记得回看${period.label}`}</Text>
-            </Pressable>
           )}
-        </Card>
+          {review.quote && (
+            <View style={{ marginTop: 12 }}>
+              <QuoteSlip
+                text={review.quote.text}
+                onPress={() => onOpenEntry(review.quote!.entryId)}
+              />
+            </View>
+          )}
+        </PostcardNote>
+      ) : (
+        <NoteSlip
+          title="这一程的回看"
+          body={
+            !enough
+              ? `${period.label}写了 ${stats.count} 篇，写到 ${MIN_REVIEW_ENTRIES} 篇就能让「记得」帮你回看这段时间。`
+              : !aiReady
+                ? `${period.label}写了 ${stats.count} 篇日记。开启「记得」后，它会读完这段时间的日记，写一份回看——这段时间在经历什么、反复出现的主题、一句摘录，和一个留给下一段的问题。`
+                : `${period.label}已写下 ${stats.count} 篇日记，可以把这一程寄给「记得」，留一份安静的回看。`
+          }
+          actionLabel={
+            !enough
+              ? undefined
+              : !aiReady
+                ? '去开启 ›'
+                : busy
+                  ? '记得正在读这段时间的日记…'
+                  : `让记得回看${period.label} ›`
+          }
+          busy={busy}
+          onAction={!enough ? undefined : !aiReady ? onOpenSettings : () => void onGenerate(kind, offset)}
+        />
       )}
     </>
   );

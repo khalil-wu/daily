@@ -2,7 +2,7 @@ import React from 'react';
 import { Pressable, ScrollView, StyleSheet, View, type NativeScrollEvent, type NativeSyntheticEvent } from 'react-native';
 import { Text } from './text';
 import { router } from 'expo-router';
-import { ChevronLeft, ChevronRight, MapPin, Sparkles } from 'lucide-react-native';
+import { ChevronLeft, ChevronRight, MapPin } from 'lucide-react-native';
 import { Image as ExpoImage } from 'expo-image';
 import { useTheme } from '../theme/ThemeProvider';
 import { useStore } from '../store/store';
@@ -11,6 +11,7 @@ import { PAPER_IMAGES } from '../data/assets';
 import { Chip } from './ui';
 import { MoodIcon, WeatherIcon } from './MoodIcon';
 import { RichBody } from './RichBody';
+import { fmtPostmarkDate, PostcardNote, PostcardTriggerStamp } from './stationery';
 import { AudioClipCard } from './AudioPlayer';
 import { VideoClipCard } from './VideoPlayer';
 import { PhotoLayoutView } from './PhotoLayout';
@@ -173,49 +174,38 @@ export const EntryReader = React.memo(function EntryReader({ entry, prevEntry, n
 
         </View>
 
-        <Text style={{ fontSize: fs(11.5), color: c.textMuted, marginTop: 26 }}>
-          共 {words} 字 · 预计阅读 {readMinutes} 分钟
-        </Text>
+        {(() => {
+          const canReply = aiStatus === 'ready' && canSendEntry(entry);
+          const reply = entry.ai?.reply;
+          const showPostcard = !!reply || (canReply && (replyJob.status === 'loading' || replyJob.status === 'error'));
+          const showTrigger = !reply && canReply && replyJob.status === 'idle';
+          return (
+            <>
+              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8, marginTop: 22 }}>
+                <Text style={{ fontSize: fs(11.5), color: c.textMuted }}>
+                  共 {words} 字 · 预计阅读 {readMinutes} 分钟
+                </Text>
+                {showTrigger && <PostcardTriggerStamp onPress={() => void startReply(entry.id)} />}
+              </View>
 
-        {/* 「记得」的回信 */}
-        {(entry.ai?.reply || (aiStatus === 'ready' && canSendEntry(entry))) && (
-          <View style={{ marginTop: 18, backgroundColor: dark ? c.cardAlt : c.primaryFaint, borderRadius: r(16), padding: 16, borderLeftWidth: 3, borderLeftColor: c.primary, borderWidth: StyleSheet.hairlineWidth, borderColor: c.primarySoft }}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
-                <Sparkles size={13} color={c.primaryDark} />
-                <Text style={{ fontSize: fs(12), color: c.primaryDark, fontWeight: '600' }}>记得的回信</Text>
-              </View>
-              {entry.ai?.reply && (
-                <Text style={{ fontSize: fs(11), color: c.textMuted }}>{fmtAgo(entry.ai.reply.at)}</Text>
+              {showPostcard && (
+                <PostcardNote
+                  style={{ marginTop: 16 }}
+                  salutation="见字如面 · 记得来信"
+                  meta={reply ? fmtAgo(reply.at) : undefined}
+                  postmark={fmtPostmarkDate(reply?.at ?? entry.createdAt)}
+                  body={reply?.text}
+                  loadingText={replyJob.status === 'loading' ? '记得正在读这篇日记…' : undefined}
+                  errorText={replyJob.status === 'error' ? replyJob.error : undefined}
+                  actionLabel={reply ? '重寄一封' : replyJob.status === 'error' ? '再试一次 ›' : undefined}
+                  actionBusy={replyJob.status === 'loading'}
+                  actionDisabled={!canReply}
+                  onAction={canReply ? () => void startReply(entry.id) : undefined}
+                />
               )}
-            </View>
-            {entry.ai?.reply ? (
-              <Text style={{ fontSize: fs(13.5), color: c.text, lineHeight: fs(13.5) * 1.65, marginTop: 10 }}>{entry.ai.reply.text}</Text>
-            ) : replyJob.status === 'loading' ? (
-              <Text style={{ fontSize: fs(13), color: c.textSub, marginTop: 10 }}>记得正在读这篇日记…</Text>
-            ) : replyJob.status === 'error' ? (
-              <View style={{ marginTop: 10 }}>
-                <Text style={{ fontSize: fs(12.5), color: c.danger }}>{replyJob.error}</Text>
-                <Pressable onPress={() => void startReply(entry.id)} style={{ marginTop: 6 }}>
-                  <Text style={{ fontSize: fs(12.5), color: c.primaryDark }}>再试一次 ›</Text>
-                </Pressable>
-              </View>
-            ) : (
-              <Pressable onPress={() => void startReply(entry.id)} style={{ marginTop: 10 }}>
-                <Text style={{ fontSize: fs(13), color: c.primaryDark, fontWeight: '500' }}>请「记得」回一封 ›</Text>
-              </Pressable>
-            )}
-            {entry.ai?.reply && (
-              <Pressable
-                onPress={() => void startReply(entry.id)}
-                disabled={replyJob.status === 'loading'}
-                style={{ marginTop: 10, alignSelf: 'flex-start' }}
-              >
-                <Text style={{ fontSize: fs(12), color: c.textMuted }}>{replyJob.status === 'loading' ? '正在写…' : '再写一封'}</Text>
-              </Pressable>
-            )}
-          </View>
-        )}
+            </>
+          );
+        })()}
 
         {/* 上一篇 / 下一篇 导航卡片 */}
         {(prevEntry || nextEntry) && (

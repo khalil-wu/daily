@@ -2,13 +2,14 @@ import React, { useMemo, useState } from 'react';
 import { FlatList, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { Text } from '../src/components/text';
 import { router, useLocalSearchParams } from 'expo-router';
-import { Award, Calendar, ChevronLeft, ChevronRight, Flame, MapPin, Moon, Sparkles, Sunrise } from 'lucide-react-native';
+import { Award, Calendar, ChevronLeft, ChevronRight, Flame, MapPin, Moon, Sunrise } from 'lucide-react-native';
 import { useTheme } from '../src/theme/ThemeProvider';
 import { useActiveBook, useBookEntries, useStore } from '../src/store/store';
 import { Card, EmptyState, NavBar, Screen, Segmented, haptic, webSpaceAction } from '../src/components/ui';
 import { BottomSheet } from '../src/components/motion';
 import { MoodIcon } from '../src/components/MoodIcon';
 import { MonthlyBarChart, MoodDonutChart, WordCloud } from '../src/components/Charts';
+import { YearbookTitlePage } from '../src/components/stationery';
 import { MOODS, moodMeta } from '../src/data/constants';
 import { computeAnnualReport, getAvailableYears, type YearPixel } from '../src/utils/annual';
 import { dayKey, fmtFullDate, fmtTime } from '../src/utils/date';
@@ -96,46 +97,18 @@ export default function AnnualReportScreen() {
         </View>
       ) : (
         <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 4, paddingBottom: 40, gap: 14 }}>
-          {/* 1. 年度封面大数字摘要卡 */}
-          <Card style={{ backgroundColor: dark ? c.cardAlt : c.primaryFaint, borderColor: c.primarySoft }}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6, gap: 8 }}>
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                <Sparkles size={15} color={c.primaryDark} />
-                <Text style={[t.h3, { color: c.primaryDark, fontSize: fs(15) }]}>{activeYear} 时光年鉴</Text>
-              </View>
-              <View style={{ paddingHorizontal: 9, paddingVertical: 3, borderRadius: r(999), backgroundColor: c.card }}>
-                <Text style={{ fontSize: fs(11), color: c.primaryDark, fontWeight: '600' }}>{report.writerPersona.title}</Text>
-              </View>
-            </View>
-            <Text style={{ fontSize: fs(12), color: c.textSub, marginBottom: 14 }}>{report.writerPersona.desc}</Text>
-
-            <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', rowGap: 10 }}>
-              {[
-                { label: '写下日记', val: String(report.totalEntries), unit: '篇' },
-                { label: '累计文字', val: fmtNumber(report.totalWords), unit: '字' },
-                { label: '记录天数', val: String(report.recordDays), unit: '天' },
-                { label: '最长连续', val: String(report.longestStreak), unit: '天' },
-              ].map(box => (
-                <View
-                  key={box.label}
-                  style={{
-                    width: '48.2%',
-                    backgroundColor: c.card,
-                    borderRadius: r(12),
-                    padding: 12,
-                    borderWidth: look.flat ? 1 : dark ? 0 : StyleSheet.hairlineWidth,
-                    borderColor: look.flat ? c.border : c.divider,
-                  }}
-                >
-                  <Text numberOfLines={1} style={{ fontSize: fs(11.5), color: c.textSub }}>{box.label}</Text>
-                  <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 3, marginTop: 4 }}>
-                    <Text numberOfLines={1} style={{ fontSize: fs(20), color: c.text, fontWeight: '700', fontVariant: ['tabular-nums'] }}>{box.val}</Text>
-                    <Text style={{ fontSize: fs(11.5), color: c.textMuted }}>{box.unit}</Text>
-                  </View>
-                </View>
-              ))}
-            </View>
-          </Card>
+          {/* 1. 年度封面扉页（经典双细线书扉 + 朱砂藏书章 + 2×2 账册） */}
+          <YearbookTitlePage
+            year={activeYear}
+            personaTitle={report.writerPersona.title}
+            personaDesc={report.writerPersona.desc}
+            stats={[
+              { label: '写下日记', val: String(report.totalEntries), unit: '篇' },
+              { label: '累计文字', val: fmtNumber(report.totalWords), unit: '字' },
+              { label: '记录天数', val: String(report.recordDays), unit: '天' },
+              { label: '最长连续', val: String(report.longestStreak), unit: '天' },
+            ]}
+          />
 
           {/* 2. Year in Pixels 情绪年历（12列 x 31行） */}
           <Card>

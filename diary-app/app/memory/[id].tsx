@@ -4,7 +4,7 @@ import { Text } from '../../src/components/text';
 import { router, useLocalSearchParams } from 'expo-router';
 import {
   ChevronLeft, ChevronRight, Copy, Edit3, EyeOff, FileDown, Heart,
-  MapPin, MoreHorizontal, Pin, Share2, Sparkles, Trash2, X,
+  MapPin, MoreHorizontal, Pin, Share2, Trash2, X,
 } from 'lucide-react-native';
 import { useTheme } from '../../src/theme/ThemeProvider';
 import { actions, scopeEntries, useEntry, useStore } from '../../src/store/store';

@@ -72,19 +72,40 @@ function Postcard({ idx, step, children }: { idx: number; step: number; children
   );
 }
 
-/** 页码指示点：当前页的点平滑拉长 */
-function Dot({ on, color, onPress, label }: { on: boolean; color: string; onPress: () => void; label: string }) {
+/** 页码指示点：原生驱动缩放胶囊，零布局宽度动画 */
+function Dot({ on, activeColor, inactiveColor, onPress, label }: { on: boolean; activeColor: string; inactiveColor: string; onPress: () => void; label: string }) {
   const reduced = useReducedMotion();
-  const w = useRef(new Animated.Value(on ? 18 : 6)).current;
+  const p = useRef(new Animated.Value(on ? 1 : 0)).current;
   useEffect(() => {
-    if (reduced) { w.setValue(on ? 18 : 6); return; }
-    const animation = Animated.spring(w, { toValue: on ? 18 : 6, useNativeDriver: false, ...SPRING.slide });
+    if (reduced) { p.setValue(on ? 1 : 0); return; }
+    const animation = Animated.spring(p, { toValue: on ? 1 : 0, useNativeDriver: ND, ...SPRING.slide });
     animation.start();
     return () => animation.stop();
-  }, [on, w, reduced]);
+  }, [on, p, reduced]);
   return (
     <Pressable accessibilityRole="button" accessibilityLabel={label} accessibilityState={{ selected: on }} aria-pressed={on} onPress={onPress} hitSlop={8} style={{ minWidth: 28, minHeight: 28, alignItems: 'center', justifyContent: 'center' }}>
-      <Animated.View style={{ width: w, height: 6, borderRadius: 3, backgroundColor: color }} />
+      <View style={{ width: 18, height: 6, borderRadius: 3, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
+        <Animated.View
+          style={{
+            position: 'absolute',
+            width: 6,
+            height: 6,
+            borderRadius: 3,
+            backgroundColor: inactiveColor,
+            opacity: p.interpolate({ inputRange: [0, 1], outputRange: [1, 0], extrapolate: 'clamp' }),
+          }}
+        />
+        <Animated.View
+          style={{
+            width: 18,
+            height: 6,
+            borderRadius: 3,
+            backgroundColor: activeColor,
+            opacity: p.interpolate({ inputRange: [0, 0.35, 1], outputRange: [0, 0.85, 1], extrapolate: 'clamp' }),
+            transform: [{ scaleX: p.interpolate({ inputRange: [0, 1], outputRange: [0.34, 1], extrapolate: 'clamp' }) }],
+          }}
+        />
+      </View>
     </Pressable>
   );
 }
@@ -274,13 +295,14 @@ export default function OnboardingScreen() {
       </Animated.ScrollView>
 
       <View style={{ paddingHorizontal: 28, paddingBottom: 24 }}>
-        <View style={{ flexDirection: 'row', justifyContent: 'center', gap: 8, marginBottom: 20 }}>
+        <View style={{ flexDirection: 'row', justifyContent: 'center', gap: 4, marginBottom: 20 }}>
           {PAGES.map((p, i) => (
             <Dot
               key={p.key}
               label={`第 ${i + 1} 页：${p.title}`}
               on={i === step}
-              color={i === step ? c.primary : c.primarySoft}
+              activeColor={c.primary}
+              inactiveColor={c.primarySoft}
               onPress={() => goPage(i)}
             />
           ))}

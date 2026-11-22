@@ -1,13 +1,13 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Animated, AppState, Easing, Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Animated, AppState, Easing, Image, Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { Text, TextInput } from '../src/components/text';
 import { router, useLocalSearchParams } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import {
-  AudioLines, BookOpen, Check, ChevronDown, Cloud, Eye, EyeOff,
+  AudioLines, BookOpen, Check, ChevronDown, Cloud, Eye, EyeOff, Feather,
   MapPin, Minus, Smile, Square, Tag as TagIcon, Users,
 } from 'lucide-react-native';
-import { EDITOR_ICONS, PAPER_IMAGES, PAPER_THUMBS } from '../src/data/assets';
+import { EDITOR_ICONS, IMAGES, PAPER_IMAGES, PAPER_THUMBS } from '../src/data/assets';
 import { Image as ExpoImage } from 'expo-image';
 import { AssetIcon } from '../src/components/AssetIcon';
 import { useTheme } from '../src/theme/ThemeProvider';
@@ -25,14 +25,15 @@ import { VideoClipCard } from '../src/components/VideoPlayer';
 import { PhotoViewer } from '../src/components/PhotoViewer';
 import { PhotoLayoutView } from '../src/components/PhotoLayout';
 import { RichBody } from '../src/components/RichBody';
-import { RememberPanel } from '../src/components/RememberPanel';
+import { CrisisNotice, RememberSheet } from '../src/components/RememberPanel';
 import { useFeedback } from '../src/components/feedback';
 import { DateTimeSheet } from '../src/components/DateTimeSheet';
 import { HiddenAccessBoundary } from '../src/components/HiddenAccessBoundary';
-import { BottomSheet, FadeIn, PopDialog, PressableScale, useReducedMotion } from '../src/components/motion';
+import { BottomSheet, FadeIn, ND, PopDialog, PressableScale, useReducedMotion } from '../src/components/motion';
 import { setTourHandler, useTourTarget } from '../src/components/tour';
 import { fmtAgo, fmtMonthDayTime, WEEK_CN } from '../src/utils/date';
-import { wordCount } from '../src/utils/text';
+import { plainText, wordCount } from '../src/utils/text';
+import { detectCrisis } from '../src/utils/ai/safety';
 import { continueListOnEnter, toggleTodoAtLine } from '../src/utils/richtext';
 import { TextHistory } from '../src/utils/history';
 import { entryForSave, hasEntryContent, insertDictation, resolveWriteNotebook } from '../src/utils/editor';
@@ -47,7 +48,7 @@ export default function WriteScreen() {
 
 function WriteEditor() {
   const params = useLocalSearchParams<{ id?: string; template?: string; date?: string; action?: string; mood?: string; tour?: string; notebook?: string }>();
-  const { c, t, fs, lineHeight, contentWidth, dark, r, frameInk } = useTheme();
+  const { c, t, fs, lineHeight, contentWidth, dark, r, ink, frameInk } = useTheme();
   const { toast } = useFeedback();
   const tags = useStore(s => s.tags);
   const people = useStore(s => s.people);
@@ -79,15 +80,25 @@ function WriteEditor() {
   const toggleDictationRef = useRef<() => void>(() => undefined);
   // 格式工具默认收起，只露一行附件图标（设计稿2 #3：键盘上方一条细工具栏）
   const [formatOpen, setFormatOpen] = useState(false);
+  const [rememberOpen, setRememberOpen] = useState(false);
   // 心情 / 天气在元信息胶囊下就地展开快选行（Daylio 式点按即得，不再跳转选择页）
   const [metaRow, setMetaRow] = useState<'mood' | 'weather' | null>(null);
   const formatAnim = useRef(new Animated.Value(0)).current;
   useEffect(() => {
+    if (!formatOpen) {
+      formatAnim.setValue(0);
+      return;
+    }
+    if (reducedMotion) {
+      formatAnim.setValue(1);
+      return;
+    }
+    formatAnim.setValue(0);
     const animation = Animated.timing(formatAnim, {
-      toValue: formatOpen ? 1 : 0,
-      duration: reducedMotion ? 0 : 180,
+      toValue: 1,
+      duration: 150,
       easing: Easing.out(Easing.cubic),
-      useNativeDriver: false,
+      useNativeDriver: ND,
     });
     animation.start();
     return () => animation.stop();
@@ -438,6 +449,7 @@ function WriteEditor() {
 
   const readingPadH = Math.round(26 - contentWidth * 12);
   const words = useMemo(() => (entry ? wordCount(entry.title) + wordCount(entry.body) : 0), [entry?.title, entry?.body]);
+  const crisis = useMemo(() => (entry ? detectCrisis(plainText(`${entry.title}\n${entry.body}`)) : false), [entry?.title, entry?.body]);
   const goalPct = goals.enabled ? Math.min(100, Math.round((words / Math.max(1, goals.dailyWords)) * 100)) : 0;
 
   const paper = entry?.paper;
@@ -857,8 +869,8 @@ function WriteEditor() {
           </View>
         )}
 
-        {/* 「记得」面板：追问 / 整理 / 理顺，放在正文下方不遮挡思考 */}
-        <RememberPanel entry={entry} applyBody={(next, step) => setBody(next, { step })} />
+        {/* 危机干预热线提示：移出「记得」面板后仍在正文下方温和可见 */}
+        {crisis && <CrisisNotice style={{ marginTop: 14 }} />}
 
         {/* 多图排版切换器 + 照片预览 */}
         {entry.photos.length >= 2 && (
@@ -960,64 +972,73 @@ function WriteEditor() {
 
       {/* 底部工具栏：一行附件图标 +「Aa」展开格式工具（设计稿2 #3 / 编辑器组件示例） */}
       <View style={{ backgroundColor: c.card, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: c.divider }}>
-        {/* 格式工具：撤销重做 + 9 种格式，随「Aa」滑出 */}
-        <Animated.View
-          ref={formatTarget}
-          collapsable={false}
-          style={{
-            height: formatAnim.interpolate({ inputRange: [0, 1], outputRange: [0, 52] }),
-            opacity: formatAnim,
-            overflow: 'hidden',
-            borderBottomWidth: formatOpen ? StyleSheet.hairlineWidth : 0,
-            borderBottomColor: c.divider,
-          }}
-        >
-          <View style={{ height: 52, flexDirection: 'row', alignItems: 'center', paddingHorizontal: 10 }}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', paddingRight: 6, marginRight: 4, borderRightWidth: StyleSheet.hairlineWidth, borderRightColor: c.divider }}>
-              {[
-                { asset: EDITOR_ICONS.undo, label: '撤销', on: history.canUndo, onPress: undo },
-                { asset: EDITOR_ICONS.redo, label: '重做', on: history.canRedo, onPress: redo },
-              ].map(tool => (
-                <Pressable
-                  key={tool.label}
-                  accessibilityRole="button"
-                  accessibilityLabel={tool.label}
-                  disabled={!tool.on}
-                  onPress={tool.onPress}
-                  hitSlop={4}
-                  style={({ pressed }) => ({ width: 44, height: 44, borderRadius: r(10), alignItems: 'center', justifyContent: 'center', opacity: tool.on ? 1 : 0.3, backgroundColor: pressed ? c.bgDeep : 'transparent' })}
-                >
-                  <AssetIcon source={tool.asset} size={20} color={c.text} />
-                </Pressable>
-              ))}
-            </View>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} keyboardShouldPersistTaps="always" contentContainerStyle={{ flexDirection: 'row', alignItems: 'center', paddingRight: 6 }} style={{ flex: 1 }}>
-              {[
-                { asset: EDITOR_ICONS.heading, label: '小标题', onPress: () => applyFormat('h') },
-                { asset: EDITOR_ICONS.bold, label: '加粗', onPress: () => applyFormat('b') },
-                { asset: EDITOR_ICONS.italic, label: '斜体', onPress: () => applyFormat('i') },
-                { asset: EDITOR_ICONS.underline, label: '下划线', onPress: () => applyFormat('u') },
-                { asset: EDITOR_ICONS.strike, label: '删除线', onPress: () => applyFormat('s') },
-                { asset: EDITOR_ICONS.highlight, label: '高亮', onPress: () => applyFormat('hl') },
-                { asset: EDITOR_ICONS.quote, label: '引用', onPress: () => applyFormat('quote') },
-                { asset: EDITOR_ICONS.checklist, label: '待办', onPress: () => applyFormat('todo') },
-                { asset: EDITOR_ICONS.bullets, label: '无序列表', onPress: () => applyFormat('ul') },
-                { asset: EDITOR_ICONS.numbered, label: '有序列表', onPress: () => applyFormat('ol') },
-                { icon: Minus, label: '分割线', onPress: () => applyFormat('hr') },
-              ].map(tool => (
-                <Pressable key={tool.label} accessibilityRole="button" accessibilityLabel={tool.label} onPress={tool.onPress} hitSlop={4} style={({ pressed }) => ({ width: 44, height: 44, borderRadius: r(10), alignItems: 'center', justifyContent: 'center', backgroundColor: pressed ? c.bgDeep : 'transparent' })}>
-                  {'asset' in tool && tool.asset ? (
+        {/* 格式工具：撤销重做 + 格式按钮，条件挂载 + 原生驱动滑入 */}
+        {formatOpen && (
+          <View
+            ref={formatTarget}
+            collapsable={false}
+            style={{
+              overflow: 'hidden',
+              borderBottomWidth: StyleSheet.hairlineWidth,
+              borderBottomColor: c.divider,
+            }}
+          >
+            <Animated.View
+              style={{
+                height: 52,
+                flexDirection: 'row',
+                alignItems: 'center',
+                paddingHorizontal: 10,
+                opacity: formatAnim,
+                transform: [{ translateY: formatAnim.interpolate({ inputRange: [0, 1], outputRange: [10, 0] }) }],
+              }}
+            >
+              <View style={{ flexDirection: 'row', alignItems: 'center', paddingRight: 6, marginRight: 4, borderRightWidth: StyleSheet.hairlineWidth, borderRightColor: c.divider }}>
+                {[
+                  { asset: EDITOR_ICONS.undo, label: '撤销', on: history.canUndo, onPress: undo },
+                  { asset: EDITOR_ICONS.redo, label: '重做', on: history.canRedo, onPress: redo },
+                ].map(tool => (
+                  <Pressable
+                    key={tool.label}
+                    accessibilityRole="button"
+                    accessibilityLabel={tool.label}
+                    disabled={!tool.on}
+                    onPress={tool.onPress}
+                    hitSlop={4}
+                    style={({ pressed }) => ({ width: 44, height: 44, borderRadius: r(10), alignItems: 'center', justifyContent: 'center', opacity: tool.on ? 1 : 0.3, backgroundColor: pressed ? c.bgDeep : 'transparent' })}
+                  >
                     <AssetIcon source={tool.asset} size={20} color={c.text} />
-                  ) : (
-                    tool.icon && <tool.icon size={19} color={c.text} strokeWidth={2} />
-                  )}
-                </Pressable>
-              ))}
-            </ScrollView>
+                  </Pressable>
+                ))}
+              </View>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} keyboardShouldPersistTaps="always" contentContainerStyle={{ flexDirection: 'row', alignItems: 'center', paddingRight: 6 }} style={{ flex: 1 }}>
+                {[
+                  { asset: EDITOR_ICONS.heading, label: '小标题', onPress: () => applyFormat('h') },
+                  { asset: EDITOR_ICONS.bold, label: '加粗', onPress: () => applyFormat('b') },
+                  { asset: EDITOR_ICONS.italic, label: '斜体', onPress: () => applyFormat('i') },
+                  { asset: EDITOR_ICONS.underline, label: '下划线', onPress: () => applyFormat('u') },
+                  { asset: EDITOR_ICONS.strike, label: '删除线', onPress: () => applyFormat('s') },
+                  { asset: EDITOR_ICONS.highlight, label: '高亮', onPress: () => applyFormat('hl') },
+                  { asset: EDITOR_ICONS.quote, label: '引用', onPress: () => applyFormat('quote') },
+                  { asset: EDITOR_ICONS.checklist, label: '待办', onPress: () => applyFormat('todo') },
+                  { asset: EDITOR_ICONS.bullets, label: '无序列表', onPress: () => applyFormat('ul') },
+                  { asset: EDITOR_ICONS.numbered, label: '有序列表', onPress: () => applyFormat('ol') },
+                  { icon: Minus, label: '分割线', onPress: () => applyFormat('hr') },
+                ].map(tool => (
+                  <Pressable key={tool.label} accessibilityRole="button" accessibilityLabel={tool.label} onPress={tool.onPress} hitSlop={4} style={({ pressed }) => ({ width: 44, height: 44, borderRadius: r(10), alignItems: 'center', justifyContent: 'center', backgroundColor: pressed ? c.bgDeep : 'transparent' })}>
+                    {'asset' in tool && tool.asset ? (
+                      <AssetIcon source={tool.asset} size={20} color={c.text} />
+                    ) : (
+                      tool.icon && <tool.icon size={19} color={c.text} strokeWidth={2} />
+                    )}
+                  </Pressable>
+                ))}
+              </ScrollView>
+            </Animated.View>
           </View>
-        </Animated.View>
+        )}
 
-        {/* 主工具行：Aa ｜ 附件图标 ｜ 预览 */}
+        {/* 主工具行：Aa ｜ 附件图标 ｜ 记得助手 · 预览 */}
         <View style={{ height: 52, flexDirection: 'row', alignItems: 'center', paddingHorizontal: 8 }}>
           <PressableScale
             scaleTo={0.9}
@@ -1071,6 +1092,22 @@ function WriteEditor() {
           </View>
 
           <View style={{ width: StyleSheet.hairlineWidth, height: 18, backgroundColor: c.divider, marginHorizontal: 4 }} />
+          <PressableScale
+            scaleTo={0.9}
+            onPress={() => {
+              haptic('light');
+              setRememberOpen(true);
+            }}
+            accessibilityLabel="记得助手"
+            aria-expanded={rememberOpen}
+            style={{ width: 44, height: 44, borderRadius: r(10), alignItems: 'center', justifyContent: 'center', backgroundColor: rememberOpen ? c.primaryFaint : 'transparent' }}
+          >
+            {ink.on ? (
+              <Image source={IMAGES.companionBird} style={{ width: 24, height: 24 }} resizeMode="contain" />
+            ) : (
+              <Feather size={18} color={rememberOpen ? c.primaryDark : c.text} strokeWidth={1.8} />
+            )}
+          </PressableScale>
           <PressableScale
             scaleTo={0.9}
             onPress={() => setPreviewMode(v => !v)}
@@ -1206,6 +1243,14 @@ function WriteEditor() {
           })}
         </View>
       </BottomSheet>
+
+      {/* 「记得」助手底部面板 */}
+      <RememberSheet
+        visible={rememberOpen}
+        onClose={() => setRememberOpen(false)}
+        entry={entry}
+        applyBody={(next, step) => setBody(next, { step })}
+      />
 
       <PhotoViewer photos={entry.photos} initialIndex={viewerIdx ?? 0} visible={viewerIdx !== null} onClose={() => setViewerIdx(null)} />
     </Screen>

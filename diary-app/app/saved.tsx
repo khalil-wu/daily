@@ -1,16 +1,16 @@
 import { HiddenAccessBoundary } from '../src/components/HiddenAccessBoundary';
 import React, { useEffect, useMemo, useRef } from 'react';
-import { ActivityIndicator, Animated, Easing, Image, Pressable, View } from 'react-native';
+import { Animated, Easing, Image, Pressable, View } from 'react-native';
 import { Text } from '../src/components/text';
 import { router, useLocalSearchParams } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Sparkles } from 'lucide-react-native';
 import { useIllustrations, useTheme } from '../src/theme/ThemeProvider';
 import { actions, useEntry, useEntrySaveStatus, useStore } from '../src/store/store';
 import { flushPendingState, saveState } from '../src/store/storage';
 import { useFeedback } from '../src/components/feedback';
 import { Button, Illustration, Screen, haptic } from '../src/components/ui';
-import { FadeIn, ND, SPRING, useReducedMotion } from '../src/components/motion';
+import { FadeIn, ND, useReducedMotion } from '../src/components/motion';
+import { fmtPostmarkDate, PostcardNote } from '../src/components/stationery';
 import { computeTodaySummary } from '../src/utils/grouping';
 import { shouldAutoReply, startReply, useReplyJob } from '../src/services/ai';
 
@@ -152,27 +152,16 @@ function SavedContent() {
             </View>
           </FadeIn>
 
-          {/* 「记得」的回信：自动回信开启时，写完就在这里回一封 */}
+          {/* 「记得」的回信：自动回信开启时，写完就在这里寄来一封明信片 */}
           {(reply || replyJob.status !== 'idle') && (
             <FadeIn delay={200} style={{ width: '100%', marginTop: 18 }}>
-              <View style={{ backgroundColor: c.card, borderRadius: r(16), padding: 16, ...frame, borderColor: c.primarySoft }}>
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
-                  <Sparkles size={13} color={c.primaryDark} />
-                  <Text style={{ fontSize: fs(12), color: c.primaryDark, fontWeight: '600' }}>记得的回信</Text>
-                </View>
-                {reply ? (
-                  <Text style={{ fontSize: fs(13.5), color: c.text, lineHeight: fs(13.5) * 1.65, marginTop: 10 }}>{reply.text}</Text>
-                ) : replyJob.status === 'loading' ? (
-                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 10 }}>
-                    <ActivityIndicator size={13} color={c.textSub} />
-                    <Text style={{ fontSize: fs(13), color: c.textSub }}>记得正在读你刚写的这篇…</Text>
-                  </View>
-                ) : (
-                  <Text style={{ fontSize: fs(12.5), color: c.textSub, marginTop: 10 }}>
-                    {replyJob.error ?? '这次没有写成回信，详情页里可以再试'}
-                  </Text>
-                )}
-              </View>
+              <PostcardNote
+                salutation="见字如面 · 记得来信"
+                postmark={fmtPostmarkDate(reply?.at ?? entry?.createdAt ?? Date.now())}
+                body={reply?.text}
+                loadingText={replyJob.status === 'loading' ? '记得正在读你刚写的这篇…' : undefined}
+                errorText={replyJob.status !== 'loading' && !reply ? (replyJob.error ?? '这次没有写成回信，详情页里可以再试') : undefined}
+              />
             </FadeIn>
           )}
 
