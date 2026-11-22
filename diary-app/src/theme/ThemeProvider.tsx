@@ -1,41 +1,49 @@
-import React, { createContext, useContext, useMemo } from 'react';
-import { StyleSheet, useColorScheme, type TextStyle, type ViewStyle } from 'react-native';
+import React, { createContext, useContext, useEffect, useMemo } from 'react';
+import { Platform, StyleSheet, useColorScheme, type TextStyle, type ViewStyle } from 'react-native';
 import { useStore } from '../store/store';
-import { buildPalette, FONT_SCALE, FONT_STACK, LINE_HEIGHT, scaleRadius, SERIF, SERIF_BOLD, stylePreset, type Palette, type StylePreset } from './tokens';
+import { buildPalette, FONT_SCALE, LINE_HEIGHT, resolveFontRoles, resolveTextFont, scaleRadius, stylePreset, type FontRoles, type Palette, type StylePreset } from './tokens';
 
 export interface Theme {
   c: Palette;
   dark: boolean;
-  scale: number; // 字体缩放
-  lineHeight: number; // 正文行高倍数
+  scale: number;
+  lineHeight: number;
   contentWidth: number;
   fs: (size: number) => number;
-  /** 当前风格（圆角、是否投影等） */
   look: StylePreset;
-  /** 圆角随风格缩放：borderRadius: r(16) */
   r: (n: number) => number;
-  /** 卡片外框：圆润风格是极细描边 + 柔和投影，利落风格是一条清晰的线 */
   frame: ViewStyle;
+  /** 线绘陪伴风的墨线 token：on 仅在该风格下为真 */
+  ink: { on: boolean; line: string; soft: string };
+  /** 主视觉卡片的墨线框：粗墨线 + 硬投影，其余风格等同 frame */
+  frameInk: ViewStyle;
+  /** Stable platform UI font, independent of the user's reading font. */
+  ui: string;
+  fonts: FontRoles;
+  fontsReady: boolean;
+  /** Legacy reading-family alias. */
   serif: string;
-  /** 正文 / 阅读字体（跟随「标题字体」设置） */
-  reading: string | undefined;
-  /** 常用字体样式 */
+  reading: string;
+  readingBold: string | undefined;
   t: {
-    display: TextStyle; // 大标题 28-32
-    h1: TextStyle; // 页面标题 22-24
-    h2: TextStyle; // 小标题 18
-    h3: TextStyle; // 卡片标题 16
-    body: TextStyle; // 正文 15
-    bodySerif: TextStyle; // 阅读正文
-    sub: TextStyle; // 次要 13
-    caption: TextStyle; // 辅助 12
-    tiny: TextStyle; // 11
+    display: TextStyle;
+    h1: TextStyle;
+    h2: TextStyle;
+    h3: TextStyle;
+    body: TextStyle;
+    /** User-content title. Page titles use h1 / h2 / h3. */
+    readingTitle: TextStyle;
+    /** Legacy name retained: this follows all three reading font choices. */
+    bodySerif: TextStyle;
+    sub: TextStyle;
+    caption: TextStyle;
+    tiny: TextStyle;
   };
 }
 
 const ThemeCtx = createContext<Theme | null>(null);
 
-export function ThemeProvider({ children }: { children: React.ReactNode }) {
+export function ThemeProvider({ children, fontsReady = true }: { children: React.ReactNode; fontsReady?: boolean }) {
   const sys = useColorScheme();
   const ap = useStore(s => s.appearance);
   const dark = ap.theme === 'dark' || (ap.theme === 'system' && sys === 'dark');
@@ -44,65 +52,66 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     const look = stylePreset(ap.style);
     const c = buildPalette(dark, ap.accent, look.key);
     const r = (n: number) => scaleRadius(n, look);
-    const frame: ViewStyle = look.flat
-      ? { borderWidth: 1, borderColor: c.border }
+    const inkLook = look.key === 'companion';
+    const ink = { on: inkLook, line: dark ? '#6F878F' : '#243238', soft: c.divider };
+    // 墨线是点缀不是默认：陪伴风普通容器只用 1px 柔和分隔线
+    const frame: ViewStyle = inkLook
+      ? { borderWidth: 1, borderColor: c.divider, shadowOpacity: 0, elevation: 0 }
       : {
-          borderWidth: dark ? 0 : StyleSheet.hairlineWidth,
-          borderColor: c.divider,
+          borderWidth: look.flat ? 1 : StyleSheet.hairlineWidth,
+          borderColor: look.flat ? c.border : c.divider,
           shadowColor: c.shadow,
-          shadowOpacity: dark ? 0 : 0.06,
-          shadowRadius: 12,
-          shadowOffset: { width: 0, height: 3 },
-          elevation: dark ? 0 : 1,
+          shadowOpacity: dark || look.flat ? 0 : 0.045,
+          shadowRadius: 16,
+          shadowOffset: { width: 0, height: 4 },
+          elevation: dark || look.flat ? 0 : 1,
         };
+    // 主视觉才上粗墨线 + 硬位移「贴纸影」
+    const frameInk: ViewStyle = inkLook
+      ? { borderWidth: 1.5, borderColor: ink.line, boxShadow: `0px 3px 0px ${dark ? '#000000' : ink.line}` }
+      : frame;
     const scale = FONT_SCALE[ap.fontScale] ?? 1;
     const lh = LINE_HEIGHT[ap.lineHeight] ?? 1.8;
     const fs = (n: number) => Math.round(n * scale * 10) / 10;
-    const family = ap.fontFamily ?? 'serif';
-    // 宋体用内置 Noto Serif SC；黑体用系统无衬线；楷体在 iOS / Web 上有系统字
-    const heading = family === 'serif' ? SERIF : family === 'kai' ? FONT_STACK.kai : undefined;
-    const headingBold = family === 'serif' ? SERIF_BOLD : heading;
-    const reading = family === 'serif' ? SERIF : FONT_STACK[family];
-    // 黑体没有「粗体字族」，靠 fontWeight 让系统合成；宋体、楷体用真实字族
-    const serifBold: Pick<TextStyle, 'fontFamily'> = headingBold ? { fontFamily: headingBold } : {};
-    const headingStyle: Pick<TextStyle, 'fontFamily'> = heading ? { fontFamily: heading } : {};
-    const boldWeight: Pick<TextStyle, 'fontWeight'> = headingBold ? {} : { fontWeight: '700' };
+    const fonts = resolveFontRoles(ap.fontFamily ?? 'serif', Platform.OS, fontsReady);
+    const uiStyle: TextStyle = { fontFamily: fonts.ui, color: c.text };
+    const readingTitle: TextStyle = { fontWeight: '600', ...resolveTextFont(fonts, 'reading', undefined, '600') };
     return {
-      c,
-      dark,
-      scale,
-      lineHeight: lh,
-      contentWidth: ap.contentWidth,
-      fs,
-      look,
-      r,
-      frame,
-      serif: heading ?? 'inherit',
-      reading,
+      c, dark, scale, lineHeight: lh,
+      contentWidth: Number.isFinite(ap.contentWidth) ? Math.max(0, Math.min(1, ap.contentWidth)) : 0.5,
+      fs, look, r, frame, ink, frameInk, ui: fonts.ui, fonts, fontsReady,
+      serif: fonts.reading, reading: fonts.reading, readingBold: fonts.readingBold,
       t: {
-        display: { ...headingStyle, ...boldWeight, fontSize: fs(30), color: c.text, letterSpacing: 1.5, ...serifBold },
-        h1: { ...headingStyle, ...boldWeight, fontSize: fs(22), color: c.text, letterSpacing: 0.3, ...serifBold },
-        h2: { ...headingStyle, ...boldWeight, fontSize: fs(18), color: c.text, ...serifBold },
-        h3: { ...headingStyle, ...boldWeight, fontSize: fs(16), color: c.text, ...serifBold },
-        body: { fontSize: fs(15), color: c.text, lineHeight: fs(15) * 1.6 },
-        bodySerif: { fontFamily: reading, fontSize: fs(16), color: c.text, lineHeight: fs(16) * lh },
-        sub: { fontSize: fs(13), color: c.textSub, lineHeight: fs(13) * 1.55 },
-        caption: { fontSize: fs(12), color: c.textSub },
-        tiny: { fontSize: fs(11), color: c.textMuted },
+        // 大标题用阅读衬线字：杂志/日记感的关键视觉锚点（墨记、素忆、Day One 同款策略）
+        display: { fontWeight: '600', fontSize: fs(30), lineHeight: fs(42), color: c.text, ...resolveTextFont(fonts, 'reading', undefined, '600') },
+        h1: { fontWeight: '600', fontSize: fs(22), lineHeight: fs(32), color: c.text, ...resolveTextFont(fonts, 'reading', undefined, '600') },
+        h2: { fontWeight: '600', fontSize: fs(18), lineHeight: fs(27), color: c.text, ...resolveTextFont(fonts, 'reading', undefined, '600') },
+        h3: { ...uiStyle, fontWeight: '600', fontSize: fs(16), lineHeight: fs(24) },
+        body: { ...uiStyle, fontSize: fs(15), lineHeight: fs(24) },
+        readingTitle: { ...readingTitle, fontSize: fs(22), lineHeight: fs(34), color: c.text },
+        bodySerif: { fontFamily: fonts.reading, fontSize: fs(16), color: c.text, lineHeight: fs(16) * lh },
+        sub: { ...uiStyle, fontSize: fs(13), color: c.textSub, lineHeight: fs(21) },
+        caption: { ...uiStyle, fontSize: fs(12), lineHeight: fs(19), color: c.textSub },
+        tiny: { ...uiStyle, fontSize: fs(12), lineHeight: fs(18), color: c.textMuted },
       },
     };
-  }, [dark, ap.accent, ap.style, ap.fontScale, ap.fontFamily, ap.lineHeight, ap.contentWidth]);
+  }, [dark, ap.accent, ap.style, ap.fontScale, ap.fontFamily, ap.lineHeight, ap.contentWidth, fontsReady]);
+
+  useEffect(() => {
+    if (Platform.OS === 'web' && typeof document !== 'undefined') {
+      document.documentElement.style.setProperty('--jide-focus-ring', theme.c.focusRing);
+    }
+  }, [theme.c.focusRing]);
 
   return <ThemeCtx.Provider value={theme}>{children}</ThemeCtx.Provider>;
 }
 
 export function useTheme(): Theme {
-  const t = useContext(ThemeCtx);
-  if (!t) throw new Error('useTheme must be used within ThemeProvider');
-  return t;
+  const theme = useContext(ThemeCtx);
+  if (!theme) throw new Error('useTheme must be used within ThemeProvider');
+  return theme;
 }
 
-/** 根据主题生成样式，主题变化时自动重算 */
 export function useStyles<T>(factory: (t: Theme) => T): T {
   const theme = useTheme();
   return useMemo(() => factory(theme), [theme]); // eslint-disable-line react-hooks/exhaustive-deps

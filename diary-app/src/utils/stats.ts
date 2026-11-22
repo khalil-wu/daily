@@ -459,13 +459,21 @@ export function computeMilestones(entries: Entry[], stats: DiaryStats): Mileston
 }
 
 /** 回顾 · 那年今日 / 记忆胶囊 */
-export function findThrowbacks(entries: Entry[], now = Date.now()): { label: string; entry: Entry }[] {
-  const published = entries.filter(e => !e.deletedAt && e.status === 'published');
+export type ThrowbackRange = 'all' | 'past-year' | 'earlier';
+export function findThrowbacks(entries: Entry[], now = Date.now(), options: { range?: ThrowbackRange; excludedTags?: string[] } = {}): { label: string; entry: Entry }[] {
+  const boundary = new Date(now);
+  boundary.setFullYear(boundary.getFullYear() - 1);
+  const excluded = new Set(options.excludedTags);
+  const published = entries.filter(e => !e.deletedAt && !e.hidden && e.status === 'published' && e.createdAt <= now
+    && !e.tags.some(id => excluded.has(id))
+    && (options.range !== 'past-year' || e.createdAt >= boundary.getTime())
+    && (options.range !== 'earlier' || e.createdAt < boundary.getTime()));
   const d = new Date(now);
   const results: { label: string; entry: Entry }[] = [];
   const used = new Set<string>();
 
   for (const e of published) {
+    if (results.length >= 4) break;
     const ed = new Date(e.createdAt);
     const diffDays = daysBetween(e.createdAt, now);
     if (ed.getFullYear() < d.getFullYear() && ed.getMonth() === d.getMonth() && ed.getDate() === d.getDate()) {

@@ -1,22 +1,6 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
-import {
-  AccessibilityInfo,
-  Animated,
-  Easing,
-  KeyboardAvoidingView,
-  LayoutAnimation,
-  Modal,
-  PanResponder,
-  Platform,
-  Pressable,
-  type PressableProps,
-  type StyleProp,
-  StyleSheet,
-  Text,
-  useWindowDimensions,
-  View,
-  type ViewStyle,
-} from 'react-native';
+import React, { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
+import { AccessibilityInfo, Animated, Easing, KeyboardAvoidingView, LayoutAnimation, Modal, PanResponder, Platform, Pressable, type ModalProps, type PressableProps, type StyleProp, StyleSheet, useWindowDimensions, View, type ViewStyle } from 'react-native';
+import { Text } from './text';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { X } from 'lucide-react-native';
 import { useTheme } from '../theme/ThemeProvider';
@@ -44,18 +28,45 @@ export const SPRING = {
 
 /* ---------------- 减弱动态效果 ---------------- */
 
-let reduceMotion = false;
-try {
-  void AccessibilityInfo.isReduceMotionEnabled?.()
-    .then(v => {
-      reduceMotion = !!v;
-    })
-    .catch(() => undefined);
-  AccessibilityInfo.addEventListener?.('reduceMotionChanged', v => {
-    reduceMotion = !!v;
-  });
-} catch {
-  reduceMotion = false;
+const motionQuery = Platform.OS === 'web' && typeof window !== 'undefined'
+  ? window.matchMedia?.('(prefers-reduced-motion: reduce)') : undefined;
+let reduceMotion = motionQuery?.matches ?? false;
+const motionListeners = new Set<() => void>();
+function updateMotion(value: boolean) {
+  if (reduceMotion === value) return;
+  reduceMotion = value;
+  motionListeners.forEach(listener => listener());
+}
+function subscribeMotion(listener: () => void) {
+  motionListeners.add(listener);
+  // A single platform subscription is shared by every animated component.
+  let remove: (() => void) | undefined;
+  if (motionListeners.size === 1) {
+    if (motionQuery) {
+      const changed = (event: MediaQueryListEvent) => updateMotion(event.matches);
+      motionQuery.addEventListener('change', changed);
+      updateMotion(motionQuery.matches);
+      remove = () => motionQuery.removeEventListener('change', changed);
+    } else {
+      let active = true;
+      void AccessibilityInfo.isReduceMotionEnabled().then(value => { if (active) updateMotion(value); }).catch(() => undefined);
+      const subscription = AccessibilityInfo.addEventListener('reduceMotionChanged', updateMotion);
+      remove = () => { active = false; subscription.remove(); };
+    }
+    unsubscribePlatformMotion = remove;
+  }
+  return () => {
+    motionListeners.delete(listener);
+    if (motionListeners.size === 0) {
+      unsubscribePlatformMotion?.();
+      unsubscribePlatformMotion = undefined;
+    }
+  };
+}
+let unsubscribePlatformMotion: (() => void) | undefined;
+
+export function useReducedMotion() {
+  return useSyncExternalStore(subscribeMotion, prefersReducedMotion, () => false);
 }
 
 /** 系统开启「减弱动态效果」时，位移类动画改为直接到位 */
@@ -92,15 +103,27 @@ export interface PressableScaleProps extends Omit<PressableProps, 'style' | 'chi
 
 /** 带弹簧缩放的可按压容器：替代「按下瞬间变透明」的生硬反馈 */
 export function PressableScale({ scaleTo = 0.97, style, onPressIn, onPressOut, children, ...rest }: PressableScaleProps) {
+  const reduced = useReducedMotion();
   const v = useRef(new Animated.Value(0)).current;
+  useEffect(() => {
+    if (reduced || rest.disabled) v.setValue(0);
+    return () => v.stopAnimation();
+  }, [reduced, rest.disabled, v]);
   const flat = (StyleSheet.flatten(style) ?? {}) as ViewStyle;
   const { transform, ...restStyle } = flat;
   const scale = v.interpolate({ inputRange: [0, 1], outputRange: [1, scaleTo] });
   const run = (to: number) => {
+    if (reduced) return;
     Animated.spring(v, { toValue: to, useNativeDriver: ND, ...(to ? SPRING.press : SPRING.release) }).start();
   };
   return (
     <AnimatedPressable
+      accessibilityRole="button"
+      aria-disabled={rest.disabled || rest.accessibilityState?.disabled}
+      aria-busy={rest.accessibilityState?.busy}
+      aria-expanded={rest.accessibilityState?.expanded}
+      aria-selected={rest.accessibilityState?.selected}
+      aria-checked={rest.accessibilityState?.checked}
       {...rest}
       onPressIn={e => {
         run(1);
@@ -135,18 +158,23 @@ export function FadeIn({
   style?: StyleProp<ViewStyle>;
   children: React.ReactNode;
 }) {
-  const a = useRef(new Animated.Value(0)).current;
+  const reduced = useReducedMotion();
+  const a = useRef(new Animated.Value(reduced ? 1 : 0)).current;
   useEffect(() => {
-    Animated.timing(a, {
+    if (reduced) { a.setValue(1); return; }
+    const animation = Animated.timing(a, {
       toValue: 1,
-      duration: reduceMotion ? 1 : duration,
-      delay: reduceMotion ? 0 : delay,
+      duration,
+      delay,
       easing: Easing.out(Easing.cubic),
       useNativeDriver: ND,
-    }).start();
-  }, [a, delay, duration]);
-  const transform: any[] = [{ translateY: a.interpolate({ inputRange: [0, 1], outputRange: [reduceMotion ? 0 : dy, 0] }) }];
-  if (scaleFrom != null) transform.push({ scale: a.interpolate({ inputRange: [0, 1], outputRange: [reduceMotion ? 1 : scaleFrom, 1] }) });
+      isInteraction: false,
+    });
+    animation.start();
+    return () => animation.stop();
+  }, [a, delay, duration, reduced]);
+  const transform: any[] = [{ translateY: a.interpolate({ inputRange: [0, 1], outputRange: [reduced ? 0 : dy, 0] }) }];
+  if (scaleFrom != null) transform.push({ scale: a.interpolate({ inputRange: [0, 1], outputRange: [reduced ? 1 : scaleFrom, 1] }) });
   return <Animated.View style={[style, { opacity: a, transform }]}>{children}</Animated.View>;
 }
 
@@ -157,30 +185,117 @@ export function FadeIn({
  * 返回 mounted（是否渲染）与 a（0→1 的进度值）。
  */
 function usePresence(visible: boolean, enter: 'sheet' | 'pop') {
+  const reduced = useReducedMotion();
   const [mounted, setMounted] = useState(visible);
-  const a = useRef(new Animated.Value(0)).current;
+  const a = useRef(new Animated.Value(reduced && visible ? 1 : 0)).current;
 
   useEffect(() => {
+    if (reduced) {
+      a.setValue(visible ? 1 : 0);
+      setMounted(visible);
+      return;
+    }
+    let animation: Animated.CompositeAnimation;
     if (visible) {
       setMounted(true);
-      if (reduceMotion) {
-        a.setValue(1);
-        return;
-      }
-      Animated.spring(a, { toValue: 1, useNativeDriver: ND, ...SPRING[enter] }).start();
+      animation = Animated.spring(a, { toValue: 1, useNativeDriver: ND, ...SPRING[enter] });
+      animation.start();
     } else {
-      Animated.timing(a, {
+      animation = Animated.timing(a, {
         toValue: 0,
-        duration: reduceMotion ? 1 : 190,
+        duration: 190,
         easing: Easing.in(Easing.cubic),
         useNativeDriver: ND,
-      }).start(({ finished }) => {
+      });
+      animation.start(({ finished }) => {
         if (finished) setMounted(false);
       });
     }
-  }, [visible, a, enter]);
+    return () => animation.stop();
+  }, [visible, a, enter, reduced]);
 
   return { mounted, a };
+}
+
+// Modals can overlap while an outgoing surface finishes its animation. Reconcile
+// their background isolation together so one closing modal cannot unlock another.
+const webModals: HTMLElement[] = [];
+const webModalBackground = new Map<HTMLElement, { inert: boolean; hidden: string | null }>();
+function reconcileModalBackground() {
+  webModalBackground.forEach((prior, element) => {
+    element.inert = prior.inert;
+    if (prior.hidden === null) element.removeAttribute('aria-hidden');
+    else element.setAttribute('aria-hidden', prior.hidden);
+  });
+  const top = webModals[webModals.length - 1];
+  if (!top) { webModalBackground.clear(); return; }
+  Array.from(document.body.children).forEach(element => {
+    if (!(element instanceof HTMLElement) || element === top) return;
+    if (!webModalBackground.has(element)) webModalBackground.set(element, { inert: element.inert, hidden: element.getAttribute('aria-hidden') });
+    element.inert = true;
+    element.setAttribute('aria-hidden', 'true');
+  });
+}
+
+/** React Native Web supplies the named dialog, focus trap and Escape handling. */
+export function AccessibleModal({ label, children, visible, onShow, ...props }: ModalProps & { label: string }) {
+  const contentRef = useRef<View>(null);
+  const restoreRef = useRef<(() => void) | null>(null);
+  const frameRef = useRef<number | null>(null);
+  const previousFocus = useRef<HTMLElement | null>(null);
+  const wasVisible = useRef(false);
+  // Capture before children mount: an autoFocus field can move focus during commit.
+  if (visible && !wasVisible.current && Platform.OS === 'web' && typeof document !== 'undefined') {
+    previousFocus.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+  }
+  wasVisible.current = !!visible;
+
+  const restore = useCallback(() => {
+    if (Platform.OS !== 'web') return;
+    if (frameRef.current !== null) cancelAnimationFrame(frameRef.current);
+    restoreRef.current?.();
+    restoreRef.current = null;
+    const previous = previousFocus.current;
+    previousFocus.current = null;
+    // RN Web's focus trap has unmounted before this frame runs.
+    if (previous) requestAnimationFrame(() => { if (previous.isConnected && !previous.closest('[inert]')) previous.focus({ preventScroll: true }); });
+  }, []);
+
+  useEffect(() => {
+    if (!visible || Platform.OS !== 'web') return;
+    return restore;
+  }, [visible, restore]);
+
+  const show: NonNullable<ModalProps['onShow']> = event => {
+    onShow?.(event);
+    if (Platform.OS !== 'web') return;
+    frameRef.current = requestAnimationFrame(() => {
+      const content = contentRef.current as unknown as HTMLElement | null;
+      if (!content) return;
+      let portal = content;
+      while (portal.parentElement && portal.parentElement !== document.body) portal = portal.parentElement;
+      if (webModals.includes(portal)) return;
+      webModals.push(portal);
+      const focused = document.activeElement;
+      const target = content.querySelector<HTMLElement>('[autofocus],input:not([disabled]),textarea:not([disabled]),[role="heading"],[role="button"],button,[tabindex="0"]');
+      if (target && (!(focused instanceof Node) || !content.contains(focused))) {
+        if (target.getAttribute('role') === 'heading') target.tabIndex = -1;
+        target.focus({ preventScroll: true });
+      }
+      reconcileModalBackground();
+      restoreRef.current = () => {
+        const index = webModals.indexOf(portal);
+        if (index >= 0) webModals.splice(index, 1);
+        reconcileModalBackground();
+      };
+    });
+  };
+
+  return (
+    <Modal {...props} visible={visible} accessibilityLabel={label} onShow={show} animationType={Platform.OS === 'web' ? 'none' : props.animationType}>
+      <View ref={contentRef} style={{ flex: 1 }} accessibilityViewIsModal>{children}</View>
+    </Modal>
+  );
 }
 
 /* ---------------- 底部面板 ---------------- */
@@ -189,6 +304,7 @@ export interface BottomSheetProps {
   visible: boolean;
   onClose: () => void;
   title?: string;
+  accessibilityLabel?: string;
   /** 标题右侧的自定义内容（默认是关闭按钮） */
   right?: React.ReactNode;
   children: React.ReactNode;
@@ -205,8 +321,8 @@ export interface BottomSheetProps {
  * 底部面板：遮罩淡入、面板弹簧升起，顶部把手可下拉关闭。
  * 取代 Modal 自带的 slide（遮罩会跟着面板一起滑上来）。
  */
-export function BottomSheet({ visible, onClose, title, right, children, maxHeight = 0.86, keyboard, bg, contentStyle }: BottomSheetProps) {
-  const { c, t } = useTheme();
+export function BottomSheet({ visible, onClose, title, accessibilityLabel, right, children, maxHeight = 0.86, keyboard, bg, contentStyle }: BottomSheetProps) {
+  const { c, t, r } = useTheme();
   const insets = useSafeAreaInsets();
   const { mounted, a } = usePresence(visible, 'sheet');
   const drag = useRef(new Animated.Value(0)).current;
@@ -229,10 +345,12 @@ export function BottomSheet({ visible, onClose, title, right, children, maxHeigh
           if (g.dy > 96 || g.vy > 0.9) {
             closeRef.current();
           } else {
+            if (prefersReducedMotion()) { drag.setValue(0); return; }
             Animated.spring(drag, { toValue: 0, useNativeDriver: ND, ...SPRING.sheet }).start();
           }
         },
         onPanResponderTerminate: () => {
+          if (prefersReducedMotion()) { drag.setValue(0); return; }
           Animated.spring(drag, { toValue: 0, useNativeDriver: ND, ...SPRING.sheet }).start();
         },
       }),
@@ -245,9 +363,10 @@ export function BottomSheet({ visible, onClose, title, right, children, maxHeigh
   const body = (
     <View style={{ flex: 1, justifyContent: 'flex-end' }}>
       <Animated.View style={[StyleSheet.absoluteFill, { backgroundColor: c.overlay, opacity: a.interpolate({ inputRange: [0, 1], outputRange: [0, 1], extrapolate: 'clamp' }) }]}>
-        <Pressable style={{ flex: 1 }} onPress={onClose} accessibilityLabel="关闭面板" />
+        <Pressable style={{ flex: 1 }} onPress={onClose} accessible={false} focusable={false} tabIndex={-1} />
       </Animated.View>
       <Animated.View
+        onAccessibilityEscape={onClose}
         onLayout={e => setSheetH(e.nativeEvent.layout.height)}
         style={{
           width: '100%',
@@ -255,8 +374,8 @@ export function BottomSheet({ visible, onClose, title, right, children, maxHeigh
           alignSelf: 'center',
           maxHeight: `${Math.round(maxHeight * 100)}%`,
           backgroundColor: bg ?? c.bg,
-          borderTopLeftRadius: 24,
-          borderTopRightRadius: 24,
+          borderTopLeftRadius: r(24),
+          borderTopRightRadius: r(24),
           paddingBottom: Math.max(insets.bottom, 12) + 10,
           transform: [{ translateY }],
           shadowColor: '#000',
@@ -270,9 +389,9 @@ export function BottomSheet({ visible, onClose, title, right, children, maxHeigh
           <View style={{ alignSelf: 'center', width: 36, height: 4, borderRadius: 2, backgroundColor: c.border }} />
           {!!title && (
             <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 22, paddingTop: 14 }}>
-              <Text style={[t.h2, { flexShrink: 1 }]} numberOfLines={1}>{title}</Text>
+              <Text accessibilityRole="header" style={[t.h2, { flex: 1, marginRight: 12 }]}>{title}</Text>
               {right ?? (
-                <Pressable hitSlop={12} onPress={onClose} accessibilityLabel="关闭">
+                <Pressable onPress={onClose} accessibilityRole="button" accessibilityLabel="关闭" style={{ width: 44, height: 44, margin: -10, alignItems: 'center', justifyContent: 'center' }}>
                   <X size={20} color={c.textSub} />
                 </Pressable>
               )}
@@ -285,7 +404,7 @@ export function BottomSheet({ visible, onClose, title, right, children, maxHeigh
   );
 
   return (
-    <Modal visible transparent animationType="none" onRequestClose={onClose} statusBarTranslucent>
+    <AccessibleModal label={accessibilityLabel ?? title ?? "操作面板"} visible transparent animationType="none" onRequestClose={onClose} statusBarTranslucent>
       {keyboard ? (
         <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
           {body}
@@ -293,7 +412,7 @@ export function BottomSheet({ visible, onClose, title, right, children, maxHeigh
       ) : (
         body
       )}
-    </Modal>
+    </AccessibleModal>
   );
 }
 
@@ -304,34 +423,39 @@ export function PopDialog({
   visible,
   onClose,
   children,
-  maxWidth = 340,
-  inset = 32,
+  maxWidth = 380,
+  inset = 20,
+  accessibilityLabel = "确认操作",
   style,
 }: {
   visible: boolean;
   onClose: () => void;
   children: React.ReactNode;
   maxWidth?: number;
+  accessibilityLabel?: string;
   /** 弹窗距屏幕边缘的留白 */
   inset?: number;
   style?: StyleProp<ViewStyle>;
 }) {
-  const { c } = useTheme();
+  const { c, r } = useTheme();
   const { mounted, a } = usePresence(visible, 'pop');
   if (!mounted) return null;
   return (
-    <Modal visible transparent animationType="none" onRequestClose={onClose} statusBarTranslucent>
+    <AccessibleModal label={accessibilityLabel} visible transparent animationType="none" onRequestClose={onClose} statusBarTranslucent>
       <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', padding: inset }}>
         <Animated.View style={[StyleSheet.absoluteFill, { backgroundColor: c.overlay, opacity: a.interpolate({ inputRange: [0, 1], outputRange: [0, 1], extrapolate: 'clamp' }) }]}>
-          <Pressable style={{ flex: 1 }} onPress={onClose} accessibilityLabel="关闭弹窗" />
+          <Pressable style={{ flex: 1 }} onPress={onClose} accessible={false} focusable={false} tabIndex={-1} />
         </Animated.View>
         <Animated.View
+          onAccessibilityEscape={onClose}
           style={[
             {
               width: '100%',
               maxWidth,
+              maxHeight: '100%',
+              flexShrink: 1,
               backgroundColor: c.card,
-              borderRadius: 20,
+              borderRadius: r(20),
               padding: 22,
               opacity: a.interpolate({ inputRange: [0, 0.6, 1], outputRange: [0, 1, 1], extrapolate: 'clamp' }),
               transform: [
@@ -350,6 +474,57 @@ export function PopDialog({
           {children}
         </Animated.View>
       </View>
-    </Modal>
+    </AccessibleModal>
   );
+}
+
+/* ---------------- 数字滚动 ---------------- */
+
+/**
+ * 数字滚动：值变化时从旧值滚到新值（约 0.7s 缓出），首次挂载从 0 滚起。
+ * 系统开启「减弱动态效果」时直接到位。返回应显示的整数。
+ */
+export function useCountUp(target: number, duration = 700): number {
+  const reduced = useReducedMotion();
+  const a = useRef(new Animated.Value(target)).current;
+  const [val, setVal] = useState(target);
+  const prev = useRef(target);
+  const lastStepAt = useRef(0);
+  useEffect(() => {
+    if (reduced) {
+      a.stopAnimation();
+      prev.current = target;
+      setVal(target);
+      return;
+    }
+    const from = prev.current;
+    prev.current = target;
+    if (from === target) return;
+    a.setValue(from);
+    let lastShown = from;
+    lastStepAt.current = 0;
+    const id = a.addListener(({ value }) => {
+      const next = Math.round(value);
+      const now = Date.now();
+      if (next === lastShown || now - lastStepAt.current < 32) return;
+      lastShown = next;
+      lastStepAt.current = now;
+      setVal(next);
+    });
+    const animation = Animated.timing(a, {
+      toValue: target,
+      duration: Math.min(duration, 280),
+      easing: Easing.out(Easing.cubic),
+      useNativeDriver: false,
+      isInteraction: false,
+    });
+    animation.start(({ finished }) => {
+      if (finished) setVal(target);
+    });
+    return () => {
+      a.removeListener(id);
+      animation.stop();
+    };
+  }, [target, duration, reduced, a]);
+  return reduced ? target : val;
 }

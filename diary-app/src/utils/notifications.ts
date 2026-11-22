@@ -1,6 +1,7 @@
 import { Platform } from 'react-native';
 import * as Notifications from 'expo-notifications';
 import type { ReminderSettings } from '../store/types';
+import { applyReminderSchedule, type ReminderResult } from './reminderSchedule';
 
 const ANDROID_CHANNEL_ID = 'daily-reminder';
 
@@ -11,41 +12,43 @@ const ANDROID_CHANNEL_ID = 'daily-reminder';
  */
 async function ensureAndroidChannels(rem: ReminderSettings): Promise<string> {
   const important = rem.important !== false;
-  const channelId = important ? `${ANDROID_CHANNEL_ID}-high` : `${ANDROID_CHANNEL_ID}-default`;
+  const channelId = `${ANDROID_CHANNEL_ID}-${important ? 'high' : 'default'}-${rem.method === 'notify_sound' ? 'sound' : 'quiet'}`;
   await Notifications.setNotificationChannelAsync(channelId, {
     name: '每日日记提醒',
     importance: important ? Notifications.AndroidImportance.HIGH : Notifications.AndroidImportance.DEFAULT,
     vibrationPattern: important ? [0, 250, 250, 250] : undefined,
-    sound: rem.method === 'notify_sound' && important ? 'default' : undefined,
+    sound: rem.method === 'notify_sound' ? 'default' : null,
   });
   return channelId;
 }
 
 /** 同步本地每日提醒通知计划 */
-export async function rescheduleDailyReminder(rem: ReminderSettings): Promise<'ok' | 'denied' | 'web'> {
-  if (Platform.OS === 'web') return 'web';
-  try {
-    await Notifications.cancelAllScheduledNotificationsAsync();
-    if (!rem.daily) return 'ok';
-    const perm = await Notifications.requestPermissionsAsync();
-    if (!perm.granted) return 'denied';
-    const channelId = Platform.OS === 'android' ? await ensureAndroidChannels(rem) : undefined;
-    await Notifications.scheduleNotificationAsync({
-      content: {
-        title: '记得日记',
-        body: rem.text || '该写日记啦 ✨ 记录今天的生活，想法与心情',
-        sound: rem.method === 'notify_sound',
-        ...(channelId ? { channelId } : {}),
+let scheduling: Promise<unknown> = Promise.resolve();
+export function rescheduleDailyReminder(rem: ReminderSettings): Promise<ReminderResult> {
+  if (Platform.OS === 'web') return Promise.resolve('web');
+  const settings = { ...rem, days: [...rem.days] };
+  const next = scheduling.catch(() => {}).then(async () => {
+    let channelId: string | undefined;
+    return applyReminderSchedule(settings, {
+      list: async () => (await Notifications.getAllScheduledNotificationsAsync()).filter(request => {
+        const trigger = request.trigger;
+        return request.content.data?.jideDailyReminder === true || (request.content.title === '记得日记' && trigger && 'type' in trigger && ['daily', 'weekly', 'calendar'].includes(trigger.type));
+      }).map(request => request.identifier),
+      permission: async () => {
+        if (Platform.OS === 'android') channelId = await ensureAndroidChannels(settings);
+        const permission = await Notifications.requestPermissionsAsync();
+        if (!permission.granted) return false;
+        return true;
       },
-      trigger: {
-        type: Notifications.SchedulableTriggerInputTypes.DAILY,
-        hour: rem.hour,
-        minute: rem.minute,
-        ...(channelId ? { channelId } : {}),
-      },
+      cancel: id => Notifications.cancelScheduledNotificationAsync(id),
+      schedule: trigger => Notifications.scheduleNotificationAsync({
+        content: { title: '记得日记', body: settings.text || '该写日记啦，记录今天的生活、想法与心情', sound: settings.method === 'notify_sound', data: { jideDailyReminder: true } },
+        trigger: trigger.weekday === undefined
+          ? { type: Notifications.SchedulableTriggerInputTypes.DAILY, hour: trigger.hour, minute: trigger.minute, ...(channelId ? { channelId } : {}) }
+          : { type: Notifications.SchedulableTriggerInputTypes.WEEKLY, hour: trigger.hour, minute: trigger.minute, weekday: trigger.weekday, ...(channelId ? { channelId } : {}) },
+      }),
     });
-    return 'ok';
-  } catch {
-    return 'ok';
-  }
+  });
+  scheduling = next;
+  return next;
 }

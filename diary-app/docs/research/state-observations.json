@@ -1,0 +1,512 @@
+[
+  {
+    "id": "date-sheet",
+    "title": "日期选择面板",
+    "route": "/write?id=audit-entry",
+    "width": 390,
+    "height": 844,
+    "screenshot": "states/date-sheet.png",
+    "errors": [],
+    "text": "取消\n编辑日记\n107 / 200 字\n保存\n我的日记\n11月21日 15:24 周六\n开心\n西湖区 · 晴 12°\n2 个标签\n和谁\n模板\n记得\n追问 · 整理 · 理顺口述\n追问\n整理\n理顺口述\n顺着你已经写的，接着问自己：\n这件事里，哪个瞬间你记得最清楚？\n写入 ›\n当时你心里最先冒出来的念头是什么？\n写入 ›\n有什么是你当时想说、但没有说的？\n写入 ›\n换一批\n以下建议都在本机生成；开启「记得」后会读一读再帮你问和整理 · 去设置 ›\n#旅行\n#成长\n图片排版 (2 张)\n网格\n大图\n轮播\n记录时间\n11月21日 周六 15:24\n今天\n此刻\n昨晚\n前天\n一周前\n日期\n时间\n‹\n2026年11月\n›\n一\n二\n三\n四\n五\n六\n日\n1\n2\n3\n4\n5\n6\n7\n8\n9\n10\n11\n12\n13\n14\n15\n16\n17\n18\n19\n20\n21\n22\n23\n24\n25\n26\n27\n28\n29\n30\n确定",
+    "dialogs": [
+      {
+        "text": "记录时间11月21日 周六 15:24今天此刻昨晚前天一周前日期时间‹2026年11月›一二三四五六日123456789101112131415161718192021222324252627282930确定",
+        "label": null
+      },
+      {
+        "text": "记录时间11月21日 周六 15:24今天此刻昨晚前天一周前日期时间‹2026年11月›一二三四五六日123456789101112131415161718192021222324252627282930确定",
+        "label": "记录时间"
+      }
+    ],
+    "focused": "关闭面板",
+    "switches": [],
+    "visibleActions": [
+      "取消",
+      "保存",
+      "我的日记",
+      "11月21日 15:24 周六",
+      "开心",
+      "西湖区 · 晴 12°",
+      "2 个标签",
+      "和谁",
+      "模板",
+      "展开记得助手",
+      "移除#旅行",
+      "移除#成长",
+      "展开格式工具",
+      "图片",
+      "视频",
+      "录音",
+      "听写",
+      "预览排版",
+      "关闭",
+      "此刻",
+      "昨晚",
+      "前天",
+      "一周前",
+      "确定"
+    ]
+  },
+  {
+    "id": "time-sheet",
+    "title": "时间轮盘面板",
+    "route": "/write?id=audit-entry",
+    "width": 390,
+    "height": 844,
+    "screenshot": "states/time-sheet.png",
+    "errors": [],
+    "text": "取消\n编辑日记\n107 / 200 字\n保存\n我的日记\n11月21日 15:24 周六\n开心\n西湖区 · 晴 12°\n2 个标签\n和谁\n模板\n记得\n追问 · 整理 · 理顺口述\n追问\n整理\n理顺口述\n顺着你已经写的，接着问自己：\n这件事里，哪个瞬间你记得最清楚？\n写入 ›\n当时你心里最先冒出来的念头是什么？\n写入 ›\n有什么是你当时想说、但没有说的？\n写入 ›\n换一批\n以下建议都在本机生成；开启「记得」后会读一读再帮你问和整理 · 去设置 ›\n#旅行\n#成长\n图片排版 (2 张)\n网格\n大图\n轮播\n记录时间\n11月21日 周六 15:24\n今天\n此刻\n昨晚\n前天\n一周前\n日期\n时间\n00\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n13\n14\n15\n16\n17\n18\n19\n20\n21\n22\n23\n:\n00\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n13\n14\n15\n16\n17\n18\n19\n20\n21\n22\n23\n24\n25\n26\n27\n28\n29\n30\n31\n32\n33\n34\n35\n36\n37\n38\n39\n40\n41\n42\n43\n44\n45\n46\n47\n48\n49\n50\n51\n52\n53\n54\n55\n56\n57\n58\n59\n确定",
+    "dialogs": [
+      {
+        "text": "记录时间11月21日 周六 15:24今天此刻昨晚前天一周前日期时间000102030405060708091011121314151617181920212223:000102030405060708091011121314151617181920212223242526272829303132333435363738394041424344454647484950515253545556575859确定",
+        "label": null
+      },
+      {
+        "text": "记录时间11月21日 周六 15:24今天此刻昨晚前天一周前日期时间000102030405060708091011121314151617181920212223:000102030405060708091011121314151617181920212223242526272829303132333435363738394041424344454647484950515253545556575859确定",
+        "label": "记录时间"
+      }
+    ],
+    "focused": "DIV",
+    "switches": [],
+    "visibleActions": [
+      "取消",
+      "保存",
+      "我的日记",
+      "11月21日 15:24 周六",
+      "开心",
+      "西湖区 · 晴 12°",
+      "2 个标签",
+      "和谁",
+      "模板",
+      "展开记得助手",
+      "移除#旅行",
+      "移除#成长",
+      "展开格式工具",
+      "图片",
+      "视频",
+      "录音",
+      "听写",
+      "预览排版",
+      "关闭",
+      "此刻",
+      "昨晚",
+      "前天",
+      "一周前",
+      "确定"
+    ]
+  },
+  {
+    "id": "exit-save",
+    "title": "退出保存修改确认",
+    "route": "/write?id=audit-entry",
+    "width": 390,
+    "height": 844,
+    "screenshot": "states/exit-save.png",
+    "errors": [],
+    "text": "取消\n编辑日记\n正在保存… · 22/200字\n保存\n我的日记\n11月21日 15:24 周六\n开心\n西湖区 · 晴 12°\n2 个标签\n和谁\n模板\n记得\n追问 · 整理 · 理顺口述\n追问\n整理\n理顺口述\n顺着你已经写的，接着问自己：\n这件事里，哪个瞬间你记得最清楚？\n写入 ›\n当时你心里最先冒出来的念头是什么？\n写入 ›\n有什么是你当时想说、但没有说的？\n写入 ›\n换一批\n以下建议都在本机生成；开启「记得」后会读一读再帮你问和整理 · 去设置 ›\n#旅行\n#成长\n图片排版 (2 张)\n网格\n大图\n轮播\n保存这次修改？\n保存后将更新这篇日记。选择不保存，会还原本次编辑前的内容。\n不保存\n保存修改",
+    "dialogs": [
+      {
+        "text": "保存这次修改？保存后将更新这篇日记。选择不保存，会还原本次编辑前的内容。不保存保存修改",
+        "label": null
+      },
+      {
+        "text": "保存这次修改？保存后将更新这篇日记。选择不保存，会还原本次编辑前的内容。不保存保存修改",
+        "label": null
+      }
+    ],
+    "focused": "关闭弹窗",
+    "switches": [],
+    "visibleActions": [
+      "取消",
+      "保存",
+      "我的日记",
+      "11月21日 15:24 周六",
+      "开心",
+      "西湖区 · 晴 12°",
+      "2 个标签",
+      "和谁",
+      "模板",
+      "展开记得助手",
+      "移除#旅行",
+      "移除#成长",
+      "展开格式工具",
+      "图片",
+      "视频",
+      "录音",
+      "听写",
+      "预览排版",
+      "不保存",
+      "保存修改"
+    ]
+  },
+  {
+    "id": "exit-draft-320",
+    "title": "窄屏退出草稿确认",
+    "route": "/write",
+    "width": 320,
+    "height": 568,
+    "screenshot": "states/exit-draft-320.png",
+    "errors": [],
+    "text": "取消\n新建日记\n正在保存… · 9/200字\n完成\n我的日记\n11月21日 20:11 周六\n心情\n天气与地点\n标签\n和谁\n模板\n记得\n追问 · 整理 · 理顺口述\n追问\n整理\n理顺口述\n顺着你已经写的，接着问自己：\n这件事里，哪个瞬间你记得最清楚？\n写入 ›\n当时你心里最先冒出来的念头是什么？\n写入 ›\n有什么是你当时想说、但没有说的？\n写入 ›\n换一批\n以下建议都在本机生成；开启「记得」后会读一读再帮你问和整理 · 去设置 ›\n保存这篇草稿？\n保存后可以在草稿箱继续写。选择不保存，会放弃这次编辑。\n不保存\n保存草稿",
+    "dialogs": [
+      {
+        "text": "保存这篇草稿？保存后可以在草稿箱继续写。选择不保存，会放弃这次编辑。不保存保存草稿",
+        "label": null
+      },
+      {
+        "text": "保存这篇草稿？保存后可以在草稿箱继续写。选择不保存，会放弃这次编辑。不保存保存草稿",
+        "label": null
+      }
+    ],
+    "focused": "关闭弹窗",
+    "switches": [],
+    "visibleActions": [
+      "取消",
+      "完成",
+      "我的日记",
+      "11月21日 20:11 周六",
+      "心情",
+      "天气与地点",
+      "标签",
+      "和谁",
+      "模板",
+      "展开记得助手",
+      "展开格式工具",
+      "图片",
+      "视频",
+      "录音",
+      "听写",
+      "预览排版",
+      "不保存",
+      "保存草稿"
+    ]
+  },
+  {
+    "id": "photo-viewer",
+    "title": "照片全屏查看",
+    "route": "/memory/audit-entry",
+    "width": 390,
+    "height": 844,
+    "screenshot": "states/photo-viewer.png",
+    "errors": [],
+    "text": "在山间的一个下午\n11月21日 15:24 周六\n我的日记\n杭州市 · 西湖区\n·\n晴 12°C\n旅行\n成长\n开心\n今天去了城郊的山林，空气非常清新。沿着小路慢慢走，太阳透过树叶洒下斑驳的光影，整个人都放松了很多。\n原来，生活的美好常常藏在这样安静的时刻里。\n•\n带了一本没读完的书\n•\n在半山腰的亭子里坐了一个小时\n•\n回来的路上看到了很美的晚霞\n共 107 字 · 预计阅读 1 分钟\n下一篇\n阅读笔记：《被讨厌的勇气》\n分享\n已收藏\n编辑\n1 / 2",
+    "dialogs": [
+      {
+        "text": "1 / 2",
+        "label": null
+      }
+    ],
+    "focused": "DIV",
+    "switches": [],
+    "visibleActions": [
+      "返回",
+      "编辑",
+      "更多"
+    ]
+  },
+  {
+    "id": "new-tag",
+    "title": "新建标签底部面板",
+    "route": "/picker/tags",
+    "width": 390,
+    "height": 844,
+    "screenshot": "states/new-tag.png",
+    "errors": [],
+    "text": "选择标签\n学习\n工作\n生活\n旅行\n情绪\n成长\n阅读\n运动\n健康\n理财\n新建标签\n确定\n新建标签\n选择一个图标\n创建标签",
+    "dialogs": [
+      {
+        "text": "新建标签选择一个图标创建标签",
+        "label": null
+      },
+      {
+        "text": "新建标签选择一个图标创建标签",
+        "label": null
+      }
+    ],
+    "focused": "输入标签名称（如：摄影、冥想）",
+    "switches": [],
+    "visibleActions": [
+      "返回",
+      "确定",
+      "创建标签"
+    ]
+  },
+  {
+    "id": "new-person",
+    "title": "新建人物底部面板",
+    "route": "/picker/people",
+    "width": 390,
+    "height": 844,
+    "screenshot": "states/new-person.png",
+    "errors": [],
+    "text": "和谁在一起\n还没有记录身边的人。\n记下日记里出现的人，回头就能按人翻看。\n记下一个人\n确定\n记下一个人\n你们的关系\n家人\n伴侣\n朋友\n同事\n其他\n记下了",
+    "dialogs": [
+      {
+        "text": "记下一个人你们的关系家人伴侣朋友同事其他记下了",
+        "label": null
+      },
+      {
+        "text": "记下一个人你们的关系家人伴侣朋友同事其他记下了",
+        "label": null
+      }
+    ],
+    "focused": "TA 的名字或你对 TA 的称呼",
+    "switches": [],
+    "visibleActions": [
+      "返回",
+      "确定",
+      "家人",
+      "伴侣",
+      "朋友",
+      "同事",
+      "其他",
+      "记下了"
+    ]
+  },
+  {
+    "id": "toast-validation",
+    "title": "标签校验Toast与面板重叠",
+    "route": "/picker/tags",
+    "width": 390,
+    "height": 844,
+    "screenshot": "states/toast-validation.png",
+    "errors": [],
+    "text": "选择标签\n学习\n工作\n生活\n旅行\n情绪\n成长\n阅读\n运动\n健康\n理财\n新建标签\n确定\n请输入标签名称\n新建标签\n选择一个图标\n创建标签",
+    "dialogs": [
+      {
+        "text": "新建标签选择一个图标创建标签",
+        "label": null
+      },
+      {
+        "text": "新建标签选择一个图标创建标签",
+        "label": null
+      }
+    ],
+    "focused": "创建标签",
+    "switches": [],
+    "visibleActions": [
+      "返回",
+      "确定",
+      "创建标签"
+    ]
+  },
+  {
+    "id": "permission-intro",
+    "title": "权限说明面板",
+    "route": "/settings/about",
+    "width": 390,
+    "height": 844,
+    "screenshot": "states/permission-intro.png",
+    "errors": [],
+    "text": "关于记得日记\n记得日记\n记下生活，记得自己 · v1.0.0\n体验与权限\n权限说明与授权\n相册、麦克风、通知权限管理\n新手导览\n跟着光圈重新认识首页的每个入口\n重新查看引导页\n重温产品初见介绍\n导入示例日记\n添加精选示例日记，方便体验回顾与统计\n状态页查看\n离线状态提示\n同步冲突处理\n一款专注记录、回顾与自我理解的日记应用\n需要以下权限\n为提供更完整的记录体验，建议授予以下权限：\n相册\n用于插入照片到日记中\n去授权\n麦克风\n用于录制语音日记\n去授权\n通知\n用于每日提醒与重要事项提醒\n去授权\n稍后再说",
+    "dialogs": [
+      {
+        "text": "需要以下权限为提供更完整的记录体验，建议授予以下权限：相册用于插入照片到日记中去授权麦克风用于录制语音日记去授权通知用于每日提醒与重要事项提醒去授权稍后再说",
+        "label": null
+      }
+    ],
+    "focused": "DIV",
+    "switches": [],
+    "visibleActions": [
+      "返回",
+      "权限说明与授权相册、麦克风、通知权限管理",
+      "新手导览跟着光圈重新认识首页的每个入口",
+      "重新查看引导页重温产品初见介绍",
+      "导入示例日记添加精选示例日记，方便体验回顾与统计",
+      "离线状态提示",
+      "同步冲突处理",
+      "相册用于插入照片到日记中去授权",
+      "麦克风用于录制语音日记去授权",
+      "通知用于每日提醒与重要事项提醒去授权",
+      "稍后再说"
+    ]
+  },
+  {
+    "id": "permission-denied",
+    "title": "麦克风拒绝后的真实错误状态",
+    "route": "/picker/audio",
+    "width": 390,
+    "height": 844,
+    "screenshot": "states/permission-denied.png",
+    "errors": [],
+    "text": "录音记录\n00:00\n点击下方按钮开始录音\n轻触开始\n无法开始录音，请检查麦克风权限后重试",
+    "dialogs": [],
+    "focused": "BODY",
+    "switches": [],
+    "visibleActions": [
+      "返回",
+      "开始录音"
+    ]
+  },
+  {
+    "id": "privacy-policy",
+    "title": "隐私政策长说明底部面板",
+    "route": "/auth/register",
+    "width": 390,
+    "height": 844,
+    "screenshot": "states/privacy-policy.png",
+    "errors": [],
+    "text": "注册记得日记\n创建账号，开启你的日记之旅。\n获取验证码\n我已阅读并同意 《用户协议》 和 《隐私政策》\n注册\n已有账号? 去登录\n隐私政策\n「记得日记」非常重视你的个人隐私。\n\n1. 我们仅在你主动点击插入照片、录制语音、获取当前位置或开启每日提醒时请求相应系统权限。\n2. 你可以随时在「隐私与安全」中开启应用锁密码、Face ID / 指纹识别或隐藏日记功能。\n3. 你可以随时手动备份、清空本地数据或永久注销账号。\n4. 「记得」AI 助手默认关闭。开启后，只有你主动操作的日记文字会发送到你自行配置的服务；照片、视频、录音、位置不会发送，隐藏与已删除的日记永远不会发送。\n我知道了",
+    "dialogs": [
+      {
+        "text": "隐私政策「记得日记」非常重视你的个人隐私。\n\n1. 我们仅在你主动点击插入照片、录制语音、获取当前位置或开启每日提醒时请求相应系统权限。\n2. 你可以随时在「隐私与安全」中开启应用锁密码、Face ID / 指纹识别或隐藏日记功能。\n3. 你可以随时手动备份、清空本地数据或永久注销账号。\n4. 「记得」AI 助手默认关闭。开启后，只有你主动操作的日记文字会发送到你自行配置的服务；照片、视频、录音、位置不会发送，隐藏与已删除的日记永远不会发送。我知道了",
+        "label": null
+      },
+      {
+        "text": "隐私政策「记得日记」非常重视你的个人隐私。\n\n1. 我们仅在你主动点击插入照片、录制语音、获取当前位置或开启每日提醒时请求相应系统权限。\n2. 你可以随时在「隐私与安全」中开启应用锁密码、Face ID / 指纹识别或隐藏日记功能。\n3. 你可以随时手动备份、清空本地数据或永久注销账号。\n4. 「记得」AI 助手默认关闭。开启后，只有你主动操作的日记文字会发送到你自行配置的服务；照片、视频、录音、位置不会发送，隐藏与已删除的日记永远不会发送。我知道了",
+        "label": null
+      }
+    ],
+    "focused": "关闭面板",
+    "switches": [],
+    "visibleActions": [
+      "返回",
+      "显示密码",
+      "注册",
+      "我知道了"
+    ]
+  },
+  {
+    "id": "ai-consent",
+    "title": "AI说明确认弹窗",
+    "route": "/settings/ai",
+    "width": 390,
+    "height": 844,
+    "screenshot": "states/ai-consent.png",
+    "errors": [],
+    "text": "记得\n它读你写的，问你、帮你整理、给你回信\n写不下去时追问：顺着原文的具体细节接着问\n帮你整理：标题、心情、标签、和谁在一起\n写完回一封短信，记得你以前写过的事\n不替你写，不改写；隐藏日记永远不发\n开启「记得」\n关闭中，日记不会离开这台设备\n使用「记得」时，当前这篇日记的文字会发送到你填写的服务。照片、视频、录音、位置不会发送；隐藏日记和已删除的日记永远不会发送。不开网络时，本机的追问和整理建议仍然可用。\n开启「记得」之前\n开启后，你主动使用追问、整理、回信、回顾时，相关日记的文字会发送到你填写的模型服务。\n\n不会发送：照片、视频、录音、位置，以及设为隐藏和已删除的日记。\n随时可以在这里关掉，关掉后不再发出任何内容。\n再想想\n明白了，开启",
+    "dialogs": [
+      {
+        "text": "开启「记得」之前开启后，你主动使用追问、整理、回信、回顾时，相关日记的文字会发送到你填写的模型服务。\n\n不会发送：照片、视频、录音、位置，以及设为隐藏和已删除的日记。\n随时可以在这里关掉，关掉后不再发出任何内容。再想想明白了，开启",
+        "label": null
+      },
+      {
+        "text": "开启「记得」之前开启后，你主动使用追问、整理、回信、回顾时，相关日记的文字会发送到你填写的模型服务。\n\n不会发送：照片、视频、录音、位置，以及设为隐藏和已删除的日记。\n随时可以在这里关掉，关掉后不再发出任何内容。再想想明白了，开启",
+        "label": null
+      }
+    ],
+    "focused": "关闭弹窗",
+    "switches": [
+      {
+        "checked": "false",
+        "disabledAncestor": "<div aria-disabled=\"true\" tabindex=\"-1\" class=\"css-g5y9jx r-12vffkv\" style=\"flex-direction: row; align-items: center; padding: 13px 16px; background-color: rgba(0, 0, 0, 0); opacity: 1;\"><svg xmlns=\"http://www.w3.org/2000/svg\" width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"#7E5D42\" stroke-width=\"1.6\" stroke-linecap=\"round\" stroke-linejoin=\"round\" style=\"margin-right: 14px;\"><path fill=\"none\" stroke=\"#7E5D42\" stroke-width=\"1.6\" stroke-linecap=\"round\" stroke-linejoin=\"round\" d=\"M11.017 2.814a1 1 0 0 1 1.966 0l1.051 5.558a2 2 0 0 0 1.594 1.594l5.558 1.051a1 1 0 0 1 0 1.966l-5.558 "
+      }
+    ],
+    "visibleActions": [
+      "返回",
+      "再想想",
+      "明白了，开启"
+    ]
+  },
+  {
+    "id": "ai-consent-dark-320",
+    "title": "窄屏深色大字号AI说明",
+    "route": "/settings/ai",
+    "width": 320,
+    "height": 568,
+    "screenshot": "states/ai-consent-dark-320.png",
+    "errors": [],
+    "text": "记得\n它读你写的，问你、帮你整理、给你回信\n写不下去时追问：顺着原文的具体细节接着问\n帮你整理：标题、心情、标签、和谁在一起\n写完回一封短信，记得你以前写过的事\n不替你写，不改写；隐藏日记永远不发\n开启「记得」\n关闭中，日记不会离开这台设备\n使用「记得」时，当前这篇日记的文字会发送到你填写的服务。照片、视频、录音、位置不会发送；隐藏日记和已删除的日记永远不会发送。不开网络时，本机的追问和整理建议仍然可用。\n开启「记得」之前\n开启后，你主动使用追问、整理、回信、回顾时，相关日记的文字会发送到你填写的模型服务。\n\n不会发送：照片、视频、录音、位置，以及设为隐藏和已删除的日记。\n随时可以在这里关掉，关掉后不再发出任何内容。\n再想想\n明白了，开启",
+    "dialogs": [
+      {
+        "text": "开启「记得」之前开启后，你主动使用追问、整理、回信、回顾时，相关日记的文字会发送到你填写的模型服务。\n\n不会发送：照片、视频、录音、位置，以及设为隐藏和已删除的日记。\n随时可以在这里关掉，关掉后不再发出任何内容。再想想明白了，开启",
+        "label": null
+      },
+      {
+        "text": "开启「记得」之前开启后，你主动使用追问、整理、回信、回顾时，相关日记的文字会发送到你填写的模型服务。\n\n不会发送：照片、视频、录音、位置，以及设为隐藏和已删除的日记。\n随时可以在这里关掉，关掉后不再发出任何内容。再想想明白了，开启",
+        "label": null
+      }
+    ],
+    "focused": "关闭弹窗",
+    "switches": [
+      {
+        "checked": "false",
+        "disabledAncestor": "<div aria-disabled=\"true\" tabindex=\"-1\" class=\"css-g5y9jx r-12vffkv\" style=\"flex-direction: row; align-items: center; padding: 13px 16px; background-color: rgba(0, 0, 0, 0); opacity: 1;\"><svg xmlns=\"http://www.w3.org/2000/svg\" width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"#BA9E87\" stroke-width=\"1.6\" stroke-linecap=\"round\" stroke-linejoin=\"round\" style=\"margin-right: 14px;\"><path fill=\"none\" stroke=\"#BA9E87\" stroke-width=\"1.6\" stroke-linecap=\"round\" stroke-linejoin=\"round\" d=\"M11.017 2.814a1 1 0 0 1 1.966 0l1.051 5.558a2 2 0 0 0 1.594 1.594l5.558 1.051a1 1 0 0 1 0 1.966l-5.558 "
+      }
+    ],
+    "visibleActions": [
+      "返回",
+      "再想想",
+      "明白了，开启"
+    ]
+  },
+  {
+    "id": "destructive-confirm",
+    "title": "清空数据危险操作确认（未执行）",
+    "route": "/settings/privacy",
+    "width": 390,
+    "height": 844,
+    "screenshot": "states/destructive-confirm.png",
+    "errors": [],
+    "text": "隐私与安全\n应用锁\n开启后，进入应用需验证身份\n解锁方式\n未开启\n生物识别\n使用 Face ID / 指纹快速解锁\n隐藏日记验证\n开启应用锁后，查看隐藏日记需再次验证\n查看隐藏日记\n暂无\n加密备份\n以加密方式备份数据，提升安全性\n清空所有数据\n删除本地的全部日记、图片与设置\n清空所有数据\n将删除本地的全部日记、图片与设置。该操作不可撤销。\n取消\n确认清空",
+    "dialogs": [
+      {
+        "text": "清空所有数据将删除本地的全部日记、图片与设置。该操作不可撤销。取消确认清空",
+        "label": null
+      },
+      {
+        "text": "清空所有数据将删除本地的全部日记、图片与设置。该操作不可撤销。取消确认清空",
+        "label": null
+      }
+    ],
+    "focused": "关闭弹窗",
+    "switches": [
+      {
+        "checked": "false",
+        "disabledAncestor": "<div aria-disabled=\"true\" tabindex=\"-1\" class=\"css-g5y9jx r-12vffkv\" style=\"flex-direction: row; align-items: center; padding: 13px 16px; background-color: rgba(0, 0, 0, 0); opacity: 1;\"><svg xmlns=\"http://www.w3.org/2000/svg\" width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"#7E5D42\" stroke-width=\"1.6\" stroke-linecap=\"round\" stroke-linejoin=\"round\" style=\"margin-right: 14px;\"><rect fill=\"none\" stroke=\"#7E5D42\" stroke-width=\"1.6\" stroke-linecap=\"round\" stroke-linejoin=\"round\" width=\"18\" height=\"11\" x=\"3\" y=\"11\" rx=\"2\" ry=\"2\" style=\"margin-right: 14px;\"></rect><path fill=\"none\" str"
+      },
+      {
+        "checked": "false",
+        "disabledAncestor": "<div aria-disabled=\"true\" tabindex=\"-1\" class=\"css-g5y9jx r-12vffkv\" style=\"flex-direction: row; align-items: center; padding: 13px 16px; background-color: rgba(0, 0, 0, 0); opacity: 1;\"><svg xmlns=\"http://www.w3.org/2000/svg\" width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"#7E5D42\" stroke-width=\"1.6\" stroke-linecap=\"round\" stroke-linejoin=\"round\" style=\"margin-right: 14px;\"><path fill=\"none\" stroke=\"#7E5D42\" stroke-width=\"1.6\" stroke-linecap=\"round\" stroke-linejoin=\"round\" d=\"M12 10a2 2 0 0 0-2 2c0 1.02-.1 2.51-.26 4\" style=\"margin-right: 14px;\"></path><path fill=\"none\" stroke="
+      },
+      {
+        "checked": "true",
+        "disabledAncestor": "<div aria-disabled=\"true\" tabindex=\"-1\" class=\"css-g5y9jx r-12vffkv\" style=\"flex-direction: row; align-items: center; padding: 13px 16px; background-color: rgba(0, 0, 0, 0); opacity: 1;\"><svg xmlns=\"http://www.w3.org/2000/svg\" width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"#7E5D42\" stroke-width=\"1.6\" stroke-linecap=\"round\" stroke-linejoin=\"round\" style=\"margin-right: 14px;\"><path fill=\"none\" stroke=\"#7E5D42\" stroke-width=\"1.6\" stroke-linecap=\"round\" stroke-linejoin=\"round\" d=\"M10.733 5.076a10.744 10.744 0 0 1 11.205 6.575 1 1 0 0 1 0 .696 10.747 10.747 0 0 1-1.444 2.49\" style=\""
+      },
+      {
+        "checked": "false",
+        "disabledAncestor": "<div aria-disabled=\"true\" tabindex=\"-1\" class=\"css-g5y9jx r-12vffkv\" style=\"flex-direction: row; align-items: center; padding: 13px 16px; background-color: rgba(0, 0, 0, 0); opacity: 1;\"><svg xmlns=\"http://www.w3.org/2000/svg\" width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"#7E5D42\" stroke-width=\"1.6\" stroke-linecap=\"round\" stroke-linejoin=\"round\" style=\"margin-right: 14px;\"><path fill=\"none\" stroke=\"#7E5D42\" stroke-width=\"1.6\" stroke-linecap=\"round\" stroke-linejoin=\"round\" d=\"M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72"
+      }
+    ],
+    "visibleActions": [
+      "返回",
+      "解锁方式未开启",
+      "查看隐藏日记暂无",
+      "清空所有数据删除本地的全部日记、图片与设置",
+      "取消",
+      "确认清空"
+    ]
+  },
+  {
+    "id": "entry-actions",
+    "title": "日记更多操作Sheet",
+    "route": "/memory/audit-entry",
+    "width": 390,
+    "height": 844,
+    "screenshot": "states/entry-actions.png",
+    "errors": [],
+    "text": "在山间的一个下午\n11月21日 15:24 周六\n我的日记\n杭州市 · 西湖区\n·\n晴 12°C\n旅行\n成长\n开心\n今天去了城郊的山林，空气非常清新。沿着小路慢慢走，太阳透过树叶洒下斑驳的光影，整个人都放松了很多。\n原来，生活的美好常常藏在这样安静的时刻里。\n•\n带了一本没读完的书\n•\n在半山腰的亭子里坐了一个小时\n•\n回来的路上看到了很美的晚霞\n共 107 字 · 预计阅读 1 分钟\n下一篇\n阅读笔记：《被讨厌的勇气》\n分享\n已收藏\n编辑\n置顶日记\n设为隐藏日记\n导出为 Markdown\n删除日记\n取消",
+    "dialogs": [
+      {
+        "text": "置顶日记设为隐藏日记导出为 Markdown删除日记取消",
+        "label": null
+      },
+      {
+        "text": "置顶日记设为隐藏日记导出为 Markdown删除日记取消",
+        "label": null
+      }
+    ],
+    "focused": "关闭面板",
+    "switches": [],
+    "visibleActions": [
+      "返回",
+      "编辑",
+      "更多",
+      "置顶日记",
+      "设为隐藏日记",
+      "导出为 Markdown",
+      "删除日记",
+      "取消"
+    ]
+  }
+]

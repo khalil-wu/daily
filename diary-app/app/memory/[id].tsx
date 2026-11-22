@@ -1,16 +1,14 @@
 import React, { useMemo, useRef, useState } from 'react';
-import {
-  Platform, Pressable, ScrollView, Share, StyleSheet, Text, View,
-  type NativeScrollEvent, type NativeSyntheticEvent,
-} from 'react-native';
+import { Animated, Platform, Pressable, ScrollView, Share, StyleSheet, View, type NativeScrollEvent, type NativeSyntheticEvent } from 'react-native';
+import { Text } from '../../src/components/text';
 import { router, useLocalSearchParams } from 'expo-router';
 import {
   ChevronLeft, ChevronRight, Copy, Edit3, EyeOff, FileDown, Heart,
-  MapPin, MoreHorizontal, Pin, Share2, Sparkles, Star, Trash2, X,
+  MapPin, MoreHorizontal, Pin, Share2, Sparkles, Trash2, X,
 } from 'lucide-react-native';
 import { useTheme } from '../../src/theme/ThemeProvider';
 import { actions, useEntry, useStore } from '../../src/store/store';
-import { DEFAULT_NOTEBOOK_ID, moodMeta, weatherMeta } from '../../src/data/constants';
+import { DEFAULT_NOTEBOOK_ID, moodMeta, moodTint, weatherMeta } from '../../src/data/constants';
 import { Chip, EmptyState, IconButton, NavBar, Photo, Screen, goBack, haptic } from '../../src/components/ui';
 import { MoodIcon, WeatherIcon } from '../../src/components/MoodIcon';
 import { RichBody } from '../../src/components/RichBody';
@@ -20,7 +18,7 @@ import { PhotoViewer } from '../../src/components/PhotoViewer';
 import { PhotoLayoutView } from '../../src/components/PhotoLayout';
 import { useFeedback } from '../../src/components/feedback';
 import { PopDialog } from '../../src/components/motion';
-import { fmtAgo, fmtMonthDay, fmtMonthDayTime, WEEK_CN } from '../../src/utils/date';
+import { fmtAgo, fmtMonthDay, fmtMonthDayTime, fmtTime, WEEK_CN } from '../../src/utils/date';
 import { entryToMarkdown, exportTextFile } from '../../src/utils/transfer';
 import { clamp, plainText, wordCount } from '../../src/utils/text';
 import { toggleTodoAtLine } from '../../src/utils/richtext';
@@ -29,11 +27,17 @@ import { posterUri } from '../../src/services/videoStore';
 import { canSendEntry } from '../../src/utils/ai/privacy';
 import { startReply, useAIStatus, useReplyJob } from '../../src/services/ai';
 import { IMAGES } from '../../src/data/assets';
+import { HiddenAccessBoundary } from '../../src/components/HiddenAccessBoundary';
 
 /** 14. 日记详情页（阅读进度 / 待办直接勾选 / 多图排版 / 上一篇下一篇） */
 export default function MemoryDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const { c, t, fs, contentWidth, dark } = useTheme();
+  return <HiddenAccessBoundary entryId={id}><MemoryDetailContent /></HiddenAccessBoundary>;
+}
+
+function MemoryDetailContent() {
+  const { id } = useLocalSearchParams<{ id: string }>();
+  const { c, t, fs, contentWidth, dark, r, frame } = useTheme();
   const { toast, confirm, sheet } = useFeedback();
   const entry = useEntry(id);
   const entries = useStore(s => s.entries);
@@ -44,8 +48,7 @@ export default function MemoryDetailScreen() {
   const replyJob = useReplyJob(id);
   const [viewerIdx, setViewerIdx] = useState<number | null>(null);
   const [shareOpen, setShareOpen] = useState(false);
-  const [readProgress, setReadProgress] = useState(0);
-  const scrollMeta = useRef({ viewportH: 0, contentH: 0 });
+  const readProgress = useRef(new Animated.Value(0)).current;
 
   const { prevEntry, nextEntry } = useMemo(() => {
     if (!entry || entry.status !== 'published' || entry.deletedAt || entry.hidden) {
@@ -89,9 +92,9 @@ export default function MemoryDetailScreen() {
     const contentH = e.nativeEvent.contentSize.height;
     const scrollable = contentH - viewportH;
     if (scrollable <= 12) {
-      setReadProgress(offsetY > 2 ? 1 : 0);
+      readProgress.setValue(offsetY > 2 ? 1 : 0);
     } else {
-      setReadProgress(clamp(offsetY / scrollable, 0, 1));
+      readProgress.setValue(clamp(offsetY / scrollable, 0, 1));
     }
   };
 
@@ -169,36 +172,29 @@ export default function MemoryDetailScreen() {
   return (
     <Screen edges={['top', 'bottom']}>
       <NavBar
-        right={
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-            <IconButton icon={Edit3} label="编辑" onPress={() => router.push({ pathname: '/write', params: { id: entry.id } })} />
-            <IconButton icon={MoreHorizontal} label="更多" onPress={openMore} />
-          </View>
-        }
+        right={<IconButton icon={MoreHorizontal} label="更多" onPress={openMore} />}
       />
 
       {/* 顶部线性阅读进度条 */}
       <View style={{ height: 2, backgroundColor: c.divider, width: '100%' }}>
-        <View style={{ height: '100%', width: `${Math.round(readProgress * 100)}%`, backgroundColor: c.primary }} />
+        <Animated.View style={{ height: '100%', width: readProgress.interpolate({ inputRange: [0, 1], outputRange: ['0%', '100%'] }), backgroundColor: c.primary }} />
       </View>
 
       <ScrollView
         showsVerticalScrollIndicator={false}
         onScroll={onScroll}
-        onLayout={e => { scrollMeta.current.viewportH = e.nativeEvent.layout.height; }}
-        onContentSizeChange={(_, h) => { scrollMeta.current.contentH = h; }}
         scrollEventThrottle={16}
-        contentContainerStyle={{ paddingHorizontal: padH, paddingTop: 10, paddingBottom: 32 }}
+        contentContainerStyle={{ paddingHorizontal: padH, paddingTop: 12, paddingBottom: 32 }}
       >
-        {!!entry.title && <Text style={[t.h1, { fontSize: fs(23), lineHeight: fs(23) * 1.4 }]}>{entry.title}</Text>}
+        {!!entry.title && <Text style={[t.readingTitle, { fontSize: fs(24), lineHeight: fs(24) * 1.42 }]}>{entry.title}</Text>}
 
-        {/* 元信息分两行（设计稿2 #14）：时间 + 日记本 ／ 地点 · 天气 */}
+        {/* 元信息分两行：时间 + 日记本 ／ 地点 · 天气 */}
         <View style={{ flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 8, marginTop: 10 }}>
           <Text style={{ fontSize: fs(12.5), color: c.textSub }}>
             {fmtMonthDayTime(entry.createdAt)} {WEEK_CN[d.getDay()]}
           </Text>
           {notebook && (
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5, paddingHorizontal: 8, paddingVertical: 2, borderRadius: 999, backgroundColor: c.cardAlt, borderWidth: StyleSheet.hairlineWidth, borderColor: c.divider }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5, paddingHorizontal: 8, paddingVertical: 2, borderRadius: r(999), backgroundColor: c.cardAlt, borderWidth: StyleSheet.hairlineWidth, borderColor: c.divider }}>
               <View style={{ width: 7, height: 7, borderRadius: 3.5, backgroundColor: notebook.color }} />
               <Text style={{ fontSize: fs(11), color: c.textSub }}>{notebook.name}</Text>
             </View>
@@ -249,12 +245,14 @@ export default function MemoryDetailScreen() {
                 size="sm"
                 label={mood.label}
                 icon={<MoodIcon mood={mood.key} size={14} />}
-                bg={mood.soft}
+                bg={moodTint(mood, dark)}
                 color={c.text}
               />
             )}
           </View>
         )}
+
+        <View style={{ height: StyleSheet.hairlineWidth, backgroundColor: c.divider, marginTop: 16 }} />
 
         {/* 配图（支持网格/大图/轮播排版） */}
         <PhotoLayoutView
@@ -299,7 +297,7 @@ export default function MemoryDetailScreen() {
 
         {/* 「记得」的回信 */}
         {(entry.ai?.reply || (aiStatus === 'ready' && canSendEntry(entry))) && (
-          <View style={{ marginTop: 18, backgroundColor: c.primaryFaint, borderRadius: 16, padding: 16, borderWidth: StyleSheet.hairlineWidth, borderColor: c.primarySoft }}>
+          <View style={{ marginTop: 18, backgroundColor: dark ? c.cardAlt : c.primaryFaint, borderRadius: r(16), padding: 16, borderLeftWidth: 3, borderLeftColor: c.primary, borderWidth: StyleSheet.hairlineWidth, borderColor: c.primarySoft }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
                 <Sparkles size={13} color={c.primaryDark} />
@@ -346,10 +344,9 @@ export default function MemoryDetailScreen() {
                 style={({ pressed }) => ({
                   width: '48.2%',
                   backgroundColor: c.card,
-                  borderRadius: 14,
-                  padding: 12,
-                  borderWidth: dark ? 0 : StyleSheet.hairlineWidth,
-                  borderColor: c.divider,
+                  borderRadius: r(14),
+                  padding: 13,
+                  ...frame,
                   opacity: pressed ? 0.85 : 1,
                 })}
               >
@@ -371,11 +368,10 @@ export default function MemoryDetailScreen() {
                 style={({ pressed }) => ({
                   width: '48.2%',
                   backgroundColor: c.card,
-                  borderRadius: 14,
-                  padding: 12,
+                  borderRadius: r(14),
+                  padding: 13,
                   alignItems: 'flex-end',
-                  borderWidth: dark ? 0 : StyleSheet.hairlineWidth,
-                  borderColor: c.divider,
+                  ...frame,
                   opacity: pressed ? 0.85 : 1,
                 })}
               >
@@ -406,31 +402,29 @@ export default function MemoryDetailScreen() {
           backgroundColor: c.card,
         }}
       >
-        <Pressable onPress={() => setShareOpen(true)} style={{ alignItems: 'center', gap: 3, paddingHorizontal: 18 }}>
-          <Share2 size={18} color={c.textSub} strokeWidth={1.7} />
+        <Pressable accessibilityRole="button" accessibilityLabel="分享" onPress={() => setShareOpen(true)} style={{ minHeight: 44, minWidth: 56, alignItems: 'center', justifyContent: 'center', gap: 3, paddingHorizontal: 18 }}>
+          <Share2 size={19} color={c.textSub} strokeWidth={1.8} />
           <Text style={{ fontSize: fs(11), color: c.textSub }}>分享</Text>
         </Pressable>
 
         <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={entry.favorite ? '取消收藏' : '收藏'}
           onPress={() => {
             haptic('light');
             const next = actions.toggleFavorite(entry.id);
             toast(next ? '已添加到我的收藏' : '已取消收藏');
           }}
-          style={{ alignItems: 'center', gap: 3, paddingHorizontal: 18 }}
+          style={{ minHeight: 44, minWidth: 56, alignItems: 'center', justifyContent: 'center', gap: 3, paddingHorizontal: 18 }}
         >
-          {entry.favorite ? (
-            <Star size={18} color={c.warning} fill={c.warning} strokeWidth={1.7} />
-          ) : (
-            <Heart size={18} color={c.textSub} strokeWidth={1.7} />
-          )}
-          <Text style={{ fontSize: fs(11), color: entry.favorite ? c.primaryDark : c.textSub }}>
+          <Heart size={19} color={entry.favorite ? c.danger : c.textSub} fill={entry.favorite ? c.danger : 'none'} strokeWidth={1.8} />
+          <Text style={{ fontSize: fs(11), color: entry.favorite ? c.danger : c.textSub }}>
             {entry.favorite ? '已收藏' : '收藏'}
           </Text>
         </Pressable>
 
-        <Pressable onPress={() => router.push({ pathname: '/write', params: { id: entry.id } })} style={{ alignItems: 'center', gap: 3, paddingHorizontal: 18 }}>
-          <Edit3 size={18} color={c.textSub} strokeWidth={1.7} />
+        <Pressable accessibilityRole="button" accessibilityLabel="编辑" onPress={() => router.push({ pathname: '/write', params: { id: entry.id } })} style={{ minHeight: 44, minWidth: 56, alignItems: 'center', justifyContent: 'center', gap: 3, paddingHorizontal: 18 }}>
+          <Edit3 size={19} color={c.textSub} strokeWidth={1.8} />
           <Text style={{ fontSize: fs(11), color: c.textSub }}>编辑</Text>
         </Pressable>
       </View>
@@ -443,44 +437,53 @@ export default function MemoryDetailScreen() {
         onClose={() => setShareOpen(false)}
         maxWidth={356}
         inset={24}
-        style={{ backgroundColor: c.bg, borderRadius: 24, padding: 20, borderWidth: 1, borderColor: c.primarySoft }}
+        style={{ backgroundColor: c.bg, borderRadius: r(24), padding: 20, borderWidth: 1, borderColor: c.primarySoft }}
       >
           <View>
             <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
               <Text style={[t.h3, { fontSize: fs(15) }]}>日签分享卡</Text>
-              <Pressable hitSlop={10} onPress={() => setShareOpen(false)}>
+              <Pressable accessibilityRole="button" accessibilityLabel="关闭分享卡片" hitSlop={10} onPress={() => setShareOpen(false)} style={{ minWidth: 44, minHeight: 44, alignItems: 'flex-end', justifyContent: 'center' }}>
                 <X size={18} color={c.textMuted} />
               </Pressable>
             </View>
 
-            <View style={{ backgroundColor: c.card, borderRadius: 18, padding: 18, borderWidth: StyleSheet.hairlineWidth, borderColor: c.divider }}>
-              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
-                <Text style={{ fontSize: fs(11.5), color: c.textMuted }}>
-                  {fmtMonthDayTime(entry.createdAt)} · {WEEK_CN[d.getDay()]}
-                </Text>
+            <View style={{ backgroundColor: c.card, borderRadius: r(18), padding: 18, ...frame }}>
+              {/* 杂志日签日期头 */}
+              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
+                <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: 8 }}>
+                  <Text style={[t.h1, { fontSize: fs(32), lineHeight: fs(34), fontVariant: ['tabular-nums'] }]}>{d.getDate()}</Text>
+                  <View style={{ paddingBottom: 2 }}>
+                    <Text style={{ fontSize: fs(11.5), color: c.textSub, fontWeight: '500' }}>
+                      {d.getFullYear()}年{d.getMonth() + 1}月 · {WEEK_CN[d.getDay()]}
+                    </Text>
+                    <Text style={{ fontSize: fs(11), color: c.textMuted, marginTop: 1 }}>{fmtTime(entry.createdAt)}</Text>
+                  </View>
+                </View>
                 {mood && (
-                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 8, paddingVertical: 2, borderRadius: 999, backgroundColor: mood.soft }}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 9, paddingVertical: 4, borderRadius: r(999), backgroundColor: moodTint(mood, dark) }}>
                     <MoodIcon mood={mood.key} size={13} />
-                    <Text style={{ fontSize: fs(11), color: '#2F2A26' }}>{mood.label}</Text>
+                    <Text style={{ fontSize: fs(11), color: c.text }}>{mood.label}</Text>
                   </View>
                 )}
               </View>
 
+              <View style={{ height: StyleSheet.hairlineWidth, backgroundColor: c.divider, marginVertical: 12 }} />
+
               {!!shareCover.uri && (
                 <View style={{ marginBottom: 12 }}>
-                  <Photo uri={shareCover.isVideo ? posterUri(shareCover.uri) : shareCover.uri} style={{ width: '100%', aspectRatio: 1.5 }} radius={12} />
+                  <Photo uri={shareCover.isVideo ? posterUri(shareCover.uri) : shareCover.uri} style={{ width: '100%', aspectRatio: 1.5 }} radius={r(12)} />
                   {shareCover.isVideo && <VideoBadge duration={entry.videos[0]?.duration} style={{ position: 'absolute', right: 8, bottom: 8 }} />}
                 </View>
               )}
 
               {!!entry.title && (
-                <Text style={[t.h2, { fontSize: fs(17), marginBottom: 8 }]}>{entry.title}</Text>
+                <Text style={[t.readingTitle, { fontSize: fs(17), lineHeight: fs(26), marginBottom: 8 }]}>{entry.title}</Text>
               )}
               <Text style={[t.bodySerif, { fontSize: fs(13.5), lineHeight: fs(13.5) * 1.75 }]} numberOfLines={6}>
                 {plainText(entry.body)}
               </Text>
 
-              <View style={{ marginTop: 14, paddingTop: 10, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: c.divider, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+              <View style={{ marginTop: 16, paddingTop: 10, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: c.divider, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
                 <Text numberOfLines={1} style={{ fontSize: fs(11), color: c.primaryDark, letterSpacing: 0.4, flex: 1, minWidth: 0 }}>记得日记 · 记下生活，记得自己</Text>
                 {!!entry.place?.name && <Text numberOfLines={1} style={{ fontSize: fs(10.5), color: c.textMuted, flexShrink: 0 }}>{entry.place.name.split('·')[0].trim()}</Text>}
               </View>
@@ -492,7 +495,7 @@ export default function MemoryDetailScreen() {
                   setShareOpen(false);
                   void copyShareText();
                 }}
-                style={{ flex: 1, height: 42, borderRadius: 21, backgroundColor: c.primary, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6 }}
+                style={{ flex: 1, minHeight: 44, borderRadius: r(999), backgroundColor: c.primary, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6 }}
               >
                 <Copy size={15} color={c.textOnPrimary} />
                 <Text style={{ fontSize: fs(13.5), color: c.textOnPrimary, fontWeight: '600' }}>{Platform.OS === 'web' ? '复制全文' : '分享文字'}</Text>
@@ -502,7 +505,7 @@ export default function MemoryDetailScreen() {
                   setShareOpen(false);
                   void exportShareMd();
                 }}
-                style={{ flex: 1, height: 42, borderRadius: 21, backgroundColor: c.card, borderWidth: 1, borderColor: c.border, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6 }}
+                style={{ flex: 1, minHeight: 44, borderRadius: r(999), backgroundColor: c.card, borderWidth: 1, borderColor: c.border, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6 }}
               >
                 <FileDown size={15} color={c.textSub} />
                 <Text style={{ fontSize: fs(13.5), color: c.textSub }}>导出 MD</Text>

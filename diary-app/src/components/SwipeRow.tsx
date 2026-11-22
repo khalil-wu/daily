@@ -1,19 +1,11 @@
 import React, { forwardRef, useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react';
-import {
-  Animated,
-  PanResponder,
-  Pressable,
-  type StyleProp,
-  StyleSheet,
-  Text,
-  View,
-  type ViewStyle,
-} from 'react-native';
+import { Animated, PanResponder, Pressable, type StyleProp, StyleSheet, View, type ViewStyle } from 'react-native';
+import { Text } from './text';
 import type { LucideIcon } from 'lucide-react-native';
 import { useTheme } from '../theme/ThemeProvider';
 import { clamp } from '../utils/text';
 import { haptic } from './ui';
-import { ND, SPRING } from './motion';
+import { ND, SPRING, prefersReducedMotion, useReducedMotion } from './motion';
 
 export interface SwipeAction {
   key: string;
@@ -53,6 +45,7 @@ export const SwipeRow = forwardRef<SwipeRowHandle, SwipeRowProps>(function Swipe
   ref,
 ) {
   const { fs } = useTheme();
+  const reduced = useReducedMotion();
   const maxReveal = actions.length * actionWidth;
   const translateX = useRef(new Animated.Value(0)).current;
   const offsetRef = useRef(0);
@@ -68,7 +61,8 @@ export const SwipeRow = forwardRef<SwipeRowHandle, SwipeRowProps>(function Swipe
       const wasOpen = offsetRef.current !== 0;
       const willOpen = toValue !== 0;
       offsetRef.current = toValue;
-      Animated.spring(translateX, { toValue, useNativeDriver: ND, ...SPRING.slide }).start();
+      if (prefersReducedMotion()) translateX.setValue(toValue);
+      else Animated.spring(translateX, { toValue, useNativeDriver: ND, ...SPRING.slide }).start();
       if (willOpen) {
         if (openRow && openRow !== self.current) openRow.close();
         openRow = self.current;
@@ -84,7 +78,7 @@ export const SwipeRow = forwardRef<SwipeRowHandle, SwipeRowProps>(function Swipe
       snapTo,
       close: () => snapTo(0),
       peek: () => {
-        if (offsetRef.current !== 0) return;
+        if (offsetRef.current !== 0 || prefersReducedMotion() || live.current.disabled) return;
         const hint = -Math.min(live.current.maxReveal, 72);
         Animated.sequence([
           Animated.spring(translateX, { toValue: hint, useNativeDriver: ND, ...SPRING.slide }),
@@ -101,9 +95,15 @@ export const SwipeRow = forwardRef<SwipeRowHandle, SwipeRowProps>(function Swipe
   useEffect(
     () => () => {
       if (openRow === self.current) openRow = null;
+      translateX.stopAnimation();
     },
-    [],
+    [translateX],
   );
+
+  useEffect(() => {
+    if (reduced) translateX.setValue(offsetRef.current);
+    if (disabled) api.close();
+  }, [disabled, reduced, api, translateX]);
 
   const panResponder = useMemo(
     () =>
@@ -145,6 +145,9 @@ export const SwipeRow = forwardRef<SwipeRowHandle, SwipeRowProps>(function Swipe
       {/* 右侧操作区：合上时完全透明，避免从卡片圆角边缘透出颜色 */}
       {actions.length > 0 && (
         <Animated.View
+          accessibilityElementsHidden={!open}
+          aria-hidden={!open}
+          importantForAccessibility={open ? 'auto' : 'no-hide-descendants'}
           pointerEvents={open ? 'auto' : 'none'}
           style={{
             position: 'absolute',
@@ -163,6 +166,8 @@ export const SwipeRow = forwardRef<SwipeRowHandle, SwipeRowProps>(function Swipe
             <Pressable
               key={act.key}
               accessibilityLabel={act.label}
+              accessibilityRole="button"
+              tabIndex={open ? 0 : -1}
               onPress={() => {
                 haptic('light');
                 api.close();
@@ -192,7 +197,7 @@ export const SwipeRow = forwardRef<SwipeRowHandle, SwipeRowProps>(function Swipe
       <Animated.View {...panResponder.panHandlers} style={{ transform: [{ translateX }] }}>
         {children}
         {/* 展开时点击卡片 = 收起，而不是误入详情页 */}
-        {open && <Pressable style={StyleSheet.absoluteFill} onPress={api.close} accessibilityLabel="收起操作" />}
+        {open && <Pressable accessibilityRole="button" style={StyleSheet.absoluteFill} onPress={api.close} accessibilityLabel="收起操作" />}
       </Animated.View>
     </View>
   );

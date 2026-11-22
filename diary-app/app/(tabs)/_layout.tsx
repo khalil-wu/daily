@@ -4,7 +4,7 @@ import { JideTabBar } from '../../src/components/TabBar';
 
 export default function TabsLayout() {
   return (
-    <Tabs screenOptions={{ headerShown: false, animation: 'shift' }} tabBar={props => <JideTabBar {...props} />}>
+    <Tabs screenOptions={{ headerShown: false, animation: 'none', freezeOnBlur: true, lazy: true }} tabBar={props => <JideTabBar {...props} />}>
       <Tabs.Screen name="index" options={{ title: '日记' }} />
       <Tabs.Screen name="calendar" options={{ title: '日历' }} />
       <Tabs.Screen name="review" options={{ title: '回顾' }} />

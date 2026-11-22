@@ -1,0 +1,45 @@
+[
+  {
+    "category": "text",
+    "count": 6,
+    "pass": true
+  },
+  {
+    "category": "mood",
+    "count": 3,
+    "pass": true
+  },
+  {
+    "category": "journal",
+    "count": 5,
+    "pass": true
+  },
+  {
+    "category": "voice",
+    "count": 1,
+    "pass": true
+  },
+  {
+    "category": "adjacent",
+    "count": 3,
+    "pass": true
+  },
+  {
+    "category": "supplement",
+    "count": 2,
+    "pass": true
+  },
+  {
+    "products": 20,
+    "galleries": 22,
+    "desktopWidth": 1440,
+    "mobileWidth": 390,
+    "horizontalOverflow": false,
+    "errors": [],
+    "search": true,
+    "zoom": true,
+    "escape": true,
+    "localLinks": true,
+    "pass": true
+  }
+]

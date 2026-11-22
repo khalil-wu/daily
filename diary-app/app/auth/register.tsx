@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Image, Pressable, ScrollView, Text, View } from 'react-native';
+import { Image, Pressable, ScrollView, View } from 'react-native';
+import { Text } from '../../src/components/text';
 import { router } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Lock, ShieldCheck, User } from 'lucide-react-native';
@@ -10,7 +11,9 @@ import { BotanicalAccent } from '../../src/components/MoodIcon';
 import { useFeedback } from '../../src/components/feedback';
 import { BottomSheet } from '../../src/components/motion';
 import { isEmail, isPhone } from '../../src/utils/text';
-import { cloudConfigured, setPasswordForCurrent } from '../../src/services/cloud';
+import { cloudConfigured } from '../../src/services/cloud';
+import { captchaGateActive, withOtpTicket } from '../../src/services/mailgate';
+import { CaptchaSheet } from '../../src/components/captchaSheet';
 import { IMAGES } from '../../src/data/assets';
 
 /** 7. 注册页（1:1 复刻设计稿1 #7） */
@@ -23,6 +26,9 @@ export default function RegisterScreen() {
   const [sentCode, setSentCode] = useState('');
   const [countdown, setCountdown] = useState(0);
   const [password, setPassword] = useState('');
+  // 密码在发码时随 signUp 写入账号；发码后再改密码需重新获取验证码
+  const [passwordAtSend, setPasswordAtSend] = useState('');
+  const [captchaOpen, setCaptchaOpen] = useState(false);
   const [agreed, setAgreed] = useState(false);
   const [loading, setLoading] = useState(false);
   const [docModal, setDocModal] = useState<'terms' | 'privacy' | null>(null);
@@ -37,27 +43,41 @@ export default function RegisterScreen() {
     return () => clearTimeout(tmr);
   }, [countdown]);
 
+  const remoteSend = async () => {
+    const id = identifier.trim();
+    const res = await actions.sendRegisterCode(id, password);
+    if (!res.ok) {
+      toast(res.message || '验证码发送失败', { type: 'error' });
+      return;
+    }
+    setSentCode('remote');
+    setPasswordAtSend(password);
+    setCountdown(60);
+    toast(isPhone(id) ? '验证码已发送，请查收短信' : '验证码已发送，请查收邮件（含垃圾箱）', { type: 'info' });
+  };
+
   const sendCode = async () => {
     const id = identifier.trim();
     if (!isPhone(id) && !isEmail(id)) {
       toast('请先输入正确的手机号或邮箱', { type: 'warning' });
       return;
     }
-    if (cloudConfigured()) {
-      const res = await actions.sendLoginCode(id);
-      if (!res.ok) {
-        toast(res.message || '验证码发送失败', { type: 'error' });
-        return;
-      }
-      setSentCode('remote');
+    if (!cloudConfigured()) {
+      const gen = '668822';
+      setSentCode(gen);
       setCountdown(60);
-      toast(isPhone(id) ? '验证码已发送，请查收短信' : '验证码已发送，请查收邮件（含垃圾箱）', { type: 'info' });
+      toast(`验证码已发送：${gen}`, { type: 'info', message: '本地演示模式下已自动生成验证码' });
       return;
     }
-    const gen = '668822';
-    setSentCode(gen);
-    setCountdown(60);
-    toast(`验证码已发送：${gen}`, { type: 'info', message: '本地演示模式下已自动生成验证码' });
+    if (password.length < 6 || password.length > 20) {
+      toast('请先填写 6-20 位密码，再获取验证码', { type: 'warning' });
+      return;
+    }
+    if (captchaGateActive()) {
+      setCaptchaOpen(true);
+      return;
+    }
+    await remoteSend();
   };
 
   const submit = async () => {
@@ -75,6 +95,10 @@ export default function RegisterScreen() {
       toast('密码长度需在 6-20 位之间', { type: 'warning' });
       return;
     }
+    if (remote && sentCode === 'remote' && password !== passwordAtSend) {
+      toast('密码已修改，请重新获取验证码', { type: 'warning' });
+      return;
+    }
     if (!agreed) {
       toast('请先阅读并勾选同意用户协议与隐私政策', { type: 'warning' });
       return;
@@ -88,8 +112,6 @@ export default function RegisterScreen() {
       toast(res.message || '注册失败', { type: 'error' });
       return;
     }
-    // 验证码注册成功后为用户设置密码（便于后续密码登录），失败不影响登录
-    if (remote) void setPasswordForCurrent(password);
     if (!onboarded) actions.completeOnboarding('account');
     toast('注册成功，欢迎来到记得日记');
     router.replace('/(tabs)');
@@ -161,6 +183,15 @@ export default function RegisterScreen() {
             <Button title="我知道了" onPress={() => setDocModal(null)} style={{ marginTop: 18 }} />
           </View>
       </BottomSheet>
+
+      <CaptchaSheet
+        visible={captchaOpen}
+        onCancel={() => setCaptchaOpen(false)}
+        onSolved={ticket => {
+          setCaptchaOpen(false);
+          void withOtpTicket(ticket, remoteSend);
+        }}
+      />
     </Screen>
   );
 }

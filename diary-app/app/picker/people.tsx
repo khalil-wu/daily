@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Text } from '../../src/components/text';
 import { Check, Plus, UserRound } from 'lucide-react-native';
 import { useTheme } from '../../src/theme/ThemeProvider';
 import { actions, useStore } from '../../src/store/store';
 import { getEditorDraft, setEditorPeople } from '../../src/store/editorSession';
 import { RELATIONS, relationLabel } from '../../src/data/constants';
 import type { RelationKey } from '../../src/store/types';
-import { Button, Chip, Field, NavBar, Screen, goBack, haptic } from '../../src/components/ui';
+import { Button, Chip, Field, NavBar, Screen, goBack, haptic, webSpaceAction } from '../../src/components/ui';
 import { PersonAvatar } from '../../src/components/PersonAvatar';
 import { useFeedback } from '../../src/components/feedback';
 import { BottomSheet } from '../../src/components/motion';
@@ -14,13 +15,14 @@ import { groupPeopleByRelation, summarizePeople } from '../../src/utils/people';
 
 /** 身边人选择页：标记这篇日记里有谁出现 */
 export default function PeoplePickerScreen() {
-  const { c, t, fs } = useTheme();
+  const { c, t, fs, r } = useTheme();
   const { toast } = useFeedback();
   const people = useStore(s => s.people);
   const entries = useStore(s => s.entries);
   const [selected, setSelected] = useState<string[]>(() => getEditorDraft()?.entry.people ?? []);
   const [createOpen, setCreateOpen] = useState(false);
   const [newName, setNewName] = useState('');
+  const [nameError, setNameError] = useState('');
   const [newRelation, setNewRelation] = useState<RelationKey>('friend');
 
   const toggle = (id: string) => {
@@ -31,7 +33,7 @@ export default function PeoplePickerScreen() {
   const addPerson = () => {
     const created = actions.addPerson(newName, newRelation);
     if (!created) {
-      toast('请输入名字', { type: 'warning' });
+      setNameError('请输入名字');
       return;
     }
     setSelected(cur => (cur.includes(created.id) ? cur : [...cur, created.id]));
@@ -68,12 +70,14 @@ export default function PeoplePickerScreen() {
                 return (
                   <Pressable
                     key={person.id}
+                    accessibilityRole="checkbox" accessibilityLabel={person.name} accessibilityState={{ checked: on }} aria-checked={on}
+                    {...webSpaceAction(() => toggle(person.id))}
                     onPress={() => toggle(person.id)}
                     style={{
                       flexDirection: 'row',
                       alignItems: 'center',
                       backgroundColor: on ? c.primaryFaint : c.card,
-                      borderRadius: 14,
+                      borderRadius: r(14),
                       paddingHorizontal: 14,
                       paddingVertical: 12,
                       borderWidth: on ? 1.5 : StyleSheet.hairlineWidth,
@@ -100,11 +104,12 @@ export default function PeoplePickerScreen() {
         ))}
 
         <Pressable
-          onPress={() => setCreateOpen(true)}
+          accessibilityRole="button" accessibilityLabel="记下一个人"
+          onPress={() => { setNameError(''); setCreateOpen(true); }}
           style={{
             marginTop: 4,
             height: 46,
-            borderRadius: 14,
+            borderRadius: r(14),
             borderWidth: 1,
             borderStyle: 'dashed',
             borderColor: c.border,
@@ -133,18 +138,17 @@ export default function PeoplePickerScreen() {
         <Button title="确定" onPress={confirm} />
       </View>
 
-      <BottomSheet visible={createOpen} onClose={() => setCreateOpen(false)} keyboard>
-        <View style={{ flexShrink: 1, paddingTop: 6 }}>
-          <Text style={[t.h2, { textAlign: 'center', marginBottom: 16 }]}>记下一个人</Text>
-          <Field value={newName} onChangeText={setNewName} placeholder="TA 的名字或你对 TA 的称呼" maxLength={12} autoFocus />
+      <BottomSheet visible={createOpen} onClose={() => setCreateOpen(false)} title="记下一个人" keyboard>
+        <ScrollView style={{ flexShrink: 1 }} keyboardShouldPersistTaps="handled">
+          <Field accessibilityLabel="名字" error={nameError} value={newName} onChangeText={value => { setNewName(value); setNameError(''); }} placeholder="TA 的名字或你对 TA 的称呼" maxLength={12} autoFocus />
           <Text style={{ fontSize: fs(12.5), color: c.textSub, marginBottom: 10 }}>你们的关系</Text>
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 20 }}>
             {RELATIONS.map(r => (
               <Chip key={r.key} label={r.label} selected={newRelation === r.key} onPress={() => setNewRelation(r.key)} />
             ))}
           </View>
-          <Button title="记下了" onPress={addPerson} />
-        </View>
+        </ScrollView>
+        <Button title="记下了" onPress={addPerson} style={{ marginTop: 12 }} />
       </BottomSheet>
     </Screen>
   );

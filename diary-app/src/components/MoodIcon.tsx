@@ -1,87 +1,39 @@
 import React from 'react';
-import { View } from 'react-native';
-import Svg, { Circle, Path } from 'react-native-svg';
+import { Image, View } from 'react-native';
+import Svg, { Path } from 'react-native-svg';
 import {
-  BookMarked, BookOpen, Briefcase, Camera, Cloud, CloudDrizzle, CloudLightning,
-  CloudRain, CloudRainWind, CloudSun, Coffee, Dumbbell, Gift, Heart, HeartPulse,
-  Home, Leaf, Moon, Music, Palette, Plane, Smile, Snowflake, Sprout, Star, Sun,
+  BookMarked, BookOpen, Briefcase, Camera, Coffee, Dumbbell, Gift, Heart, HeartPulse,
+  Home, Leaf, Moon, Music, Palette, Plane, Smile, Sprout, Star,
   Tag as TagLucide, Utensils, Wallet, type LucideIcon,
 } from 'lucide-react-native';
 import type { MoodKey, WeatherKey } from '../store/types';
-import { moodMeta, weatherMeta } from '../data/constants';
+import { MOOD_ICONS, WEATHER_ICONS } from '../data/assets';
 
 export function MoodIcon({ mood, size = 28 }: { mood: MoodKey; size?: number }) {
-  const m = moodMeta(mood);
-  const fill = m?.color ?? '#E8D9C9';
-  const stroke = '#5A4A3E';
+  const src = MOOD_ICONS[mood] ?? MOOD_ICONS.calm;
   return (
-    <Svg width={size} height={size} viewBox="0 0 36 36">
-      <Circle cx={18} cy={18} r={16} fill={fill} opacity={0.92} />
-      {mood === 'happy' && (
-        <>
-          <Circle cx={13} cy={15} r={1.6} fill={stroke} />
-          <Circle cx={23} cy={15} r={1.6} fill={stroke} />
-          <Path d="M12.5 21.5 Q18 26.5 23.5 21.5" stroke={stroke} strokeWidth={1.8} strokeLinecap="round" fill="none" />
-        </>
-      )}
-      {mood === 'calm' && (
-        <>
-          <Path d="M11 15.5 Q13 13.8 15 15.5" stroke={stroke} strokeWidth={1.6} strokeLinecap="round" fill="none" />
-          <Path d="M21 15.5 Q23 13.8 25 15.5" stroke={stroke} strokeWidth={1.6} strokeLinecap="round" fill="none" />
-          <Path d="M14 22 Q18 24.5 22 22" stroke={stroke} strokeWidth={1.7} strokeLinecap="round" fill="none" />
-        </>
-      )}
-      {mood === 'tired' && (
-        <>
-          <Path d="M11 16 L15 16" stroke={stroke} strokeWidth={1.7} strokeLinecap="round" />
-          <Path d="M21 16 L25 16" stroke={stroke} strokeWidth={1.7} strokeLinecap="round" />
-          <Path d="M14.5 23 Q18 21.5 21.5 23" stroke={stroke} strokeWidth={1.6} strokeLinecap="round" fill="none" />
-        </>
-      )}
-      {mood === 'down' && (
-        <>
-          <Circle cx={13} cy={15.5} r={1.5} fill={stroke} />
-          <Circle cx={23} cy={15.5} r={1.5} fill={stroke} />
-          <Path d="M13 24 Q18 19.5 23 24" stroke={stroke} strokeWidth={1.7} strokeLinecap="round" fill="none" />
-        </>
-      )}
-      {mood === 'anxious' && (
-        <>
-          <Path d="M11 14 L15 15.5" stroke={stroke} strokeWidth={1.6} strokeLinecap="round" />
-          <Path d="M25 14 L21 15.5" stroke={stroke} strokeWidth={1.6} strokeLinecap="round" />
-          <Circle cx={13} cy={17.5} r={1.3} fill={stroke} />
-          <Circle cx={23} cy={17.5} r={1.3} fill={stroke} />
-          <Path d="M12.5 23 Q14.5 21.5 16.2 23 T19.8 23 T23.5 23" stroke={stroke} strokeWidth={1.6} strokeLinecap="round" fill="none" />
-        </>
-      )}
-      {mood === 'grateful' && (
-        <>
-          <Path d="M11 15.5 Q13 13.5 15 15.5" stroke={stroke} strokeWidth={1.7} strokeLinecap="round" fill="none" />
-          <Path d="M21 15.5 Q23 13.5 25 15.5" stroke={stroke} strokeWidth={1.7} strokeLinecap="round" fill="none" />
-          <Circle cx={10.5} cy={19.5} r={2} fill="#E07D73" opacity={0.45} />
-          <Circle cx={25.5} cy={19.5} r={2} fill="#E07D73" opacity={0.45} />
-          <Path d="M13.5 21.5 Q18 25.5 22.5 21.5" stroke={stroke} strokeWidth={1.7} strokeLinecap="round" fill="none" />
-        </>
-      )}
-    </Svg>
+    <Image
+      source={src}
+      resizeMode="contain"
+      accessibilityElementsHidden
+      importantForAccessibility="no-hide-descendants"
+      style={{ width: size, height: size }}
+    />
   );
 }
 
-const WEATHER_ICON_MAP: Record<string, LucideIcon> = {
-  Sun,
-  CloudSun,
-  Cloud,
-  CloudDrizzle,
-  CloudRain,
-  CloudRainWind,
-  Snowflake,
-  CloudLightning,
-};
-
-export function WeatherIcon({ weather, size = 18, color }: { weather: WeatherKey; size?: number; color?: string }) {
-  const meta = weatherMeta(weather);
-  const Icon = (meta && WEATHER_ICON_MAP[meta.icon]) || Sun;
-  return <Icon size={size} color={color ?? meta?.color ?? '#E2A65A'} strokeWidth={1.8} />;
+export function WeatherIcon({ weather, size = 18 }: { weather: WeatherKey; size?: number; color?: string }) {
+  const src = WEATHER_ICONS[weather] ?? WEATHER_ICONS.sunny;
+  const s = Math.max(size, 15);
+  return (
+    <Image
+      source={src}
+      resizeMode="contain"
+      accessibilityElementsHidden
+      importantForAccessibility="no-hide-descendants"
+      style={{ width: s, height: s }}
+    />
+  );
 }
 
 const TAG_ICON_MAP: Record<string, LucideIcon> = {
@@ -93,10 +45,10 @@ export function getTagIcon(name?: string): LucideIcon {
   return (name && TAG_ICON_MAP[name]) || TagLucide;
 }
 
-/** 登录/注册/找回密码页面右上角的淡雅植物枝条装饰（对应设计稿1 #6-#8） */
-export function BotanicalAccent({ color = '#C8B09A' }: { color?: string }) {
+/** 登录/注册/找回密码页面右上角的淡雅植物枝条装饰 */
+export function BotanicalAccent({ color = '#5AC4CA' }: { color?: string }) {
   return (
-    <View pointerEvents="none" style={{ position: 'absolute', top: 0, right: 0, opacity: 0.45 }}>
+    <View pointerEvents="none" style={{ position: 'absolute', top: 0, right: 0, opacity: 0.4 }}>
       <Svg width={132} height={132} viewBox="0 0 132 132">
         <Path d="M126 10 Q96 42 54 64" stroke={color} strokeWidth={1.5} fill="none" strokeLinecap="round" />
         <Path d="M98 31 Q88 15 74 22 Q86 35 98 31 Z" fill={color} opacity={0.5} />

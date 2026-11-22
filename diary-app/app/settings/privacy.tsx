@@ -132,8 +132,8 @@ export default function PrivacyScreen() {
           <Row
             icon={EyeOff}
             iconColor={c.primaryDark}
-            title="隐藏日记"
-            subtitle="将选中的日记在列表中隐藏"
+            title="隐藏日记验证"
+            subtitle="开启应用锁后，查看隐藏日记需再次验证"
             right={<Switch value={privacy.lockHidden} onChange={v => actions.setPrivacy({ lockHidden: v })} />}
           />
           <Row

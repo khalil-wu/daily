@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { Pressable, ScrollView, Text, View, type NativeScrollEvent, type NativeSyntheticEvent } from 'react-native';
+import { Pressable, ScrollView, View, type NativeScrollEvent, type NativeSyntheticEvent } from 'react-native';
+import { Text } from './text';
 import { X } from 'lucide-react-native';
 import type { PhotoLayout as PhotoLayoutType } from '../store/types';
 import { useTheme } from '../theme/ThemeProvider';
@@ -14,7 +15,7 @@ interface PhotoLayoutProps {
 
 /** 日记配图多排版视图：grid（双列网格） / large（逐张大图） / carousel（横滑轮播） */
 export function PhotoLayoutView({ photos, layout = 'grid', onPressPhoto, onRemovePhoto }: PhotoLayoutProps) {
-  const { c } = useTheme();
+  const { c, r } = useTheme();
   const [carouselWidth, setCarouselWidth] = useState(0);
   const [activeIdx, setActiveIdx] = useState(0);
 
@@ -50,9 +51,9 @@ export function PhotoLayoutView({ photos, layout = 'grid', onPressPhoto, onRemov
           <Pressable
             key={`${uri}_${idx}`}
             onPress={() => onPressPhoto?.(idx)}
-            style={{ width: '100%', aspectRatio: 1.4, borderRadius: 14, overflow: 'hidden' }}
+            style={{ width: '100%', aspectRatio: 1.4, borderRadius: r(14), overflow: 'hidden' }}
           >
-            <Photo uri={uri} style={{ width: '100%', height: '100%' }} radius={14} />
+            <Photo uri={uri} style={{ width: '100%', height: '100%' }} radius={r(14)} />
             {renderRemoveBtn(uri)}
           </Pressable>
         ))}
@@ -79,7 +80,7 @@ export function PhotoLayoutView({ photos, layout = 'grid', onPressPhoto, onRemov
           if (w > 0 && w !== carouselWidth) setCarouselWidth(w);
         }}
       >
-        <View style={{ borderRadius: 14, overflow: 'hidden', position: 'relative' }}>
+        <View style={{ borderRadius: r(14), overflow: 'hidden', position: 'relative' }}>
           <ScrollView
             horizontal
             pagingEnabled
@@ -108,8 +109,8 @@ export function PhotoLayoutView({ photos, layout = 'grid', onPressPhoto, onRemov
               right: 10,
               paddingHorizontal: 8,
               paddingVertical: 3,
-              borderRadius: 999,
-              backgroundColor: 'rgba(47,42,38,0.6)',
+              borderRadius: r(999),
+              backgroundColor: 'rgba(18,16,14,0.62)',
             }}
           >
             <Text style={{ color: '#fff', fontSize: 11, fontVariant: ['tabular-nums'] }}>
@@ -135,20 +136,47 @@ export function PhotoLayoutView({ photos, layout = 'grid', onPressPhoto, onRemov
     );
   }
 
+  // 3 图采用 Apple Journal / Day One 式杂志不对称拼图
+  if (photos.length === 3) {
+    return (
+      <View style={{ flexDirection: 'row', gap: 8, marginTop: 18 }}>
+        <Pressable
+          onPress={() => onPressPhoto?.(0)}
+          style={{ flex: 1.4, aspectRatio: 0.86, borderRadius: r(14), overflow: 'hidden' }}
+        >
+          <Photo uri={photos[0]} style={{ width: '100%', height: '100%' }} radius={0} />
+          {renderRemoveBtn(photos[0])}
+        </Pressable>
+        <View style={{ flex: 1, gap: 8 }}>
+          {[1, 2].map(idx => (
+            <Pressable
+              key={`${photos[idx]}_${idx}`}
+              onPress={() => onPressPhoto?.(idx)}
+              style={{ flex: 1, borderRadius: r(14), overflow: 'hidden' }}
+            >
+              <Photo uri={photos[idx]} style={{ width: '100%', height: '100%' }} radius={0} />
+              {renderRemoveBtn(photos[idx])}
+            </Pressable>
+          ))}
+        </View>
+      </View>
+    );
+  }
+
   return (
-    <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', rowGap: 10, marginTop: 18 }}>
+    <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', rowGap: 8, marginTop: 18 }}>
       {photos.map((uri, idx) => (
         <Pressable
           key={`${uri}_${idx}`}
           onPress={() => onPressPhoto?.(idx)}
           style={{
-            width: photos.length === 1 ? '100%' : '48.2%',
+            width: photos.length === 1 ? '100%' : '48.4%',
             aspectRatio: photos.length === 1 ? 1.45 : 1.15,
-            borderRadius: 14,
+            borderRadius: r(14),
             overflow: 'hidden',
           }}
         >
-          <Photo uri={uri} style={{ width: '100%', height: '100%' }} radius={14} />
+          <Photo uri={uri} style={{ width: '100%', height: '100%' }} radius={r(14)} />
           {renderRemoveBtn(uri)}
         </Pressable>
       ))}

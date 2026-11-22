@@ -1,0 +1,135 @@
+{
+  "checks": [
+    {
+      "view": "desktop-text",
+      "images": [
+        {
+          "name": "一本日记当前网页图库预览",
+          "complete": true,
+          "width": 1440,
+          "height": 1464
+        },
+        {
+          "name": "格志日记当前网页图库预览",
+          "complete": true,
+          "width": 1440,
+          "height": 1448
+        },
+        {
+          "name": "青橙日记当前网页图库预览",
+          "complete": true,
+          "width": 1480,
+          "height": 1655
+        },
+        {
+          "name": "墨记当前网页图库预览",
+          "complete": true,
+          "width": 1480,
+          "height": 1653
+        },
+        {
+          "name": "吾记当前网页图库预览",
+          "complete": true,
+          "width": 1440,
+          "height": 1000
+        },
+        {
+          "name": "人生笔记 Real当前网页图库预览",
+          "complete": true,
+          "width": 1440,
+          "height": 1000
+        }
+      ]
+    },
+    {
+      "view": "mobile-journal",
+      "images": [
+        {
+          "name": "粉粉日记当前网页图库预览",
+          "complete": true,
+          "width": 1440,
+          "height": 1000
+        },
+        {
+          "name": "罐头日记当前网页图库预览",
+          "complete": true,
+          "width": 1480,
+          "height": 1653
+        },
+        {
+          "name": "拾柒当前网页图库预览",
+          "complete": true,
+          "width": 1440,
+          "height": 800
+        },
+        {
+          "name": "时光手帐当前网页图库预览",
+          "complete": true,
+          "width": 1800,
+          "height": 800
+        },
+        {
+          "name": "念念手帐当前网页图库预览",
+          "complete": true,
+          "width": 2160,
+          "height": 800
+        }
+      ]
+    },
+    {
+      "view": "overview-six",
+      "images": [
+        {
+          "name": "一本日记当前网页图库预览",
+          "complete": true,
+          "width": 1440,
+          "height": 1464
+        },
+        {
+          "name": "EMMO 日记当前网页图库预览",
+          "complete": true,
+          "width": 1440,
+          "height": 1448
+        },
+        {
+          "name": "墨记当前网页图库预览",
+          "complete": true,
+          "width": 1480,
+          "height": 1653
+        },
+        {
+          "name": "时光手帐当前网页图库预览",
+          "complete": true,
+          "width": 1800,
+          "height": 800
+        },
+        {
+          "name": "念念手帐当前网页图库预览",
+          "complete": true,
+          "width": 2160,
+          "height": 800
+        },
+        {
+          "name": "声间当前网页图库预览",
+          "complete": true,
+          "width": 1440,
+          "height": 1396
+        }
+      ]
+    }
+  ],
+  "overview": {
+    "width": 1200,
+    "height": 900,
+    "products": [
+      "yiben",
+      "emmo",
+      "moji",
+      "shiguang",
+      "niannian",
+      "shengjian"
+    ]
+  },
+  "errors": [],
+  "productLazyLoading": "unchanged"
+}

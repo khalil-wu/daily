@@ -1,23 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
-import {
-  ActivityIndicator,
-  Animated,
-  Image,
-  KeyboardAvoidingView,
-  Platform,
-  Pressable,
-  ScrollView,
-  type ScrollViewProps,
-  type StyleProp,
-  StyleSheet,
-  Text,
-  type TextProps,
-  TextInput,
-  type TextInputProps,
-  type TextStyle,
-  View,
-  type ViewStyle,
-} from 'react-native';
+import { ActivityIndicator, Animated, Easing, Image, type ImageSourcePropType, KeyboardAvoidingView, Platform, Pressable, type PressableProps, ScrollView, type ScrollViewProps, type StyleProp, StyleSheet, type TextStyle, View, type ViewStyle } from 'react-native';
+import { Image as ExpoImage } from 'expo-image';
+import { Text, TextInput, type TextProps, type TextInputProps } from './text';
 import { SafeAreaView, useSafeAreaInsets, type Edge } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import * as Haptics from 'expo-haptics';
@@ -32,19 +16,46 @@ import {
   type LucideIcon,
 } from 'lucide-react-native';
 import { useStyles, useTheme, type Theme } from '../theme/ThemeProvider';
-import { radius } from '../theme/tokens';
+import { control, radius } from '../theme/tokens';
 import { photoSource } from '../data/assets';
 import { usePhotoUri } from '../utils/usePhotoUri';
-import { ND, PressableScale, SPRING, prefersReducedMotion } from './motion';
+import { ND, PressableScale, SPRING, useReducedMotion } from './motion';
+
+let lastHapticAt = 0;
 
 export const haptic = (kind: 'light' | 'medium' | 'success' | 'warning' = 'light') => {
   if (Platform.OS === 'web') return;
+  const now = Date.now();
+  if (now - lastHapticAt < 30) return;
+  lastHapticAt = now;
   try {
-    if (kind === 'success') void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    else if (kind === 'warning') void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
-    else void Haptics.impactAsync(kind === 'medium' ? Haptics.ImpactFeedbackStyle.Medium : Haptics.ImpactFeedbackStyle.Light);
+    if (Platform.OS === 'android') {
+      const androidKind =
+        kind === 'success' ? Haptics.AndroidHaptics.Confirm
+        : kind === 'warning' ? Haptics.AndroidHaptics.Reject
+        : kind === 'medium' ? Haptics.AndroidHaptics.Context_Click
+        : Haptics.AndroidHaptics.Clock_Tick;
+      void Haptics.performAndroidHapticsAsync(androidKind).catch(() => undefined);
+      return;
+    }
+    const feedback = kind === 'success' ? Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success)
+      : kind === 'warning' ? Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning)
+      : Haptics.impactAsync(kind === 'medium' ? Haptics.ImpactFeedbackStyle.Medium : Haptics.ImpactFeedbackStyle.Light);
+    void feedback.catch(() => undefined);
   } catch {}
 };
+
+/** RN Web handles Enter for all Pressables, but Space only for the button role. */
+export function webSpaceAction(onActivate: () => void, disabled = false) {
+  return Platform.OS === 'web' ? {
+    onKeyDown: (event: React.KeyboardEvent<HTMLElement>) => {
+      if (event.target !== event.currentTarget || (event.key !== ' ' && event.key !== 'Spacebar')) return;
+      event.preventDefault();
+      event.stopPropagation();
+      if (!disabled && !event.repeat) onActivate();
+    },
+  } : {};
+}
 
 /* ============ 文本 ============ */
 
@@ -76,6 +87,7 @@ export function Screen({ children, scroll, edges = ['top'], style, contentStyle,
   const body = scroll ? (
     <ScrollView
       keyboardShouldPersistTaps="handled"
+      keyboardDismissMode="on-drag"
       showsVerticalScrollIndicator={false}
       {...scrollProps}
       contentContainerStyle={[{ paddingHorizontal: 20, paddingBottom: 32 + (edges.includes('bottom') ? 0 : insets.bottom) }, contentStyle]}
@@ -95,7 +107,7 @@ export function Screen({ children, scroll, edges = ['top'], style, contentStyle,
   return (
     <SafeAreaView edges={edges} style={[{ flex: 1, backgroundColor: bg ?? c.bg }, style]}>
       {keyboard ? (
-        <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+        <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'web' ? undefined : 'padding'}>
           {inner}
         </KeyboardAvoidingView>
       ) : (
@@ -127,28 +139,28 @@ export function NavBar({ title, subtitle, variant = 'center', back = true, left,
   const { c, t } = useTheme();
   const onBack = typeof back === 'function' ? back : goBack;
   const leftNode = left ?? (back ? (
-    <Pressable hitSlop={12} onPress={onBack} style={{ padding: 4, marginLeft: -6 }} accessibilityLabel="返回">
+    <Pressable onPress={onBack} style={{ width: 44, height: 44, alignItems: 'center', justifyContent: 'center', marginLeft: -10 }} accessibilityRole="button" accessibilityLabel="返回">
       <ChevronLeft size={24} color={c.text} strokeWidth={1.8} />
     </Pressable>
   ) : null);
   if (variant === 'large') {
     return (
       <View style={[{ paddingHorizontal: 20, paddingTop: 6, paddingBottom: 14 }, style]}>
-        <View style={{ height: 36, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+        <View style={{ minHeight: control.target, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
           <View>{leftNode}</View>
           <View>{right}</View>
         </View>
-        {!!title && <Text style={[t.h1, { fontSize: t.h1.fontSize! + 2, marginTop: 6 }]}>{title}</Text>}
+        {!!title && <Text style={[t.h1, { fontSize: t.h1.fontSize! + 2, marginTop: 6, letterSpacing: -0.3 }]}>{title}</Text>}
         {!!subtitle && <T v="sub" style={{ marginTop: 6 }}>{subtitle}</T>}
       </View>
     );
   }
   return (
-    <View style={[{ height: 50, flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16 }, style]}>
+    <View style={[{ minHeight: 56, paddingVertical: 6, flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16 }, style]}>
       <View style={{ minWidth: 64, alignItems: 'flex-start' }}>{leftNode}</View>
-      <View style={{ flex: 1, alignItems: variant === 'plain' ? 'flex-start' : 'center' }}>
+      <View style={{ flex: 1, minWidth: 0, paddingHorizontal: 6, alignItems: variant === 'plain' ? 'flex-start' : 'center' }}>
         {!!title && (
-          <Text numberOfLines={1} style={[t.h3, { fontSize: t.h3.fontSize! + 1 }]}>
+          <Text numberOfLines={1} style={[t.h3, { fontSize: t.h3.fontSize! + 1, textAlign: variant === 'plain' ? 'left' : 'center' }]}>
             {title}
           </Text>
         )}
@@ -163,30 +175,147 @@ export function NavBar({ title, subtitle, variant = 'center', back = true, left,
 export function TextAction({ label, onPress, color, disabled, bold }: { label: string; onPress?: () => void; color?: string; disabled?: boolean; bold?: boolean }) {
   const { c, fs } = useTheme();
   return (
-    <Pressable hitSlop={10} onPress={onPress} disabled={disabled} style={{ paddingVertical: 4 }}>
+    <Pressable accessibilityRole="button" accessibilityState={{ disabled: !!disabled }} aria-disabled={!!disabled} hitSlop={6} onPress={onPress} disabled={disabled} style={{ minHeight: control.target, minWidth: control.target, justifyContent: 'center', paddingVertical: 6 }}>
       <Text style={{ fontSize: fs(15), color: disabled ? c.textMuted : color ?? c.textSub, fontWeight: bold ? '600' : '400' }}>{label}</Text>
     </Pressable>
   );
 }
 
-/** 胶囊主按钮（导航栏右侧 “发布”） */
+/**
+ * 线绘陪伴风的「按压到墨影上」容器：底层是一块纯色的硬位移投影（underlay），
+ * 面层（face）按下时整体下移 offset 贴到影子上，松开弹簧回位。
+ * 用于 Button / PillAction / FAB，不要各自复制这份逻辑。
+ */
+export function InkPress({
+  offset = 3,
+  radius = 999,
+  underlay,
+  hold = false,
+  onPress,
+  onPressIn,
+  onPressOut,
+  disabled,
+  style,
+  faceStyle,
+  children,
+  ...rest
+}: Omit<PressableProps, 'children'> & {
+  children?: React.ReactNode;
+  offset?: number;
+  radius?: number;
+  underlay?: string;
+  /** 无投影、面层常驻按下位（禁用/加载态） */
+  hold?: boolean;
+  faceStyle?: StyleProp<ViewStyle>;
+}) {
+  const reduced = useReducedMotion();
+  const v = useRef(new Animated.Value(hold ? 1 : 0)).current;
+  useEffect(() => {
+    v.setValue(hold ? 1 : 0);
+    return () => v.stopAnimation();
+  }, [hold, v]);
+  const run = (down: boolean) => {
+    if (hold) return;
+    if (reduced) {
+      v.setValue(down ? 1 : 0);
+      return;
+    }
+    if (down) {
+      Animated.timing(v, { toValue: 1, duration: 70, easing: Easing.out(Easing.cubic), useNativeDriver: ND }).start();
+    } else {
+      Animated.spring(v, { toValue: 0, useNativeDriver: ND, ...SPRING.release }).start();
+    }
+  };
+  return (
+    <Pressable
+      accessibilityRole="button"
+      disabled={disabled}
+      {...rest}
+      onPressIn={e => {
+        run(true);
+        onPressIn?.(e);
+      }}
+      onPressOut={e => {
+        run(false);
+        onPressOut?.(e);
+      }}
+      onPress={onPress}
+      style={style}
+    >
+      <View style={{ paddingBottom: offset }}>
+        {underlay != null && (
+          <View pointerEvents="none" style={{ position: 'absolute', left: 0, right: 0, top: offset, bottom: 0, borderRadius: radius, backgroundColor: underlay }} />
+        )}
+        <Animated.View style={[faceStyle, { transform: [{ translateY: v.interpolate({ inputRange: [0, 1], outputRange: [0, offset] }) }] }]}>
+          {children}
+        </Animated.View>
+      </View>
+    </Pressable>
+  );
+}
+
+/** 胶囊主按钮（导航栏右侧 “发布”/“完成”：保持 44px 触控热区，内层视觉高度 34px 更轻巧） */
 export function PillAction({ label, onPress, disabled }: { label: string; onPress?: () => void; disabled?: boolean }) {
-  const { c, fs } = useTheme();
+  const { c, fs, r, ink, dark } = useTheme();
+  if (ink.on) {
+    const underlay = disabled ? undefined : dark ? '#000000' : ink.line;
+    return (
+      <InkPress
+        offset={2}
+        radius={r(999)}
+        underlay={underlay}
+        hold={!!disabled}
+        onPress={() => {
+          haptic('light');
+          onPress?.();
+        }}
+        disabled={disabled}
+        accessibilityState={{ disabled: !!disabled }}
+        hitSlop={6}
+        style={{ minHeight: control.target, minWidth: 56, justifyContent: 'center', alignItems: 'flex-end' }}
+        faceStyle={{
+          minHeight: 34,
+          paddingHorizontal: 15,
+          paddingVertical: 6,
+          borderRadius: r(999),
+          backgroundColor: disabled ? c.disabledBg : c.primary,
+          borderWidth: disabled ? 1.25 : 1.25,
+          borderColor: disabled ? c.divider : ink.line,
+          justifyContent: 'center',
+          alignItems: 'center',
+        }}
+      >
+        <Text style={{ color: disabled ? c.disabledText : dark ? '#0B1012' : '#182326', fontSize: fs(13.5), fontWeight: '600' }}>{label}</Text>
+      </InkPress>
+    );
+  }
   return (
     <PressableScale
       scaleTo={0.94}
       onPress={onPress}
       disabled={disabled}
-      hitSlop={8}
+      accessibilityState={{ disabled: !!disabled }}
+      hitSlop={6}
       style={{
-        backgroundColor: disabled ? c.primarySoft : c.primary,
-        paddingHorizontal: 14,
-        height: 30,
-        borderRadius: 15,
+        minHeight: control.target,
+        minWidth: 56,
         justifyContent: 'center',
+        alignItems: 'flex-end',
       }}
     >
-      <Text style={{ color: c.textOnPrimary, fontSize: fs(14), fontWeight: '600' }}>{label}</Text>
+      <View
+        style={{
+          backgroundColor: disabled ? c.disabledBg : c.primary,
+          paddingHorizontal: 15,
+          minHeight: 34,
+          paddingVertical: 6,
+          borderRadius: r(999),
+          justifyContent: 'center',
+          alignItems: 'center',
+        }}
+      >
+        <Text style={{ color: disabled ? c.disabledText : c.textOnPrimary, fontSize: fs(13.5), fontWeight: '600' }}>{label}</Text>
+      </View>
     </PressableScale>
   );
 }
@@ -194,8 +323,8 @@ export function PillAction({ label, onPress, disabled }: { label: string; onPres
 export function IconButton({ icon: Icon, onPress, size = 22, color, style, label, badge }: { icon: LucideIcon; onPress?: () => void; size?: number; color?: string; style?: StyleProp<ViewStyle>; label?: string; badge?: boolean }) {
   const { c } = useTheme();
   return (
-    <Pressable accessibilityLabel={label} hitSlop={8} onPress={onPress} style={({ pressed }) => [{ padding: 6, opacity: pressed ? 0.6 : 1 }, style]}>
-      <Icon size={size} color={color ?? c.text} strokeWidth={1.7} />
+    <Pressable accessibilityRole="button" accessibilityLabel={label} hitSlop={4} onPress={onPress} style={({ pressed }) => [{ minWidth: 44, minHeight: 44, alignItems: 'center', justifyContent: 'center', padding: 6, opacity: pressed ? 0.6 : 1 }, style]}>
+      <Icon size={size} color={color ?? c.text} strokeWidth={1.8} />
       {badge && <View style={{ position: 'absolute', right: 5, top: 5, width: 7, height: 7, borderRadius: 4, backgroundColor: c.danger }} />}
     </Pressable>
   );
@@ -215,15 +344,75 @@ interface ButtonProps {
   full?: boolean;
 }
 
+/** 线绘陪伴风按钮：矢量面层 + 硬质墨影，按下整面贴到影子上 */
+function InkButton({ title, onPress, variant = 'primary', size = 'lg', icon: Icon, loading, disabled, style, full }: ButtonProps) {
+  const { c, fs, r, ink, dark } = useTheme();
+  const h = size === 'lg' ? 52 : size === 'md' ? 44 : 36;
+  const offset = size === 'sm' ? 2 : 3;
+  const off = disabled || loading;
+  const conf = {
+    primary: { bg: c.primary, fg: dark ? '#0B1012' : '#182326', bd: ink.line, ul: dark ? '#000000' : ink.line, bw: 1.5 },
+    secondary: { bg: c.card, fg: c.text, bd: ink.line, ul: c.divider, bw: 1.5 },
+    danger: { bg: c.danger, fg: c.textOnDanger, bd: ink.line, ul: dark ? '#000000' : ink.line, bw: 1.5 },
+    soft: { bg: c.primaryFaint, fg: c.primaryDark, bd: 'transparent', ul: undefined, bw: 0 },
+    outline: { bg: 'transparent', fg: c.primaryDark, bd: c.primaryDark, ul: undefined, bw: 1.5 },
+    ghost: { bg: 'transparent', fg: c.textSub, bd: 'transparent', ul: undefined, bw: 0 },
+  }[variant];
+  const face: ViewStyle = {
+    height: h,
+    borderRadius: r(999),
+    backgroundColor: off ? c.disabledBg : conf.bg,
+    borderWidth: off ? (conf.bw ? 1 : 0) : conf.bw,
+    borderColor: off ? c.divider : conf.bd,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: size === 'sm' ? 18 : 24,
+    alignSelf: 'stretch',
+  };
+  const label = loading ? (
+    <ActivityIndicator color={off ? c.disabledText : conf.fg} size="small" />
+  ) : (
+    <>
+      {Icon && <Icon size={size === 'sm' ? 16 : 18} color={off ? c.disabledText : conf.fg} strokeWidth={1.8} style={{ marginRight: 7 }} />}
+      <Text style={{ color: off ? c.disabledText : conf.fg, fontSize: fs(size === 'sm' ? 14 : size === 'md' ? 15 : 16), fontWeight: '600', letterSpacing: 0.3, textAlign: 'center', flexShrink: 1 }}>{title}</Text>
+    </>
+  );
+  const a11y = {
+    accessibilityLabel: title,
+    accessibilityState: { disabled: !!off, busy: !!loading },
+    hitSlop: size === 'sm' ? 6 : undefined,
+    onPress: () => {
+      haptic('light');
+      onPress?.();
+    },
+    disabled: off,
+  };
+  if (!conf.ul) {
+    // soft / outline / ghost / 禁用态：无投影；禁用态面层停在按下位
+    return (
+      <InkPress offset={off ? offset : 0} hold={off} {...a11y} style={[{ alignSelf: full ? 'stretch' : 'center' }, style]} faceStyle={face}>
+        {label}
+      </InkPress>
+    );
+  }
+  return (
+    <InkPress offset={offset} radius={r(999)} underlay={conf.ul} {...a11y} style={[{ alignSelf: full ? 'stretch' : 'center' }, style]} faceStyle={face}>
+      {label}
+    </InkPress>
+  );
+}
+
 export function Button({ title, onPress, variant = 'primary', size = 'lg', icon: Icon, loading, disabled, style, full = true }: ButtonProps) {
-  const { c, fs } = useTheme();
-  const h = size === 'lg' ? 48 : size === 'md' ? 40 : 32;
+  const { c, fs, r, look, dark, ink } = useTheme();
+  if (ink.on) return <InkButton {...{ title, onPress, variant, size, icon: Icon, loading, disabled, style, full }} />;
+  const h = size === 'lg' ? 50 : control.target;
   const palette = {
     primary: { bg: c.primary, fg: c.textOnPrimary, bd: c.primary },
-    secondary: { bg: c.card, fg: c.text, bd: c.border },
-    outline: { bg: 'transparent', fg: c.primary, bd: c.primary },
+    secondary: { bg: c.card, fg: c.text, bd: c.controlBorder },
+    outline: { bg: 'transparent', fg: c.primaryDark, bd: c.primaryDark },
     ghost: { bg: 'transparent', fg: c.textSub, bd: 'transparent' },
-    danger: { bg: c.danger, fg: c.textOnPrimary, bd: c.danger },
+    danger: { bg: c.danger, fg: c.textOnDanger, bd: c.danger },
     soft: { bg: c.primaryFaint, fg: c.primaryDark, bd: c.primarySoft },
   }[variant];
   const off = disabled || loading;
@@ -232,35 +421,39 @@ export function Button({ title, onPress, variant = 'primary', size = 'lg', icon:
       scaleTo={0.97}
       disabled={off}
       accessibilityRole="button"
-      accessibilityState={{ disabled: !!off }}
+      accessibilityLabel={title}
+      accessibilityState={{ disabled: !!off, busy: !!loading }}
+      hitSlop={size === 'sm' ? 6 : undefined}
       onPress={() => {
         haptic('light');
         onPress?.();
       }}
       style={[
         {
-          height: h,
-          borderRadius: h / 2,
-          backgroundColor: palette.bg,
+          minHeight: h,
+          paddingVertical: size === 'sm' ? 8 : 10,
+          borderRadius: r(999),
+          backgroundColor: disabled ? c.disabledBg : palette.bg,
           borderWidth: variant === 'ghost' ? 0 : StyleSheet.hairlineWidth * 2,
-          borderColor: palette.bd,
+          borderColor: disabled ? c.border : palette.bd,
           flexDirection: 'row',
           alignItems: 'center',
           justifyContent: 'center',
-          paddingHorizontal: size === 'sm' ? 14 : 22,
+          paddingHorizontal: size === 'sm' ? 18 : 24,
           alignSelf: full ? 'stretch' : 'center',
-          opacity: off ? 0.55 : 1,
+          opacity: 1,
+          position: 'relative',
         },
-        variant === 'primary' && !off ? { shadowColor: c.primaryDark, shadowOpacity: 0.22, shadowRadius: 10, shadowOffset: { width: 0, height: 4 }, elevation: 2 } : null,
+        variant === 'primary' && !off && !look.flat && !dark ? { shadowColor: c.primaryDark, shadowOpacity: 0.22, shadowRadius: 10, shadowOffset: { width: 0, height: 4 }, elevation: 2 } : null,
         style,
       ]}
     >
       {loading ? (
-        <ActivityIndicator color={palette.fg} size="small" />
+        <ActivityIndicator color={disabled ? c.disabledText : palette.fg} size="small" />
       ) : (
         <>
-          {Icon && <Icon size={size === 'sm' ? 15 : 18} color={palette.fg} strokeWidth={1.8} style={{ marginRight: 6 }} />}
-          <Text style={{ color: palette.fg, fontSize: fs(size === 'sm' ? 13 : 15), fontWeight: '600', letterSpacing: 1 }}>{title}</Text>
+          {Icon && <Icon size={size === 'sm' ? 16 : 18} color={disabled ? c.disabledText : palette.fg} strokeWidth={1.85} style={{ marginRight: 7 }} />}
+          <Text style={{ color: disabled ? c.disabledText : palette.fg, fontSize: fs(size === 'sm' ? 13.5 : 15), fontWeight: '600', letterSpacing: 0.3, textAlign: 'center', flexShrink: 1 }}>{title}</Text>
         </>
       )}
     </PressableScale>
@@ -269,34 +462,24 @@ export function Button({ title, onPress, variant = 'primary', size = 'lg', icon:
 
 /* ============ 卡片 / 分组 ============ */
 
-export function Card({ children, style, onPress, padded = true }: { children: React.ReactNode; style?: StyleProp<ViewStyle>; onPress?: () => void; padded?: boolean }) {
+export function Card({ children, style, onPress, padded = true, hero }: { children: React.ReactNode; style?: StyleProp<ViewStyle>; onPress?: () => void; padded?: boolean; hero?: boolean }) {
   const s = useStyles(cardStyles);
+  const { frameInk } = useTheme();
+  const frameStyle = hero ? frameInk : undefined;
   if (onPress) {
     return (
-      <PressableScale scaleTo={0.98} onPress={onPress} style={[s.card, padded && s.pad, style]}>
+      <PressableScale scaleTo={0.98} onPress={onPress} style={[s.card, frameStyle, padded && s.pad, style]}>
         {children}
       </PressableScale>
     );
   }
-  return <View style={[s.card, padded && s.pad, style]}>{children}</View>;
+  return <View style={[s.card, frameStyle, padded && s.pad, style]}>{children}</View>;
 }
 
-const cardStyles = ({ c, dark, r, look }: Theme) =>
-  StyleSheet.create({
-    card: {
-      backgroundColor: c.card,
-      borderRadius: r(radius.lg),
-      // 圆润风格（温润 / 樱雾）用极细描边 + 柔和投影；利落风格（清冷 / 墨白 / 旧纸）改用清晰的线
-      borderWidth: look.flat ? 1 : dark ? 0 : StyleSheet.hairlineWidth,
-      borderColor: look.flat ? c.border : c.divider,
-      shadowColor: c.shadow,
-      shadowOpacity: dark || look.flat ? 0 : 0.06,
-      shadowRadius: 12,
-      shadowOffset: { width: 0, height: 3 },
-      elevation: dark || look.flat ? 0 : 1,
-    },
-    pad: { padding: 16 },
-  });
+const cardStyles = ({ c, r, frame }: Theme) => StyleSheet.create({
+  card: { backgroundColor: c.card, borderRadius: r(radius.lg), ...frame },
+  pad: { padding: 16 },
+});
 
 export function SectionTitle({ title, right, style }: { title: string; right?: React.ReactNode; style?: StyleProp<ViewStyle> }) {
   const { c, fs } = useTheme();
@@ -314,7 +497,7 @@ export function Group({ children, title, footer, style }: { children: React.Reac
   const items = React.Children.toArray(children).filter(Boolean);
   return (
     <View style={[{ marginBottom: 14 }, style]}>
-      {!!title && <Text style={{ fontSize: fs(13), color: c.textSub, marginBottom: 8, marginLeft: 4, fontWeight: '500' }}>{title}</Text>}
+      {!!title && <Text style={{ fontSize: fs(12.5), letterSpacing: 0.4, color: c.textSub, marginBottom: 8, marginLeft: 6, fontWeight: '500' }}>{title}</Text>}
       <Card padded={false} style={{ overflow: 'hidden' }}>
         {items.map((child, i) => (
           <View key={i}>
@@ -344,39 +527,64 @@ interface RowProps {
 }
 
 export function Row({ icon: Icon, iconColor, title, subtitle, value, onPress, right, chevron, danger, checked, style, disabled }: RowProps) {
-  const { c, fs } = useTheme();
+  const { c, fs, r } = useTheme();
   const showChevron = chevron ?? (!!onPress && !right && checked === undefined);
-  return (
-    <Pressable
-      disabled={!onPress || disabled}
-      onPress={onPress}
-      style={({ pressed }) => [
-        { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: subtitle ? 13 : 15, backgroundColor: pressed ? c.cardAlt : 'transparent', opacity: disabled ? 0.5 : 1 },
-        style,
-      ]}
-    >
-      {Icon && <Icon size={20} color={danger ? c.danger : iconColor ?? c.text} strokeWidth={1.6} style={{ marginRight: 14 }} />}
-      <View style={{ flex: 1 }}>
-        <Text style={{ fontSize: fs(15), color: danger ? c.danger : c.text }}>{title}</Text>
-        {!!subtitle && <Text style={{ fontSize: fs(12), color: c.textSub, marginTop: 3, lineHeight: fs(12) * 1.5 }}>{subtitle}</Text>}
+  const rightControl = React.isValidElement<React.ComponentProps<typeof Switch>>(right) && right.type === Switch
+    ? React.cloneElement(right, { label: right.props.label ?? title }) : right;
+  const rowStyle: ViewStyle = { minHeight: control.target, flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: subtitle ? 13 : 15, opacity: disabled ? 0.5 : 1 };
+  const content = <>
+    {Icon && (
+      <View
+        style={{
+          width: 34,
+          height: 34,
+          borderRadius: r(10),
+          backgroundColor: danger ? c.dangerSoft : c.primaryFaint,
+          alignItems: 'center',
+          justifyContent: 'center',
+          marginRight: 13,
+          flexShrink: 0,
+        }}
+      >
+        <Icon size={17} color={danger ? c.danger : iconColor ?? c.primaryDark} strokeWidth={1.85} />
       </View>
-      {!!value && <Text style={{ fontSize: fs(13), color: c.textSub, marginLeft: 8, maxWidth: 170 }} numberOfLines={1}>{value}</Text>}
-      {right}
-      {checked !== undefined && (checked ? <Check size={18} color={c.primary} strokeWidth={2.2} /> : <View style={{ width: 18 }} />)}
-      {showChevron && <ChevronRight size={18} color={c.textMuted} style={{ marginLeft: 4 }} />}
-    </Pressable>
-  );
+    )}
+    <View style={{ flex: 1, minWidth: 0 }}>
+      <Text style={{ fontSize: fs(15), color: danger ? c.danger : c.text }}>{title}</Text>
+      {!!subtitle && <Text style={{ fontSize: fs(12), color: c.textSub, marginTop: 3, lineHeight: fs(19) }}>{subtitle}</Text>}
+    </View>
+    {!!value && <Text style={{ fontSize: fs(13), color: c.textSub, marginLeft: 10, maxWidth: '42%', flexShrink: 1, textAlign: 'right' }}>{value}</Text>}
+    {rightControl && <View style={{ flexShrink: 0, marginLeft: 10 }}>{rightControl}</View>}
+    {checked !== undefined && (checked ? <Check size={18} color={c.primaryDark} strokeWidth={2.2} style={{ marginLeft: 8 }} /> : <View style={{ width: 26 }} />)}
+    {showChevron && <ChevronRight size={18} color={c.textMuted} style={{ marginLeft: 4, flexShrink: 0 }} />}
+  </>;
+  // Rows containing a Switch are layout containers. A disabled Pressable ancestor
+  // incorrectly describes an enabled child control as unavailable on the web.
+  return onPress ? (
+    <Pressable
+      disabled={disabled}
+      accessibilityRole="button"
+      accessibilityState={{ disabled: !!disabled, ...(checked === undefined ? {} : { selected: checked }) }}
+      aria-disabled={!!disabled}
+      aria-selected={checked}
+      onPress={onPress}
+      style={({ pressed }) => [rowStyle, { backgroundColor: pressed ? c.cardAlt : 'transparent' }, style]}
+    >{content}</Pressable>
+  ) : <View style={[rowStyle, style]}>{content}</View>;
 }
 
 /* ============ 开关 ============ */
 
-export function Switch({ value, onChange, disabled }: { value: boolean; onChange: (v: boolean) => void; disabled?: boolean }) {
-  const { c, dark } = useTheme();
+export function Switch({ value, onChange, disabled, label }: { value: boolean; onChange: (v: boolean) => void; disabled?: boolean; label?: string }) {
+  const { c } = useTheme();
+  const reduced = useReducedMotion();
   const anim = useRef(new Animated.Value(value ? 1 : 0)).current;
   useEffect(() => {
-    Animated.timing(anim, { toValue: value ? 1 : 0, duration: 180, useNativeDriver: false }).start();
-  }, [value, anim]);
-  const bg = anim.interpolate({ inputRange: [0, 1], outputRange: [dark ? '#4A423B' : '#E3DCD3', c.primary] });
+    if (reduced) { anim.setValue(value ? 1 : 0); return; }
+    const animation = Animated.timing(anim, { toValue: value ? 1 : 0, duration: 160, useNativeDriver: ND });
+    animation.start();
+    return () => animation.stop();
+  }, [value, anim, reduced]);
   const x = anim.interpolate({ inputRange: [0, 1], outputRange: [2, 22] });
   return (
     <Pressable
@@ -385,19 +593,23 @@ export function Switch({ value, onChange, disabled }: { value: boolean; onChange
         haptic('light');
         onChange(!value);
       }}
+      {...webSpaceAction(() => onChange(!value), disabled)}
       hitSlop={8}
-      style={{ opacity: disabled ? 0.5 : 1 }}
+      style={{ opacity: disabled ? 0.5 : 1, minWidth: control.target, minHeight: control.target, alignItems: 'center', justifyContent: 'center' }}
       accessibilityRole="switch"
-      accessibilityState={{ checked: value }}
+      accessibilityLabel={label}
+      accessibilityState={{ checked: value, disabled: !!disabled }}
+      aria-checked={value}
+      aria-disabled={!!disabled}
     >
-      <Animated.View style={{ width: 46, height: 26, borderRadius: 13, backgroundColor: bg, justifyContent: 'center' }}>
+      <View style={{ width: 46, height: 26, borderRadius: 13, backgroundColor: value ? c.primary : c.controlBorder, justifyContent: 'center' }}>
         <Animated.View
           style={{
-            width: 22, height: 22, borderRadius: 11, backgroundColor: '#fff', transform: [{ translateX: x }],
+            width: 22, height: 22, borderRadius: 11, backgroundColor: value ? c.textOnPrimary : c.card, transform: [{ translateX: x }],
             shadowColor: '#000', shadowOpacity: 0.15, shadowRadius: 3, shadowOffset: { width: 0, height: 1 }, elevation: 2,
           }}
         />
-      </Animated.View>
+      </View>
     </Pressable>
   );
 }
@@ -406,20 +618,23 @@ export function Switch({ value, onChange, disabled }: { value: boolean; onChange
 
 /** 灰底白块分段控件（时间线 / 年度 / 那年今日）—— 白块随选中项滑动 */
 export function Segmented<K extends string>({ items, value, onChange, style }: { items: { key: K; label: string }[]; value: K; onChange: (k: K) => void; style?: StyleProp<ViewStyle> }) {
-  const { c, fs, dark } = useTheme();
+  const { c, fs, r, dark, look, ink } = useTheme();
+  const reduced = useReducedMotion();
   const [w, setW] = useState(0);
   const idx = Math.max(0, items.findIndex(it => it.key === value));
   const pos = useRef(new Animated.Value(idx)).current;
   const first = useRef(true);
 
   useEffect(() => {
-    if (first.current || prefersReducedMotion()) {
+    if (first.current || reduced) {
       first.current = false;
       pos.setValue(idx);
       return;
     }
-    Animated.spring(pos, { toValue: idx, useNativeDriver: ND, ...SPRING.slide }).start();
-  }, [idx, pos]);
+    const animation = Animated.spring(pos, { toValue: idx, useNativeDriver: ND, ...SPRING.slide });
+    animation.start();
+    return () => animation.stop();
+  }, [idx, pos, reduced]);
 
   const itemW = w > 0 ? (w - 6) / Math.max(1, items.length) : 0;
   const translateX = items.length > 1
@@ -428,15 +643,17 @@ export function Segmented<K extends string>({ items, value, onChange, style }: {
 
   return (
     <View
+      accessibilityRole="tablist"
       onLayout={e => setW(e.nativeEvent.layout.width)}
-      style={[{ flexDirection: 'row', backgroundColor: dark ? c.cardAlt : '#F0EAE2', borderRadius: 12, padding: 3 }, style]}
+      style={[{ flexDirection: 'row', backgroundColor: c.inputBg, borderRadius: r(12), padding: 3 }, style]}
     >
       {itemW > 0 && (
         <Animated.View
           pointerEvents="none"
           style={{
-            position: 'absolute', left: 3, top: 3, bottom: 3, width: itemW, borderRadius: 10, backgroundColor: c.card,
-            shadowColor: c.shadow, shadowOpacity: 0.08, shadowRadius: 4, shadowOffset: { width: 0, height: 1 }, elevation: 1,
+            position: 'absolute', left: 3, top: 3, bottom: 3, width: itemW, borderRadius: r(10), backgroundColor: c.card,
+            borderWidth: ink.on ? 1.25 : look.flat ? 1 : 0, borderColor: ink.on ? ink.line : c.border,
+            shadowColor: c.shadow, shadowOpacity: dark || look.flat ? 0 : 0.08, shadowRadius: 4, shadowOffset: { width: 0, height: 1 }, elevation: dark || look.flat ? 0 : 1,
             transform: [{ translateX }],
           }}
         />
@@ -448,13 +665,15 @@ export function Segmented<K extends string>({ items, value, onChange, style }: {
             key={it.key}
             accessibilityRole="tab"
             accessibilityState={{ selected: on }}
+            aria-selected={on}
+            {...webSpaceAction(() => onChange(it.key))}
             onPress={() => {
               if (!on) haptic('light');
               onChange(it.key);
             }}
-            style={{ flex: 1, height: 32, borderRadius: 10, alignItems: 'center', justifyContent: 'center', backgroundColor: on && itemW === 0 ? c.card : 'transparent' }}
+            style={{ flex: 1, minHeight: control.target, paddingHorizontal: 5, paddingVertical: 8, borderRadius: r(10), alignItems: 'center', justifyContent: 'center', backgroundColor: on && itemW === 0 ? c.card : 'transparent' }}
           >
-            <Text style={{ fontSize: fs(13), color: on ? c.primaryDark : c.textSub, fontWeight: on ? '600' : '400' }}>{it.label}</Text>
+            <Text style={{ fontSize: fs(13), color: on ? c.primaryDark : c.textSub, fontWeight: on ? '600' : '400', textAlign: 'center' }}>{it.label}</Text>
           </Pressable>
         );
       })}
@@ -464,7 +683,8 @@ export function Segmented<K extends string>({ items, value, onChange, style }: {
 
 /** 下划线标签栏（全部 / 日记 / 草稿 / 收藏 / 置顶）—— 下划线随选中项滑动 */
 export function UnderlineTabs<K extends string>({ items, value, onChange, style }: { items: { key: K; label: string; count?: number }[]; value: K; onChange: (k: K) => void; style?: StyleProp<ViewStyle> }) {
-  const { c, fs } = useTheme();
+  const { c, fs, ink } = useTheme();
+  const reduced = useReducedMotion();
   const [layouts, setLayouts] = useState<Record<string, { x: number; w: number }>>({});
   const x = useRef(new Animated.Value(0)).current;
   const placed = useRef(false);
@@ -473,13 +693,15 @@ export function UnderlineTabs<K extends string>({ items, value, onChange, style 
 
   useEffect(() => {
     if (curX == null) return;
-    if (!placed.current || prefersReducedMotion()) {
+    if (!placed.current || reduced) {
       placed.current = true;
       x.setValue(curX);
       return;
     }
-    Animated.spring(x, { toValue: curX, useNativeDriver: ND, ...SPRING.slide }).start();
-  }, [curX, x]);
+    const animation = Animated.spring(x, { toValue: curX, useNativeDriver: ND, ...SPRING.slide });
+    animation.start();
+    return () => animation.stop();
+  }, [curX, x, reduced]);
 
   return (
     <ScrollView horizontal showsHorizontalScrollIndicator={false} style={[{ flexGrow: 0 }, style]} contentContainerStyle={{ gap: 22, paddingRight: 8 }}>
@@ -490,6 +712,8 @@ export function UnderlineTabs<K extends string>({ items, value, onChange, style 
             key={it.key}
             accessibilityRole="tab"
             accessibilityState={{ selected: on }}
+            aria-selected={on}
+            {...webSpaceAction(() => onChange(it.key))}
             hitSlop={6}
             onLayout={e => {
               const { x: lx, width } = e.nativeEvent.layout;
@@ -499,20 +723,20 @@ export function UnderlineTabs<K extends string>({ items, value, onChange, style 
               if (!on) haptic('light');
               onChange(it.key);
             }}
-            style={{ paddingVertical: 8, alignItems: 'center' }}
+            style={{ minHeight: control.target, paddingVertical: 8, justifyContent: 'center', alignItems: 'center' }}
           >
             <Text style={{ fontSize: fs(14), color: on ? c.text : c.textSub, fontWeight: on ? '600' : '400' }}>
               {it.label}
               {it.count ? ` ${it.count}` : ''}
             </Text>
-            <View style={{ marginTop: 6, height: 2.5, width: 16, borderRadius: 2, backgroundColor: on && curX == null ? c.primary : 'transparent' }} />
+            <View style={{ marginTop: 6, height: 2.5, width: 16, borderRadius: 2, backgroundColor: on && curX == null ? (ink.on ? ink.line : c.primary) : 'transparent' }} />
           </Pressable>
         );
       })}
       {curX != null && (
         <Animated.View
           pointerEvents="none"
-          style={{ position: 'absolute', left: 0, bottom: 8, width: 16, height: 2.5, borderRadius: 2, backgroundColor: c.primary, transform: [{ translateX: x }] }}
+          style={{ position: 'absolute', left: 0, bottom: 8, width: 16, height: 2.5, borderRadius: 2, backgroundColor: ink.on ? ink.line : c.primary, transform: [{ translateX: x }] }}
         />
       )}
     </ScrollView>
@@ -521,35 +745,53 @@ export function UnderlineTabs<K extends string>({ items, value, onChange, style 
 
 /* ============ 标签 Chip ============ */
 
-export function Chip({ label, icon: Icon, selected, onPress, onRemove, color, bg, style, size = 'md' }: { label: string; icon?: LucideIcon | React.ReactNode; selected?: boolean; onPress?: () => void; onRemove?: () => void; color?: string; bg?: string; style?: StyleProp<ViewStyle>; size?: 'sm' | 'md' }) {
-  const { c, fs } = useTheme();
-  const fg = color ?? (selected ? c.primaryDark : c.textSub);
+export function Chip({ label, icon: Icon, selected, onPress, onRemove, color, bg, style, size = 'md', tone }: { label: string; icon?: LucideIcon | React.ReactNode; selected?: boolean; onPress?: () => void; onRemove?: () => void; color?: string; bg?: string; style?: StyleProp<ViewStyle>; size?: 'sm' | 'md'; /** 'soft'：已填充的取值展示，不走选中态墨线 */ tone?: 'soft' }) {
+  const { c, fs, r, ink, dark } = useTheme();
+  const soft = tone === 'soft';
+  const fg = color ?? (soft ? c.primaryDark : ink.on ? (selected ? (dark ? c.text : ink.line) : c.textSub) : selected ? c.primaryDark : c.textSub);
   const iconNode = typeof Icon === 'function' || (Icon && typeof Icon === 'object' && 'render' in (Icon as object))
     ? React.createElement(Icon as LucideIcon, { size: size === 'sm' ? 12 : 14, color: fg, strokeWidth: 1.8 })
     : (Icon as React.ReactNode);
-  return (
-    <Pressable
-      onPress={onPress}
-      disabled={!onPress}
-      style={[
-        {
-          flexDirection: 'row', alignItems: 'center', gap: 4,
-          paddingHorizontal: size === 'sm' ? 8 : 12, height: size === 'sm' ? 24 : 32, borderRadius: 999,
-          backgroundColor: bg ?? (selected ? c.primaryFaint : c.card),
-          borderWidth: StyleSheet.hairlineWidth * 2, borderColor: selected ? c.primary : c.divider,
-        },
-        style,
-      ]}
-    >
+  const pillStyle: ViewStyle = {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 4,
+    paddingHorizontal: size === 'sm' ? 10 : 12,
+    minHeight: ink.on ? (size === 'sm' ? 28 : 32) : size === 'sm' ? 28 : 34,
+    paddingVertical: size === 'sm' ? 4 : 5,
+    borderRadius: r(999),
+    backgroundColor: bg ?? (soft ? c.primaryFaint : selected ? (ink.on ? c.primarySoft : c.primaryFaint) : ink.on ? c.inputBg : c.card),
+    borderWidth: soft ? 0 : ink.on ? (selected ? 1.25 : 0) : 1,
+    borderColor: ink.on ? ink.line : selected ? c.primaryDark : c.divider,
+  };
+  const inner = (
+    <View style={[pillStyle, onPress ? undefined : style]}>
       {iconNode}
-      <Text style={{ fontSize: fs(size === 'sm' ? 11 : 13), color: fg }}>{label}</Text>
+      <Text style={{ fontSize: fs(size === 'sm' ? 12 : 13), color: fg, flexShrink: 1, fontWeight: soft ? '500' : ink.on && selected ? '600' : '400' }}>{label}</Text>
       {onRemove && (
-        <Pressable hitSlop={8} onPress={onRemove}>
-          <X size={12} color={fg} />
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={`移除${label}`}
+          style={{ minWidth: 44, minHeight: 44, alignItems: 'center', justifyContent: 'center', marginVertical: -10, marginRight: -12 }}
+          onPress={event => { event.stopPropagation(); onRemove(); }}
+        >
+          <X size={13} color={fg} />
         </Pressable>
       )}
-    </Pressable>
+    </View>
   );
+  return onPress ? (
+    <Pressable
+      onPress={onPress}
+      accessibilityRole="button"
+      accessibilityState={selected === undefined ? undefined : { selected }}
+      aria-selected={selected}
+      style={[{ minHeight: control.target, minWidth: control.target, justifyContent: 'center' }, style]}
+    >
+      {inner}
+    </Pressable>
+  ) : inner;
 }
 
 /* ============ 输入 ============ */
@@ -563,45 +805,50 @@ interface FieldProps extends TextInputProps {
 }
 
 export function Field({ icon: Icon, right, secure, containerStyle, error, style, ...rest }: FieldProps) {
-  const { c, fs } = useTheme();
+  const { c, fs, r } = useTheme();
   const [hide, setHide] = useState(true);
   const [focus, setFocus] = useState(false);
   return (
     <View style={[{ marginBottom: 12 }, containerStyle]}>
       <View
         style={{
-          flexDirection: 'row', alignItems: 'center', height: 50, borderRadius: 14, paddingHorizontal: 14,
-          backgroundColor: c.inputBg, borderWidth: 1, borderColor: error ? c.danger : focus ? c.primary : 'transparent',
+          flexDirection: 'row', alignItems: 'center', minHeight: 50, borderRadius: r(14), paddingHorizontal: 14,
+          backgroundColor: c.inputBg, borderWidth: 1, borderColor: error ? c.danger : focus ? c.focusRing : c.controlBorder,
         }}
       >
         {Icon && <Icon size={18} color={c.textMuted} strokeWidth={1.6} style={{ marginRight: 10 }} />}
         <TextInput
+          {...rest}
+          accessibilityLabel={rest.accessibilityLabel ?? rest.placeholder}
           placeholderTextColor={c.textMuted}
           secureTextEntry={secure && hide}
           onFocus={e => { setFocus(true); rest.onFocus?.(e); }}
           onBlur={e => { setFocus(false); rest.onBlur?.(e); }}
-          style={[{ flex: 1, fontSize: fs(15), color: c.text, paddingVertical: 0, outlineStyle: 'none' } as any, style]}
-          {...rest}
+          style={[{ flex: 1, minWidth: 0, minHeight: 48, fontSize: fs(15), color: c.text, paddingVertical: 10, outlineStyle: 'none' } as any, style]}
         />
         {secure && (
-          <Pressable hitSlop={10} onPress={() => setHide(h => !h)}>
+          <Pressable accessibilityRole="button" accessibilityLabel={hide ? '显示密码' : '隐藏密码'} onPress={() => setHide(h => !h)} style={{ minWidth: 44, minHeight: 44, alignItems: 'center', justifyContent: 'center', marginRight: -10 }}>
             {hide ? <EyeOff size={18} color={c.textMuted} /> : <Eye size={18} color={c.textMuted} />}
           </Pressable>
         )}
         {right}
       </View>
-      {!!error && <Text style={{ color: c.danger, fontSize: fs(12), marginTop: 6, marginLeft: 6 }}>{error}</Text>}
+      {!!error && <Text accessibilityRole="alert" accessibilityLiveRegion="polite" style={{ color: c.danger, fontSize: fs(12), marginTop: 6, marginLeft: 6 }}>{error}</Text>}
     </View>
   );
 }
 
 export function SearchBar({ value, onChangeText, placeholder = '搜索日记、关键词或内容…', onSubmit, autoFocus, style, editable = true, onPress }: { value?: string; onChangeText?: (t: string) => void; placeholder?: string; onSubmit?: () => void; autoFocus?: boolean; style?: StyleProp<ViewStyle>; editable?: boolean; onPress?: () => void }) {
-  const { c, fs } = useTheme();
+  const { c, fs, r } = useTheme();
+  const [focus, setFocus] = useState(false);
   const content = (
-    <View style={[{ flexDirection: 'row', alignItems: 'center', height: 40, borderRadius: 20, paddingHorizontal: 14, backgroundColor: c.inputBg }, style]}>
+    <View style={[{ flexDirection: 'row', alignItems: 'center', minHeight: 44, borderRadius: r(999), paddingHorizontal: 14, backgroundColor: c.inputBg, borderWidth: 1, borderColor: focus ? c.focusRing : c.controlBorder }, style]}>
       <Search size={16} color={c.textMuted} />
       {editable ? (
         <TextInput
+          accessibilityLabel="搜索日记"
+          onFocus={() => setFocus(true)}
+          onBlur={() => setFocus(false)}
           value={value}
           onChangeText={onChangeText}
           placeholder={placeholder}
@@ -609,28 +856,30 @@ export function SearchBar({ value, onChangeText, placeholder = '搜索日记、�
           autoFocus={autoFocus}
           returnKeyType="search"
           onSubmitEditing={onSubmit}
-          style={{ flex: 1, marginLeft: 8, fontSize: fs(14), color: c.text, paddingVertical: 0, outlineStyle: 'none' } as any}
+          style={{ flex: 1, minWidth: 0, minHeight: 42, marginLeft: 8, fontSize: fs(14), color: c.text, paddingVertical: 7, outlineStyle: 'none' } as any}
         />
       ) : (
         <Text style={{ flex: 1, marginLeft: 8, fontSize: fs(14), color: c.textMuted }}>{placeholder}</Text>
       )}
       {!!value && editable && (
-        <Pressable hitSlop={10} onPress={() => onChangeText?.('')} style={{ backgroundColor: c.textMuted, borderRadius: 9, width: 16, height: 16, alignItems: 'center', justifyContent: 'center' }}>
-          <X size={11} color={c.card} strokeWidth={3} />
+        <Pressable accessibilityRole="button" accessibilityLabel="清空搜索" hitSlop={12} onPress={() => onChangeText?.('')} style={{ backgroundColor: 'transparent', borderRadius: r(12), minWidth: control.target, minHeight: control.target, alignItems: 'center', justifyContent: 'center' }}>
+          <X size={18} color={c.textSub} strokeWidth={2} />
         </Pressable>
       )}
     </View>
   );
-  return onPress ? <Pressable onPress={onPress}>{content}</Pressable> : content;
+  return onPress ? <Pressable accessibilityRole="button" accessibilityLabel="搜索日记" onPress={onPress}>{content}</Pressable> : content;
 }
 
 /* ============ 勾选 ============ */
 
 export function Checkbox({ checked, onChange, size = 18 }: { checked: boolean; onChange?: (v: boolean) => void; size?: number }) {
-  const { c } = useTheme();
+  const { c, r } = useTheme();
   return (
-    <Pressable hitSlop={8} onPress={() => onChange?.(!checked)} style={{ width: size, height: size, borderRadius: 5, borderWidth: 1.5, borderColor: checked ? c.primary : c.textMuted, backgroundColor: checked ? c.primary : 'transparent', alignItems: 'center', justifyContent: 'center' }}>
-      {checked && <Check size={size - 6} color="#fff" strokeWidth={3} />}
+    <Pressable accessibilityRole="checkbox" accessibilityState={{ checked, disabled: !onChange }} aria-checked={checked} aria-disabled={!onChange} disabled={!onChange} onPress={() => onChange?.(!checked)} {...webSpaceAction(() => onChange?.(!checked), !onChange)} style={{ minWidth: control.target, minHeight: control.target, alignItems: 'center', justifyContent: 'center' }}>
+      <View style={{ width: size, height: size, borderRadius: r(5), borderWidth: 1.5, borderColor: checked ? c.primaryDark : c.controlBorder, backgroundColor: checked ? c.primary : 'transparent', alignItems: 'center', justifyContent: 'center' }}>
+        {checked && <Check size={size - 6} color={c.textOnPrimary} strokeWidth={3} />}
+      </View>
     </Pressable>
   );
 }
@@ -638,7 +887,7 @@ export function Checkbox({ checked, onChange, size = 18 }: { checked: boolean; o
 export function Radio({ checked, size = 20 }: { checked: boolean; size?: number }) {
   const { c } = useTheme();
   return (
-    <View style={{ width: size, height: size, borderRadius: size / 2, borderWidth: 1.5, borderColor: checked ? c.primary : c.textMuted, alignItems: 'center', justifyContent: 'center' }}>
+    <View style={{ width: size, height: size, borderRadius: size / 2, borderWidth: 1.5, borderColor: checked ? c.primaryDark : c.controlBorder, alignItems: 'center', justifyContent: 'center' }}>
       {checked && <View style={{ width: size - 9, height: size - 9, borderRadius: size, backgroundColor: c.primary }} />}
     </View>
   );
@@ -649,7 +898,7 @@ export function SelectBadge({ checked, index }: { checked: boolean; index?: numb
   const { c } = useTheme();
   return (
     <View style={{ width: 22, height: 22, borderRadius: 11, borderWidth: 1.5, borderColor: '#fff', backgroundColor: checked ? c.primary : 'rgba(0,0,0,0.18)', alignItems: 'center', justifyContent: 'center' }}>
-      {checked && (index ? <Text style={{ color: '#fff', fontSize: 11, fontWeight: '700' }}>{index}</Text> : <Check size={13} color="#fff" strokeWidth={3} />)}
+      {checked && (index ? <Text style={{ color: c.textOnPrimary, fontSize: 12, fontWeight: '700' }}>{index}</Text> : <Check size={13} color={c.textOnPrimary} strokeWidth={3} />)}
     </View>
   );
 }
@@ -661,30 +910,50 @@ export function Divider({ style, inset = 0 }: { style?: StyleProp<ViewStyle>; in
   return <View style={[{ height: StyleSheet.hairlineWidth, backgroundColor: c.divider, marginLeft: inset }, style]} />;
 }
 
-export function Photo({ uri, style, radius: r = 10 }: { uri?: string; style?: StyleProp<ViewStyle>; radius?: number }) {
-  const { c } = useTheme();
+export function Photo({ uri, style, radius: imageRadius = 10 }: { uri?: string; style?: StyleProp<ViewStyle>; radius?: number }) {
+  const { c, r } = useTheme();
   const resolved = usePhotoUri(uri);
   const src = photoSource(resolved);
-  if (!src) return <View style={[{ backgroundColor: c.primarySoft, borderRadius: r, overflow: 'hidden' }, style]} />;
+  if (!src) return <View style={[{ backgroundColor: c.primarySoft, borderRadius: r(imageRadius), overflow: 'hidden' }, style]} />;
   return (
-    <View style={[{ borderRadius: r, backgroundColor: c.primarySoft, overflow: 'hidden' }, style]}>
-      <Image source={src} resizeMode="cover" style={[StyleSheet.absoluteFill, { width: '100%', height: '100%' }]} />
+    <View style={[{ borderRadius: r(imageRadius), backgroundColor: c.primarySoft, overflow: 'hidden' }, style]}>
+      <ExpoImage
+        source={src as any}
+        contentFit="cover"
+        cachePolicy="memory-disk"
+        transition={0}
+        recyclingKey={typeof resolved === 'string' ? resolved : undefined}
+        style={[StyleSheet.absoluteFill, { width: '100%', height: '100%' }]}
+      />
     </View>
   );
 }
 
-export function EmptyState({ image, title, desc, action, onAction, secondary, onSecondary, style, imageSize = 200 }: { image?: number; title: string; desc?: string; action?: string; onAction?: () => void; secondary?: string; onSecondary?: () => void; style?: StyleProp<ViewStyle>; imageSize?: number }) {
-  const { c, t } = useTheme();
+export function EmptyState({ image, title, desc, action, onAction, secondary, onSecondary, style, imageSize = 186 }: { image?: ImageSourcePropType; title: string; desc?: string; action?: string; onAction?: () => void; secondary?: string; onSecondary?: () => void; style?: StyleProp<ViewStyle>; imageSize?: number }) {
+  const { c, t, dark } = useTheme();
   return (
     <View style={[{ alignItems: 'center', paddingHorizontal: 32, paddingVertical: 24 }, style]}>
       {image != null && (
-        <Image source={image} style={{ width: imageSize, height: imageSize, borderRadius: imageSize / 2, marginBottom: 12, opacity: 0.98 }} resizeMode="cover" />
+        <View
+          style={{
+            width: imageSize,
+            height: imageSize,
+            borderRadius: dark ? imageSize / 2 : 0,
+            backgroundColor: dark ? 'rgba(236,246,247,0.92)' : 'transparent',
+            padding: dark ? 14 : 0,
+            alignItems: 'center',
+            justifyContent: 'center',
+            marginBottom: 14,
+          }}
+        >
+          <Image source={image} style={{ width: '100%', height: '100%' }} resizeMode="contain" />
+        </View>
       )}
       <Text style={[t.h2, { textAlign: 'center' }]}>{title}</Text>
       {!!desc && <T v="sub" center style={{ marginTop: 10 }}>{desc}</T>}
-      {!!action && <Button title={action} onPress={onAction} full={false} size="md" style={{ marginTop: 22, minWidth: 150 }} />}
+      {!!action && <Button title={action} onPress={onAction} full={false} size="md" style={{ marginTop: 22, minWidth: 164 }} />}
       {!!secondary && (
-        <Pressable onPress={onSecondary} style={{ marginTop: 14 }}>
+        <Pressable accessibilityRole="button" onPress={onSecondary} style={{ marginTop: 10, minHeight: control.target, justifyContent: 'center' }}>
           <Text style={{ color: c.primaryDark, fontSize: 13 }}>{secondary}</Text>
         </Pressable>
       )}
@@ -693,20 +962,29 @@ export function EmptyState({ image, title, desc, action, onAction, secondary, on
 }
 
 export function Badge({ text, color, bg }: { text: string; color?: string; bg?: string }) {
-  const { c } = useTheme();
+  const { c, r, fs } = useTheme();
   return (
-    <View style={{ paddingHorizontal: 8, paddingVertical: 2, borderRadius: 999, backgroundColor: bg ?? c.primaryFaint }}>
-      <Text style={{ fontSize: 11, color: color ?? c.primaryDark }}>{text}</Text>
+    <View style={{ paddingHorizontal: 8, paddingVertical: 3, borderRadius: r(999), backgroundColor: bg ?? c.primaryFaint }}>
+      <Text style={{ fontSize: fs(12), color: color ?? c.primaryDark }}>{text}</Text>
     </View>
   );
 }
 
 /** 圆角图标底座（设置项、模板等） */
 export function IconTile({ icon: Icon, size = 40, color, bg, iconSize }: { icon: LucideIcon; size?: number; color?: string; bg?: string; iconSize?: number }) {
-  const { c } = useTheme();
+  const { c, r } = useTheme();
   return (
-    <View style={{ width: size, height: size, borderRadius: size * 0.32, backgroundColor: bg ?? c.primaryFaint, alignItems: 'center', justifyContent: 'center' }}>
-      <Icon size={iconSize ?? size * 0.5} color={color ?? c.primaryDark} strokeWidth={1.6} />
+    <View
+      style={{
+        width: size,
+        height: size,
+        borderRadius: r(size * 0.32),
+        backgroundColor: bg ?? c.primaryFaint,
+        alignItems: 'center',
+        justifyContent: 'center',
+      }}
+    >
+      <Icon size={iconSize ?? size * 0.5} color={color ?? c.primaryDark} strokeWidth={1.75} />
     </View>
   );
 }

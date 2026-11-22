@@ -7,14 +7,14 @@
       "policy": "appVersion"
     },
     "scheme": "jidediary",
-    "icon": "./assets/images/app-icon.png",
+    "icon": "./assets/ink-companion/illustrations/app-icon-1024.png",
     "orientation": "portrait",
     "userInterfaceStyle": "automatic",
-    "backgroundColor": "#F8F5EF",
+    "backgroundColor": "#F7FAFA",
     "splash": {
-      "image": "./assets/images/splash-icon.png",
+      "image": "./assets/ink-companion/illustrations/splash-bird.png",
       "resizeMode": "contain",
-      "backgroundColor": "#F8F5EF"
+      "backgroundColor": "#F7FAFA"
     },
     "ios": {
       "supportsTablet": true,
@@ -24,7 +24,7 @@
         "NSFaceIDUsageDescription": "使用 Face ID 解锁记得日记，保护你的隐私。",
         "NSLocationWhenInUseUsageDescription": "用于为日记添加当前所在的地点。",
         "NSSpeechRecognitionUsageDescription": "用于在设备上进行语音识别，把口述内容写成日记。",
-        "NSMicrophoneUsageDescription": "用于把你说的话转成文字（语音听写）。"
+        "NSMicrophoneUsageDescription": "用于录制语音日记、视频声音，以及语音听写。"
       }
     },
     "android": {
@@ -32,8 +32,8 @@
       "versionCode": 1,
       "softwareKeyboardLayoutMode": "resize",
       "adaptiveIcon": {
-        "foregroundImage": "./assets/images/adaptive-icon.png",
-        "backgroundColor": "#FCF0DD"
+        "foregroundImage": "./assets/ink-companion/illustrations/adaptive-icon-1024.png",
+        "backgroundColor": "#6BD0D5"
       },
       "permissions": [
         "android.permission.USE_BIOMETRIC",
@@ -58,7 +58,7 @@
       "bundler": "metro",
       "output": "single",
       "name": "记得日记",
-      "favicon": "./assets/images/app-icon.png"
+      "favicon": "./assets/ink-companion/illustrations/app-icon.png"
     },
     "plugins": [
       "expo-router",
@@ -101,13 +101,13 @@
         {
           "photosPermission": "用于把照片插入到你的日记中。",
           "cameraPermission": "用于拍照记录生活中的瞬间。",
-          "microphonePermission": false
+          "microphonePermission": "用于录制语音日记、视频声音，以及语音听写。"
         }
       ],
       [
         "expo-audio",
         {
-          "microphonePermission": "用于录制语音日记。"
+          "microphonePermission": "用于录制语音日记、视频声音，以及语音听写。"
         }
       ],
       [
@@ -126,7 +126,7 @@
         "expo-notifications",
         {
           "icon": "./assets/images/notification-icon.png",
-          "color": "#B79276"
+          "color": "#5AC4CA"
         }
       ],
       "expo-sharing",
@@ -135,7 +135,7 @@
       [
         "expo-speech-recognition",
         {
-          "microphonePermission": "用于把你说的话转成文字（语音听写）。",
+          "microphonePermission": "用于录制语音日记、视频声音，以及语音听写。",
           "speechRecognitionPermission": "用于在设备上进行语音识别，把口述内容写成日记。"
         }
       ]

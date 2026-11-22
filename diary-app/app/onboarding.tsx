@@ -1,10 +1,11 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Animated, Image, Pressable, ScrollView, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
+import { Animated, Image, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Text } from '../src/components/text';
 import { router } from 'expo-router';
 import { useTheme } from '../src/theme/ThemeProvider';
 import { Button, Screen } from '../src/components/ui';
 import { MoodIcon } from '../src/components/MoodIcon';
-import { ND, PressableScale, SPRING } from '../src/components/motion';
+import { ND, PressableScale, SPRING, useReducedMotion } from '../src/components/motion';
 import { IMAGES } from '../src/data/assets';
 import type { MoodKey } from '../src/store/types';
 
@@ -34,14 +35,56 @@ const PAGES = [
 
 const PREVIEW_MOODS: MoodKey[] = ['happy', 'calm', 'tired', 'down', 'anxious'];
 
+/** 每页插画的固定小倾角，像贴在手账上的明信片 */
+const POSTCARD_ROT = [-1.5, 1.2, -0.8];
+
+/** 明信片外框：陪伴风给粗墨线 + 硬影，翻到该页时带轻微倾角回正 + 上浮 */
+function Postcard({ idx, step, children }: { idx: number; step: number; children: React.ReactNode }) {
+  const { ink } = useTheme();
+  const reduced = useReducedMotion();
+  const rot = POSTCARD_ROT[idx % POSTCARD_ROT.length];
+  const a = useRef(new Animated.Value(1)).current;
+  const prevActive = useRef(idx === step);
+  const active = idx === step;
+  useEffect(() => {
+    if (active && !prevActive.current) {
+      if (reduced) a.setValue(1);
+      else {
+        a.setValue(0);
+        Animated.spring(a, { toValue: 1, useNativeDriver: ND, ...SPRING.pop }).start();
+      }
+    }
+    prevActive.current = active;
+  }, [active, a, reduced]);
+  if (!ink.on) return <>{children}</>;
+  return (
+    <Animated.View
+      style={{
+        width: '100%',
+        alignItems: 'center',
+        transform: [
+          { rotate: a.interpolate({ inputRange: [0, 1], outputRange: [`${rot + 3}deg`, `${rot}deg`] }) },
+          { translateY: a.interpolate({ inputRange: [0, 1], outputRange: [10, 0] }) },
+        ],
+      }}
+    >
+      {children}
+    </Animated.View>
+  );
+}
+
 /** 页码指示点：当前页的点平滑拉长 */
-function Dot({ on, color, onPress }: { on: boolean; color: string; onPress: () => void }) {
+function Dot({ on, color, onPress, label }: { on: boolean; color: string; onPress: () => void; label: string }) {
+  const reduced = useReducedMotion();
   const w = useRef(new Animated.Value(on ? 18 : 6)).current;
   useEffect(() => {
-    Animated.spring(w, { toValue: on ? 18 : 6, useNativeDriver: false, ...SPRING.slide }).start();
-  }, [on, w]);
+    if (reduced) { w.setValue(on ? 18 : 6); return; }
+    const animation = Animated.spring(w, { toValue: on ? 18 : 6, useNativeDriver: false, ...SPRING.slide });
+    animation.start();
+    return () => animation.stop();
+  }, [on, w, reduced]);
   return (
-    <Pressable onPress={onPress} hitSlop={8}>
+    <Pressable accessibilityRole="button" accessibilityLabel={label} accessibilityState={{ selected: on }} aria-pressed={on} onPress={onPress} hitSlop={8} style={{ minWidth: 28, minHeight: 28, alignItems: 'center', justifyContent: 'center' }}>
       <Animated.View style={{ width: w, height: 6, borderRadius: 3, backgroundColor: color }} />
     </Pressable>
   );
@@ -49,15 +92,17 @@ function Dot({ on, color, onPress }: { on: boolean; color: string; onPress: () =
 
 /** 2-4. 引导页 1-3（1:1 复刻设计稿1 #2-#4） */
 export default function OnboardingScreen() {
-  const { c, t, fs } = useTheme();
-  const { width } = useWindowDimensions();
-  const pageW = Math.min(width, 420);
+  const { c, t, fs, dark, r, ink, frameInk } = useTheme();
+  const inkLook = ink.on;
+  const reduced = useReducedMotion();
+  const [pageW, setPageW] = useState(1);
   const scrollRef = useRef<ScrollView>(null);
   const [step, setStep] = useState(0);
   const [activeMood, setActiveMood] = useState<MoodKey>('happy');
   // 插画随翻页轻微位移与缩放，翻页不再是「整块平移」
   const scrollX = useRef(new Animated.Value(0)).current;
   const pageMotion = (idx: number) => {
+    if (reduced) return { opacity: 1 };
     const inputRange = [(idx - 1) * pageW, idx * pageW, (idx + 1) * pageW];
     return {
       opacity: scrollX.interpolate({ inputRange, outputRange: [0.35, 1, 0.35], extrapolate: 'clamp' }),
@@ -75,8 +120,16 @@ export default function OnboardingScreen() {
   const goPage = (i: number) => {
     pending.current = i;
     setStep(i);
-    scrollRef.current?.scrollTo({ x: i * pageW, animated: true });
+    scrollRef.current?.scrollTo({ x: i * pageW, animated: !reduced });
   };
+
+  // The carousel follows its actual content width, including desktop frames and rotation.
+  const stepRef = useRef(step);
+  stepRef.current = step;
+  useEffect(() => {
+    pending.current = stepRef.current;
+    scrollRef.current?.scrollTo({ x: stepRef.current * pageW, animated: false });
+  }, [pageW]);
 
   const next = () => {
     if (step < PAGES.length - 1) goPage(step + 1);
@@ -86,13 +139,14 @@ export default function OnboardingScreen() {
   return (
     <Screen edges={['top', 'bottom']}>
       <View style={{ paddingHorizontal: 22, paddingTop: 10, alignItems: 'flex-end' }}>
-        <Pressable hitSlop={12} onPress={goChoose}>
+        <Pressable accessibilityRole="button" hitSlop={12} onPress={goChoose} style={{ minWidth: 44, minHeight: 44, alignItems: 'flex-end', justifyContent: 'center' }}>
           <Text style={{ fontSize: fs(14), color: c.textSub }}>跳过</Text>
         </Pressable>
       </View>
 
       <Animated.ScrollView
         ref={scrollRef}
+        onLayout={event => setPageW(Math.max(1, event.nativeEvent.layout.width))}
         horizontal
         pagingEnabled
         showsHorizontalScrollIndicator={false}
@@ -121,25 +175,53 @@ export default function OnboardingScreen() {
         style={{ flex: 1 }}
       >
         {PAGES.map((p, idx) => (
-          <View key={p.key} style={{ width: pageW, flex: 1, paddingHorizontal: 28, justifyContent: 'space-between', paddingTop: 18, paddingBottom: 16 }}>
+          <View key={p.key} accessibilityElementsHidden={idx !== step} importantForAccessibility={idx === step ? 'auto' : 'no-hide-descendants'} aria-hidden={idx !== step} style={{ width: pageW, flexShrink: 0, paddingHorizontal: 28, justifyContent: 'center', gap: 20, paddingTop: 12, paddingBottom: 12 }}>
             <View>
               <Text style={[t.h1, { fontSize: fs(26), letterSpacing: 1 }]}>{p.title}</Text>
-              <Text style={[t.sub, { fontSize: fs(14.5), marginTop: 14, lineHeight: fs(14.5) * 1.75 }]}>{p.desc}</Text>
+              <Text style={[t.sub, { fontSize: fs(14.5), marginTop: 12, lineHeight: fs(14.5) * 1.75 }]}>{p.desc}</Text>
             </View>
 
-            <Animated.View style={[{ flex: 1, justifyContent: 'center', alignItems: 'center', marginVertical: 14 }, pageMotion(idx)]}>
+            <Animated.View style={[{ width: '100%', alignItems: 'center' }, pageMotion(idx)]}>
               {idx === 0 && (
-                <View style={{ width: '100%', aspectRatio: 0.92, borderRadius: 24, overflow: 'hidden', shadowColor: c.shadow, shadowOpacity: 0.12, shadowRadius: 18, shadowOffset: { width: 0, height: 8 }, elevation: 3 }}>
-                  <Image source={p.image} style={{ width: '100%', height: '100%' }} resizeMode="cover" />
-                </View>
+                <Postcard idx={idx} step={step}>
+                  <View
+                    style={{
+                      width: '100%',
+                      maxWidth: 320,
+                      maxHeight: 320,
+                      aspectRatio: 1,
+                      borderRadius: inkLook ? r(20) : 24,
+                      overflow: 'hidden',
+                      backgroundColor: '#FFFFFF',
+                      ...(inkLook ? frameInk : { borderWidth: StyleSheet.hairlineWidth, borderColor: c.divider }),
+                    }}
+                  >
+                    <Image source={p.image} style={{ width: '100%', height: '100%' }} resizeMode="cover" />
+                  </View>
+                </Postcard>
               )}
 
               {idx === 1 && (
-                <View style={{ width: '100%', alignItems: 'center' }}>
-                  <View style={{ width: '100%', aspectRatio: 1.32, borderRadius: 24, overflow: 'hidden', shadowColor: c.shadow, shadowOpacity: 0.1, shadowRadius: 16, shadowOffset: { width: 0, height: 6 }, elevation: 3 }}>
-                    <Image source={p.image} style={{ width: '100%', height: '100%' }} resizeMode="cover" />
-                  </View>
-                  <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', width: '94%', marginTop: 22 }}>
+                <View style={{ width: '100%', maxWidth: 320, alignItems: 'center' }}>
+                  <Postcard idx={idx} step={step}>
+                    <View
+                      style={{
+                        width: '100%',
+                        maxHeight: 240,
+                        aspectRatio: 1.32,
+                        borderRadius: inkLook ? r(20) : 24,
+                        overflow: 'hidden',
+                        backgroundColor: dark ? 'rgba(236,246,247,0.94)' : c.cardAlt,
+                        ...(inkLook ? frameInk : { borderWidth: StyleSheet.hairlineWidth, borderColor: c.divider }),
+                        padding: 14,
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                      }}
+                    >
+                    <Image source={p.image} style={{ width: '100%', height: '100%' }} resizeMode="contain" />
+                    </View>
+                  </Postcard>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', width: '96%', marginTop: 18 }}>
                     {PREVIEW_MOODS.map(m => {
                       const on = activeMood === m;
                       return (
@@ -148,15 +230,18 @@ export default function OnboardingScreen() {
                           scaleTo={0.86}
                           onPress={() => setActiveMood(m)}
                           style={{
-                            padding: 4,
+                            width: 48,
+                            height: 48,
                             borderRadius: 24,
+                            alignItems: 'center',
+                            justifyContent: 'center',
                             backgroundColor: on ? c.card : 'transparent',
                             borderWidth: 1.5,
-                            borderColor: on ? c.primarySoft : 'transparent',
-                            transform: [{ scale: on ? 1.12 : 1 }],
+                            borderColor: on ? (inkLook ? ink.line : c.primary) : 'transparent',
+                            transform: [{ scale: on ? 1.1 : 1 }],
                           }}
                         >
-                          <MoodIcon mood={m} size={34} />
+                          <MoodIcon mood={m} size={36} />
                         </PressableScale>
                       );
                     })}
@@ -165,9 +250,21 @@ export default function OnboardingScreen() {
               )}
 
               {idx === 2 && (
-                <View style={{ width: '100%', aspectRatio: 0.96, borderRadius: 24, overflow: 'hidden', borderWidth: StyleSheet.hairlineWidth, borderColor: c.divider }}>
-                  <Image source={p.image} style={{ width: '100%', height: '100%' }} resizeMode="cover" />
-                </View>
+                <Postcard idx={idx} step={step}>
+                  <View
+                    style={{
+                      width: '100%',
+                      maxWidth: 320,
+                      maxHeight: 320,
+                      aspectRatio: 1,
+                      borderRadius: inkLook ? r(20) : 24,
+                      overflow: 'hidden',
+                      ...(inkLook ? frameInk : { borderWidth: StyleSheet.hairlineWidth, borderColor: c.divider }),
+                    }}
+                  >
+                    <Image source={p.image} style={{ width: '100%', height: '100%' }} resizeMode="cover" />
+                  </View>
+                </Postcard>
               )}
             </Animated.View>
           </View>
@@ -179,6 +276,7 @@ export default function OnboardingScreen() {
           {PAGES.map((p, i) => (
             <Dot
               key={p.key}
+              label={`第 ${i + 1} 页：${p.title}`}
               on={i === step}
               color={i === step ? c.primary : c.primarySoft}
               onPress={() => goPage(i)}
@@ -189,8 +287,6 @@ export default function OnboardingScreen() {
         <Button
           title={PAGES[step].cta}
           onPress={next}
-          // 前两页的按钮略浅（设计稿），用主题色加透明度实现，换强调色时也协调
-          style={step < PAGES.length - 1 ? { opacity: 0.78 } : undefined}
         />
       </View>
     </Screen>

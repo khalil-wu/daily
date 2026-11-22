@@ -1,0 +1,225 @@
+{
+  "status": "published-and-verified",
+  "scope": "Continued the requested chat read-only; no message was sent to it. Browser tests used isolated synthetic local data.",
+  "artifact": {
+    "sourceSha256": "7810ee9af7593df3a2915cf41ba951c84d1f5956ac8743f3e28df82484153be3",
+    "sourceFiles": 145,
+    "entry": "_expo/static/js/web/entry-33f624c42aa60f4ab31361db51e48e45.js",
+    "entrySha256": "6882fa7147d306886541a177434d2d2127e3ba50247ae7e6704c4d9d369d7c63"
+  },
+  "checks": {
+    "typecheck": "passed",
+    "unitTests": {
+      "passed": 99,
+      "failed": 0
+    },
+    "feedbackServerTests": {
+      "passed": 3,
+      "failed": 0
+    },
+    "webExport": "passed",
+    "editorInteractions": 11,
+    "editorWorkflowChecks": 6,
+    "reviewAndReminderChecks": 6,
+    "modalAndMediaChecks": 12,
+    "layoutChecks": 48,
+    "themePreviews": 12,
+    "routes": 49,
+    "routeScreenshots": 64,
+    "overlayStates": 15,
+    "browserRuntimeErrors": 0,
+    "nativeConfiguration": "public config and introspection passed; offline dependency check passed"
+  },
+  "largeData": {
+    "reviewMountedOf5000": 9,
+    "photoWallMountedOf5000": 54,
+    "photoThumbnailsMountedOf5000": 13,
+    "personEntriesMountedOf5000": 8,
+    "importedDevicePhotos": 20
+  },
+  "privacyAndPerformance": [
+    {
+      "case": "lock-40-visible-frames",
+      "result": "pass",
+      "totalFrames": 47,
+      "lockedFrames": 40,
+      "exposedFrames": 0,
+      "observedContentFrames": 40,
+      "stopped": true,
+      "keyboardTabs": 24,
+      "focused": [
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6",
+        "7",
+        "8",
+        "9",
+        "0",
+        "DIV",
+        "BODY (outside app content)",
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6",
+        "7",
+        "8",
+        "9",
+        "0",
+        "DIV",
+        "BODY (outside app content)"
+      ],
+      "unlockedAfterCorrectPin": true,
+      "darkExtraLargeNoOverflow": true
+    },
+    {
+      "case": "long-writing-30000",
+      "result": "pass",
+      "environment": "single headless Chromium, local preview, no CPU throttling; diagnostic measurement only",
+      "bodyCharacters": 30000,
+      "inputEvents": 12,
+      "persistedCharacters": 30012,
+      "inputToNextFrameMs": {
+        "p50": 14.900000095367432,
+        "p95": 15.700000047683716,
+        "max": 15.700000047683716,
+        "samples": [
+          7.300000071525574,
+          7.800000071525574,
+          15,
+          15,
+          14.900000095367432,
+          14.300000071525574,
+          15.700000047683716,
+          14.900000095367432,
+          15.100000023841858,
+          14.899999976158142,
+          13.899999976158142,
+          15.600000023841858
+        ]
+      },
+      "longTasksOver50ms": [],
+      "scroll": {
+        "scrollable": true,
+        "samples": 40,
+        "distance": 3200,
+        "frameIntervals": [
+          14.100000023841858,
+          16.59999999999991,
+          16.700000000000045,
+          16.700000000000045,
+          16.700000000000045,
+          16.59999999999991,
+          16.700000000000045,
+          16.700000000000045,
+          16.59999999999991,
+          16.700000000000045,
+          16.700000000000045,
+          16.700000000000045,
+          16.5,
+          16.799999999999955,
+          16.59999999999991,
+          16.700000000000045,
+          16.700000000000045,
+          16.59999999999991,
+          16.700000000000045,
+          16.59999999999991,
+          16.800000000000182,
+          16.59999999999991,
+          16.699999999999818,
+          16.600000000000364,
+          16.699999999999818,
+          16.59999999999991,
+          16.700000000000273,
+          16.699999999999818,
+          16.699999999999818,
+          16.600000000000364,
+          16.59999999999991,
+          16.799999999999727,
+          16.600000000000364,
+          16.699999999999818,
+          16.59999999999991,
+          16.700000000000273,
+          16.59999999999991,
+          16.699999999999818,
+          16.700000000000273,
+          16.59999999999991
+        ],
+        "p95FrameIntervalMs": 16.799999999999955
+      }
+    }
+  ],
+  "production": {
+    "url": "http://39.105.19.77",
+    "verifiedAt": "2026-11-21T15:21:45.610Z",
+    "release": "/var/www/diary-releases/20261121T152011Z",
+    "previousRelease": "/var/www/diary",
+    "nginxBackup": "/var/backups/jide/20261121T152011Z/nginx.conf",
+    "entryMatches": true,
+    "entrySha256": "6882fa7147d306886541a177434d2d2127e3ba50247ae7e6704c4d9d369d7c63",
+    "localWrite": "passed",
+    "feedbackDraftOnHTTP": "passed",
+    "feedbackHealth": "passed",
+    "nginx": "active and syntax valid",
+    "feedbackService": "active and enabled; loopback only; database mode 0600",
+    "probes": [
+      {
+        "path": "/healthz",
+        "status": 200,
+        "type": "application/json",
+        "cache": "no-store"
+      },
+      {
+        "path": "/api/feedback/health",
+        "status": 200,
+        "type": "application/json; charset=utf-8",
+        "cache": "no-store, no-store"
+      },
+      {
+        "path": "/cb/",
+        "status": 401,
+        "type": "application/json; charset=utf-8",
+        "cache": "no-store"
+      },
+      {
+        "path": "/_expo/static/missing-jide.js",
+        "status": 404,
+        "type": "text/html"
+      },
+      {
+        "path": "/fonts/missing-jide.woff2",
+        "status": 404,
+        "type": "text/html"
+      },
+      {
+        "path": "/server/feedback.py",
+        "status": 403,
+        "type": "text/html"
+      },
+      {
+        "path": "/write",
+        "status": 200,
+        "type": "text/html",
+        "cache": "no-cache, must-revalidate"
+      }
+    ],
+    "firstInteractiveMs": 426,
+    "transferBytes": 2014968,
+    "fontRequestsBeforeReading": 0,
+    "baselineInteractiveMs": 3570,
+    "baselineTransferBytes": 38470030,
+    "transferReductionPercent": 94.8,
+    "measurementNote": "Single fresh headless Chromium context per measurement, same server; diagnostic observations, not a latency SLA. Home/onboarding use system UI fonts; diary fonts load when reading content appears.",
+    "initialDeployment": "First attempt automatically restored the old release after nginx reload briefly returned the previous SPA for health probes. Exact release-manifest readiness polling fixed the race; second attempt passed."
+  },
+  "remainingExternalValidation": [
+    "Real CloudBase authentication, two-device transfer, account isolation, database rules and storage permissions: user has no dedicated account/console access and chose to finish independently verifiable work first.",
+    "Physical iOS/Android recording, camera, notification delivery, input method, biometrics, background restoration and native animation frame rate; no signed app was published.",
+    "HTTPS/domain setup remains deferred as requested; the current bare IP is HTTP, so browser microphone/location capabilities remain restricted.",
+    "Media archives beyond 25 MiB attachments/50 MiB file are explicitly rejected; streaming or multi-volume archives are future work, not claimed as delivered."
+  ]
+}

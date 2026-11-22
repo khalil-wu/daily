@@ -1,5 +1,6 @@
-import React, { useMemo, useRef, useState } from 'react';
-import { ActivityIndicator, Animated, Easing, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { ActivityIndicator, Animated, Easing, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Text } from './text';
 import { router } from 'expo-router';
 import { Check, ChevronDown, HeartHandshake, RefreshCw, Sparkles, Wand2 } from 'lucide-react-native';
 import { useTheme } from '../theme/ThemeProvider';
@@ -8,7 +9,7 @@ import { updateEditorDraft } from '../store/editorSession';
 import type { Entry, MoodKey } from '../store/types';
 import { moodMeta, relationLabel } from '../data/constants';
 import { useFeedback } from './feedback';
-import { BottomSheet } from './motion';
+import { BottomSheet, useReducedMotion } from './motion';
 import { RichBody } from './RichBody';
 import { plainText } from '../utils/text';
 import { detectNewPeople, matchPeopleInText } from '../utils/people';
@@ -27,7 +28,8 @@ type TabKey = 'ask' | 'organize' | 'tidy';
  * AI 只问和整理，永远不替用户写。
  */
 export function RememberPanel({ entry, applyBody }: { entry: Entry; applyBody: (next: string, step?: boolean) => void }) {
-  const { c, t, fs } = useTheme();
+  const { c, t, fs, r } = useTheme();
+  const reduced = useReducedMotion();
   const { toast } = useFeedback();
   const tags = useStore(s => s.tags);
   const people = useStore(s => s.people);
@@ -47,12 +49,13 @@ export function RememberPanel({ entry, applyBody }: { entry: Entry; applyBody: (
   const sendable = canSendEntry(entry);
   const crisis = useMemo(() => detectCrisis(body), [body]);
 
-  const toggle = () => {
-    setOpen(v => {
-      Animated.timing(anim, { toValue: v ? 0 : 1, duration: 240, easing: Easing.out(Easing.cubic), useNativeDriver: false }).start();
-      return !v;
-    });
-  };
+  useEffect(() => {
+    if (reduced) { anim.setValue(open ? 1 : 0); return; }
+    const animation = Animated.timing(anim, { toValue: open ? 1 : 0, duration: 220, easing: Easing.out(Easing.cubic), useNativeDriver: false });
+    animation.start();
+    return () => animation.stop();
+  }, [anim, open, reduced]);
+  const toggle = () => setOpen(value => !value);
 
   /* ---------- 追问 ---------- */
   const questions = useMemo(() => {
@@ -137,9 +140,9 @@ export function RememberPanel({ entry, applyBody }: { entry: Entry; applyBody: (
   };
 
   return (
-    <View style={{ marginBottom: 14, backgroundColor: c.cardAlt, borderRadius: 16, borderWidth: StyleSheet.hairlineWidth, borderColor: open ? c.primarySoft : c.divider, overflow: 'hidden' }}>
+    <View style={{ marginTop: 14, marginBottom: 14, backgroundColor: c.card, borderRadius: r(14), borderWidth: StyleSheet.hairlineWidth, borderColor: open ? c.primarySoft : c.divider, overflow: 'hidden' }}>
       {/* 折叠头：永远只占一行 */}
-      <Pressable onPress={toggle} style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 14, paddingVertical: 11 }}>
+      <Pressable accessibilityRole="button" accessibilityState={{ expanded: open }} aria-expanded={open} accessibilityLabel={open ? '收起记得助手' : '展开记得助手'} onPress={toggle} style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 14, minHeight: 44, paddingVertical: 11 }}>
         <Sparkles size={14} color={c.primaryDark} />
         <Text style={{ fontSize: fs(13), color: c.primaryDark, fontWeight: '500', marginLeft: 6 }}>记得</Text>
         <Text style={{ fontSize: fs(12), color: c.textMuted, marginLeft: 6, flex: 1 }} numberOfLines={1}>
@@ -150,7 +153,7 @@ export function RememberPanel({ entry, applyBody }: { entry: Entry; applyBody: (
         </Animated.View>
       </Pressable>
 
-      <Animated.View style={{ height: anim.interpolate({ inputRange: [0, 1], outputRange: [0, 420] }), opacity: anim }}>
+      <Animated.View accessibilityElementsHidden={!open} aria-hidden={!open} importantForAccessibility={open ? 'auto' : 'no-hide-descendants'} pointerEvents={open ? 'auto' : 'none'} style={{ height: anim.interpolate({ inputRange: [0, 1], outputRange: [0, 420] }), opacity: anim, overflow: 'hidden' }}>
         <View style={{ height: 420, paddingHorizontal: 14, paddingBottom: 12 }}>
           {/* 页签 */}
           <View style={{ flexDirection: 'row', gap: 16, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: c.divider }}>
@@ -159,7 +162,7 @@ export function RememberPanel({ entry, applyBody }: { entry: Entry; applyBody: (
               { key: 'organize', label: '整理' },
               { key: 'tidy', label: '理顺口述' },
             ] as { key: TabKey; label: string }[]).map(it => (
-              <Pressable key={it.key} onPress={() => setTab(it.key)} style={{ paddingVertical: 8 }}>
+              <Pressable key={it.key} accessibilityRole="tab" accessibilityState={{ selected: tab === it.key }} aria-selected={tab === it.key} onPress={() => setTab(it.key)} style={{ paddingVertical: 8 }}>
                 <Text style={{ fontSize: fs(13), color: tab === it.key ? c.text : c.textMuted, fontWeight: tab === it.key ? '600' : '400' }}>{it.label}</Text>
                 <View style={{ height: 2, width: 14, marginTop: 5, borderRadius: 1, backgroundColor: tab === it.key ? c.primary : 'transparent' }} />
               </Pressable>
@@ -183,7 +186,7 @@ export function RememberPanel({ entry, applyBody }: { entry: Entry; applyBody: (
                   <Pressable
                     key={`${i}-${q}`}
                     onPress={() => insertQuestion(q)}
-                    style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'flex-start', gap: 8, backgroundColor: c.card, borderRadius: 12, padding: 12, opacity: pressed ? 0.75 : 1 })}
+                    style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'flex-start', gap: 8, backgroundColor: c.cardAlt, borderRadius: r(10), padding: 12, opacity: pressed ? 0.75 : 1 })}
                   >
                     <Text style={{ flex: 1, fontSize: fs(13.5), color: c.text, lineHeight: fs(13.5) * 1.5 }}>{q}</Text>
                     <Text style={{ fontSize: fs(11), color: c.primaryDark, marginTop: 2 }}>写入 ›</Text>
@@ -211,7 +214,7 @@ export function RememberPanel({ entry, applyBody }: { entry: Entry; applyBody: (
                     <Text style={S.label}>标题</Text>
                     <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 6 }}>
                       {suggest.titles.map(title => (
-                        <Pressable key={title} onPress={() => updateEditorDraft({ title })} style={{ paddingHorizontal: 10, paddingVertical: 6, borderRadius: 10, backgroundColor: c.card, borderWidth: StyleSheet.hairlineWidth, borderColor: c.divider }}>
+                        <Pressable key={title} onPress={() => updateEditorDraft({ title })} style={{ paddingHorizontal: 10, paddingVertical: 6, borderRadius: r(10), backgroundColor: c.cardAlt, borderWidth: StyleSheet.hairlineWidth, borderColor: c.divider }}>
                           <Text style={{ fontSize: fs(12.5), color: c.text }}>{title}</Text>
                         </Pressable>
                       ))}
@@ -221,7 +224,7 @@ export function RememberPanel({ entry, applyBody }: { entry: Entry; applyBody: (
                 {suggest.mood && suggest.mood !== entry.mood && (
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
                     <Text style={S.label}>心情</Text>
-                    <Pressable onPress={() => updateEditorDraft({ mood: suggest.mood })} style={{ paddingHorizontal: 10, paddingVertical: 6, borderRadius: 10, backgroundColor: c.card, borderWidth: StyleSheet.hairlineWidth, borderColor: c.divider }}>
+                    <Pressable onPress={() => updateEditorDraft({ mood: suggest.mood })} style={{ paddingHorizontal: 10, paddingVertical: 6, borderRadius: r(10), backgroundColor: c.cardAlt, borderWidth: StyleSheet.hairlineWidth, borderColor: c.divider }}>
                       <Text style={{ fontSize: fs(12.5), color: c.text }}>{moodMeta(suggest.mood)?.label}</Text>
                     </Pressable>
                   </View>
@@ -232,7 +235,7 @@ export function RememberPanel({ entry, applyBody }: { entry: Entry; applyBody: (
                     {suggest.tagIds.map(id => {
                       const tg = tags.find(x => x.id === id);
                       return tg ? (
-                        <Pressable key={id} onPress={() => updateEditorDraft({ tags: [...entry.tags, id] })} style={{ paddingHorizontal: 10, paddingVertical: 6, borderRadius: 10, backgroundColor: c.card, borderWidth: StyleSheet.hairlineWidth, borderColor: c.divider }}>
+                        <Pressable key={id} onPress={() => updateEditorDraft({ tags: [...entry.tags, id] })} style={{ paddingHorizontal: 10, paddingVertical: 6, borderRadius: r(10), backgroundColor: c.cardAlt, borderWidth: StyleSheet.hairlineWidth, borderColor: c.divider }}>
                           <Text style={{ fontSize: fs(12.5), color: c.text }}>#{tg.name}</Text>
                         </Pressable>
                       ) : null;
@@ -245,7 +248,7 @@ export function RememberPanel({ entry, applyBody }: { entry: Entry; applyBody: (
                     {suggest.peopleIds.map(id => {
                       const p = people.find(x => x.id === id);
                       return p ? (
-                        <Pressable key={id} onPress={() => updateEditorDraft({ people: [...entry.people, id] })} style={{ paddingHorizontal: 10, paddingVertical: 6, borderRadius: 10, backgroundColor: c.card, borderWidth: StyleSheet.hairlineWidth, borderColor: c.divider }}>
+                        <Pressable key={id} onPress={() => updateEditorDraft({ people: [...entry.people, id] })} style={{ paddingHorizontal: 10, paddingVertical: 6, borderRadius: r(10), backgroundColor: c.cardAlt, borderWidth: StyleSheet.hairlineWidth, borderColor: c.divider }}>
                           <Text style={{ fontSize: fs(12.5), color: c.text }}>{p.name}</Text>
                         </Pressable>
                       ) : null;
@@ -257,7 +260,7 @@ export function RememberPanel({ entry, applyBody }: { entry: Entry; applyBody: (
                           const created = actions.addPerson(np.name, np.relation);
                           if (created) updateEditorDraft({ people: [...entry.people, created.id] });
                         }}
-                        style={{ paddingHorizontal: 10, paddingVertical: 6, borderRadius: 10, backgroundColor: c.primaryFaint, borderWidth: StyleSheet.hairlineWidth, borderColor: c.primarySoft }}
+                        style={{ paddingHorizontal: 10, paddingVertical: 6, borderRadius: r(10), backgroundColor: c.primaryFaint, borderWidth: StyleSheet.hairlineWidth, borderColor: c.primarySoft }}
                       >
                         <Text style={{ fontSize: fs(12.5), color: c.primaryDark }}>+ {np.name}（{relationLabel(np.relation)}）</Text>
                       </Pressable>
@@ -313,7 +316,7 @@ export function RememberPanel({ entry, applyBody }: { entry: Entry; applyBody: (
         <ScrollView style={{ flexShrink: 1 }} showsVerticalScrollIndicator={false}>
           {tidied !== null && <RichBody body={tidied} />}
           <View style={{ flexDirection: 'row', gap: 10, marginTop: 18, marginBottom: 6 }}>
-            <Pressable onPress={() => setTidied(null)} style={{ flex: 1, height: 42, borderRadius: 21, borderWidth: 1, borderColor: c.border, alignItems: 'center', justifyContent: 'center' }}>
+            <Pressable onPress={() => setTidied(null)} style={{ flex: 1, minHeight: 44, borderRadius: r(999), borderWidth: 1, borderColor: c.border, alignItems: 'center', justifyContent: 'center' }}>
               <Text style={{ fontSize: fs(14), color: c.textSub }}>保留原文</Text>
             </Pressable>
             <Pressable
@@ -322,7 +325,7 @@ export function RememberPanel({ entry, applyBody }: { entry: Entry; applyBody: (
                 setTidied(null);
                 toast('已替换为理顺后的文字，可撤销');
               }}
-              style={{ flex: 1, height: 42, borderRadius: 21, backgroundColor: c.primary, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 5 }}
+              style={{ flex: 1, minHeight: 44, borderRadius: r(999), backgroundColor: c.primary, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 5 }}
             >
               <Check size={15} color={c.textOnPrimary} />
               <Text style={{ fontSize: fs(14), color: c.textOnPrimary, fontWeight: '600' }}>用这个</Text>

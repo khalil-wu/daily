@@ -115,8 +115,10 @@ export async function storeVideo(id: string, sourceUri: string, opts?: { blob?: 
     try {
       const blob = opts?.blob ?? (await (await fetch(sourceUri)).blob());
       await idbRun('readwrite', s => s.put(blob, id));
-      // 选取时拿到的 blob 地址在本次会话内仍然有效，直接复用
-      objectUrls.set(id, sourceUri);
+      // Own the preview URL so callers can safely release their temporary source.
+      const old = objectUrls.get(id);
+      if (old) URL.revokeObjectURL(old);
+      objectUrls.set(id, URL.createObjectURL(blob));
       return { uri: `${IDB_PREFIX}${id}`, durable: true };
     } catch {
       return { uri: sourceUri, durable: false };

@@ -1,5 +1,6 @@
-import React, { useEffect, useRef, useState } from 'react';
-import { Animated, AppState, Image, Platform, StyleSheet, Text, useWindowDimensions, View, type ViewStyle } from 'react-native';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { ActivityIndicator, Animated, AppState, Image, Platform, StyleSheet, useWindowDimensions, View, type ViewStyle } from 'react-native';
+import { Text } from '../src/components/text';
 import { Stack, router, usePathname } from 'expo-router';
 import { useFonts } from 'expo-font';
 import * as Notifications from 'expo-notifications';
@@ -14,6 +15,8 @@ import { TutorialOverlay } from '../src/components/TutorialOverlay';
 import { actions, closeTutorial, hydrate, useActiveTour, useHydrated, useStore } from '../src/store/store';
 import { isAutoBackupDue, writeAutoBackup } from '../src/services/autoBackup';
 import { IMAGES } from '../src/data/assets';
+import { useReducedMotion } from '../src/components/motion';
+import { FONT_SOURCES } from '../src/theme/fontSources';
 
 if (Platform.OS !== 'web') {
   Notifications.setNotificationHandler({
@@ -23,22 +26,24 @@ if (Platform.OS !== 'web') {
 
 /** 1. 启动页（品牌与氛围 - 1:1 复刻设计稿1 #1） */
 function SplashOverlay({ onDone }: { onDone: () => void }) {
-  const { t, fs } = useTheme();
+  const { c, t, fs, dark } = useTheme();
+  const reduced = useReducedMotion();
   const opacity = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
+    if (reduced) { onDone(); return; }
     const timer = setTimeout(() => {
-      Animated.timing(opacity, { toValue: 0, duration: 380, useNativeDriver: Platform.OS !== 'web' }).start(onDone);
-    }, 900);
-    return () => clearTimeout(timer);
-  }, [opacity, onDone]);
+      Animated.timing(opacity, { toValue: 0, duration: 180, useNativeDriver: Platform.OS !== 'web', isInteraction: false }).start(({ finished }) => { if (finished) onDone(); });
+    }, 240);
+    return () => { clearTimeout(timer); opacity.stopAnimation(); };
+  }, [opacity, onDone, reduced]);
 
   return (
-    <Animated.View style={[StyleSheet.absoluteFill, { zIndex: 99, backgroundColor: '#F8F5EF', opacity }]}>
-      <Image source={IMAGES.splash} style={[StyleSheet.absoluteFill, { width: '100%', height: '100%' }]} resizeMode="cover" />
+    <Animated.View style={[StyleSheet.absoluteFill, { zIndex: 99, backgroundColor: c.bg, opacity }]}>
+      <Image source={IMAGES.splash} style={[StyleSheet.absoluteFill, { width: '100%', height: '100%', opacity: dark ? 0.25 : 0.9 }]} resizeMode="cover" />
       <View style={{ flex: 1, alignItems: 'center', paddingTop: '44%' }}>
-        <Text style={[t.display, { fontSize: fs(34), color: '#2F2A26', letterSpacing: 4 }]}>记得日记</Text>
-        <Text style={{ fontSize: fs(14), color: '#7A746E', marginTop: 12, letterSpacing: 1.5 }}>记下生活，记得自己</Text>
+        <Text style={[t.display, { fontSize: fs(34), color: c.text, letterSpacing: 4 }]}>记得日记</Text>
+        <Text style={{ fontSize: fs(14), color: c.textSub, marginTop: 12, letterSpacing: 1.5 }}>记下生活，记得自己</Text>
       </View>
     </Animated.View>
   );
@@ -46,6 +51,7 @@ function SplashOverlay({ onDone }: { onDone: () => void }) {
 
 function AppShell() {
   const { c, dark } = useTheme();
+  const reduced = useReducedMotion();
   const hydrated = useHydrated();
   const privacy = useStore(s => s.privacy);
   const onboarded = useStore(s => s.onboarded);
@@ -55,8 +61,10 @@ function AppShell() {
   const pathRef = useRef(pathname);
   pathRef.current = pathname;
 
-  const [showSplash, setShowSplash] = useState(true);
-  const [locked, setLocked] = useState(false);
+  const [showSplash, setShowSplash] = useState(Platform.OS !== 'web');
+  const dismissSplash = useCallback(() => setShowSplash(false), []);
+  // Hydration finishes before AppShell mounts: render the lock on the very first frame.
+  const [locked, setLocked] = useState(() => !!(onboarded && privacy.appLock && privacy.passcodeHash));
   const lockInit = useRef(false);
   const bgAt = useRef<number | null>(null);
 
@@ -113,23 +121,31 @@ function AppShell() {
     return () => sub.remove();
   }, []);
 
-  const framedWeb = Platform.OS === 'web' && width >= 520;
+  const framedWeb = Platform.OS === 'web' && width >= 760;
   const tallFrame = framedWeb && height >= 740;
 
   const content = (
     <View style={{ flex: 1, backgroundColor: c.bg }}>
       <StatusBar style={dark ? 'light' : 'dark'} />
+      <View
+        {...(Platform.OS === 'web' ? { inert: locked } : {})}
+        accessibilityElementsHidden={locked}
+        importantForAccessibility={locked ? 'no-hide-descendants' : 'auto'}
+        aria-hidden={locked}
+        pointerEvents={locked ? 'none' : 'auto'}
+        style={{ flex: 1, opacity: locked ? 0 : 1 }}
+      >
       {hydrated ? (
-        <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: c.bg }, animation: 'slide_from_right' }}>
+        <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: c.bg }, animation: reduced ? 'none' : 'slide_from_right' }}>
         <Stack.Screen name="index" options={{ animation: 'none' }} />
-        <Stack.Screen name="onboarding" options={{ animation: 'fade' }} />
+        <Stack.Screen name="onboarding" options={{ animation: reduced ? 'none' : 'fade' }} />
         <Stack.Screen name="auth/choose" />
         <Stack.Screen name="auth/login" />
         <Stack.Screen name="auth/register" />
         <Stack.Screen name="auth/forgot" />
         <Stack.Screen name="(tabs)" options={{ animation: 'none' }} />
-        <Stack.Screen name="write" options={{ animation: 'slide_from_bottom' }} />
-        <Stack.Screen name="saved" options={{ animation: 'fade' }} />
+        <Stack.Screen name="write" options={{ animation: reduced ? 'none' : 'slide_from_bottom' }} />
+        <Stack.Screen name="saved" options={{ animation: reduced ? 'none' : 'fade' }} />
         <Stack.Screen name="memory/[id]" />
         <Stack.Screen name="search" />
         <Stack.Screen name="notebooks" />
@@ -166,9 +182,10 @@ function AppShell() {
       ) : (
         <View style={{ flex: 1, backgroundColor: c.bg }} />
       )}
+      </View>
 
       {locked && (
-        <View style={StyleSheet.absoluteFill}>
+        <View accessibilityViewIsModal aria-modal role="dialog" accessibilityLabel="应用锁" style={StyleSheet.absoluteFill}>
           <PinPadView
             title="请输入应用锁密码"
             allowBiometric={privacy.biometric}
@@ -193,24 +210,23 @@ function AppShell() {
         }}
       />
 
-      {showSplash && <SplashOverlay onDone={() => setShowSplash(false)} />}
+      {showSplash && <SplashOverlay onDone={dismissSplash} />}
     </View>
   );
 
   if (!framedWeb) return content;
 
   return (
-    <View style={{ flex: 1, backgroundColor: dark ? '#110F0D' : '#E9E2D8', alignItems: 'center', justifyContent: 'center' }}>
+    <View style={{ flex: 1, backgroundColor: c.bgDeep, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 24 }}>
       <View
         style={[
           {
             width: '100%',
-            maxWidth: 420,
+            maxWidth: 760,
             flex: 1,
-            maxHeight: tallFrame ? 880 : undefined,
             overflow: 'hidden',
             backgroundColor: c.bg,
-            borderRadius: tallFrame ? 36 : 0,
+            borderRadius: tallFrame ? 20 : 0,
             marginVertical: tallFrame ? 16 : 0,
             borderWidth: tallFrame ? 1 : 0,
             borderColor: c.divider,
@@ -225,24 +241,21 @@ function AppShell() {
 }
 
 export default function RootLayout() {
-  const [fontsLoaded] = useFonts({
-    NotoSerifSC: require('../assets/fonts/NotoSerifSC-Regular.otf'),
-    'NotoSerifSC-SemiBold': require('../assets/fonts/NotoSerifSC-SemiBold.otf'),
-  });
+  const [fontsLoaded] = useFonts(FONT_SOURCES);
 
   useEffect(() => {
     void hydrate();
   }, []);
 
   const hydrated = useHydrated();
-  if (!hydrated || !fontsLoaded) {
-    return <View style={{ flex: 1, backgroundColor: '#F8F5EF' }} />;
+  if (!hydrated) {
+    return <View style={{ flex: 1, backgroundColor: '#F7FAFA', alignItems: 'center', justifyContent: 'center' }}><ActivityIndicator color="#227C84" accessibilityLabel="正在打开日记" /></View>;
   }
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>
-        <ThemeProvider>
+        <ThemeProvider fontsReady={fontsLoaded}>
           <FeedbackProvider>
             <AppShell />
           </FeedbackProvider>

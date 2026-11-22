@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Linking, Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Linking, Platform, ScrollView, StyleSheet, View } from 'react-native';
+import { Text } from '../../src/components/text';
 import * as ImagePicker from 'expo-image-picker';
 import { FolderOpen, Video } from 'lucide-react-native';
 import { useTheme } from '../../src/theme/ThemeProvider';

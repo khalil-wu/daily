@@ -1,0 +1,24 @@
+{
+  "date": "2026-11-21",
+  "researchOnly": true,
+  "reportFiles": 10,
+  "localEvidenceLinks": 238,
+  "missing": [],
+  "sampleCounts": {
+    "coreJournals": 15,
+    "adjacent": 3,
+    "supplementalIdentityBoundary": 2,
+    "priorDayOneDaylio": 2
+  },
+  "currentApp": {
+    "routesIncludingRedirect": 49,
+    "layouts": 2,
+    "routeAndThemeScreenshots": 64,
+    "overlayStates": 15
+  },
+  "visualBrowser": "domestic-comparison.html",
+  "browserQA": "domestic-comparison-qa.json",
+  "screenshotQA": "domestic-comparison-screenshot-qa.json",
+  "productTestsRerun": false,
+  "deployed": false
+}

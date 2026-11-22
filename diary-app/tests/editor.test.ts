@@ -3,6 +3,9 @@ import assert from 'node:assert/strict';
 import { parseBlocks, toggleTodoAtLine } from '../src/utils/richtext';
 import { plainText } from '../src/utils/text';
 import { isDictationSupported } from '../src/utils/dictation';
+import { actions } from '../src/store/store';
+import { entryForSave, hasEntryContent, insertDictation } from '../src/utils/editor';
+import { calendarEntryDate } from '../src/utils/calendar';
 
 test('富文本解析：覆盖 8 种块类型、待办勾选往返与纯文本清理', () => {
   assert.deepEqual(parseBlocks(''), []);
@@ -52,4 +55,35 @@ test('富文本解析：覆盖 8 种块类型、待办勾选往返与纯文本�
 
 test('语音听写：在无 window 的 Node 环境下返回不支持', () => {
   assert.equal(isDictationSupported(), false);
+});
+
+test('编辑保存：已发布日记保留状态、完整日期人物元数据和多媒体空正文', () => {
+  const entry = actions.newEntry({ status: 'published', createdAt: 100, people: ['mum'], tags: ['travel'], temperature: 20, photos: ['asset:photo-lake'] });
+  assert.equal(hasEntryContent(entry), true);
+  const saved = entryForSave(entry, 200);
+  assert.equal(saved.status, 'published');
+  assert.equal(saved.createdAt, 100);
+  assert.equal(saved.updatedAt, 200);
+  assert.deepEqual(saved.people, ['mum']);
+  assert.deepEqual(saved.tags, ['travel']);
+  assert.equal(saved.temperature, 20);
+  assert.equal(entryForSave(actions.newEntry({ body: '还没写完' })).status, 'draft');
+  assert.equal(hasEntryContent(actions.newEntry({ title: ' ', body: '\n' })), false);
+  assert.equal(hasEntryContent(actions.newEntry({ audios: [{ id: 'audio', uri: 'test', duration: 1, createdAt: 1 }] })), true);
+});
+
+test('连续听写：替换选区后按顺序插入多段结果，光标越界也不会丢掉原文', () => {
+  const first = insertDictation('今天旧内容结束', '去了海边，', { start: 2, end: 5 });
+  const second = insertDictation(first.body, '很开心。', { start: first.cursor, end: first.cursor });
+  assert.equal(second.body, '今天去了海边，很开心。结束');
+  assert.equal(second.cursor, 11);
+  assert.deepEqual(insertDictation('原文', '新增', { start: 99, end: 99 }), { body: '原文新增', cursor: 4 });
+});
+
+test('日历补记：上午写今天不产生未来时间，过去用正午，未来日期不可写', () => {
+  const now = new Date(2026, 10, 21, 8, 30).getTime();
+  assert.equal(calendarEntryDate(2026, 10, 21, now), now);
+  assert.equal(calendarEntryDate(2026, 10, 20, now), new Date(2026, 10, 20, 12).getTime());
+  assert.equal(calendarEntryDate(2026, 10, 22, now), null);
+  assert.equal(calendarEntryDate(2027, 0, 1, now), null);
 });

@@ -1,22 +1,24 @@
 import React, { useMemo, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { FlatList, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Text } from '../src/components/text';
 import { router, useLocalSearchParams } from 'expo-router';
-import { Award, Calendar, Flame, MapPin, Moon, Sparkles, Sunrise } from 'lucide-react-native';
+import { Award, Calendar, ChevronLeft, ChevronRight, Flame, MapPin, Moon, Sparkles, Sunrise } from 'lucide-react-native';
 import { useTheme } from '../src/theme/ThemeProvider';
 import { useStore } from '../src/store/store';
-import { Card, EmptyState, NavBar, Screen, haptic } from '../src/components/ui';
+import { Card, EmptyState, NavBar, Screen, Segmented, haptic, webSpaceAction } from '../src/components/ui';
+import { BottomSheet } from '../src/components/motion';
 import { MoodIcon } from '../src/components/MoodIcon';
 import { MonthlyBarChart, MoodDonutChart, WordCloud } from '../src/components/Charts';
 import { MOODS, moodMeta } from '../src/data/constants';
 import { computeAnnualReport, getAvailableYears, type YearPixel } from '../src/utils/annual';
-import { fmtFullDate, fmtTime } from '../src/utils/date';
-import { fmtNumber, wordCount } from '../src/utils/text';
+import { dayKey, fmtFullDate, fmtTime } from '../src/utils/date';
+import { excerpt, fmtNumber, wordCount } from '../src/utils/text';
 import { IMAGES } from '../src/data/assets';
 
 /** 年度时光报告（Year in Pixels + 月度分布 + 情绪环形图 + 词云 + 年度之最） */
 export default function AnnualReportScreen() {
   const params = useLocalSearchParams<{ year?: string }>();
-  const { c, t, fs, dark } = useTheme();
+  const { c, t, fs, dark, r, look } = useTheme();
   const entries = useStore(s => s.entries);
   const tags = useStore(s => s.tags);
 
@@ -40,6 +42,10 @@ export default function AnnualReportScreen() {
 
   const report = useMemo(() => computeAnnualReport(entries, activeYear), [entries, activeYear]);
   const [selectedPixel, setSelectedPixel] = useState<YearPixel | null>(null);
+  const [calendarView, setCalendarView] = useState<'pixels' | 'days'>('pixels');
+  const [calendarMonth, setCalendarMonth] = useState(new Date().getMonth() + 1);
+  const recordedDays = useMemo(() => report.pixels.filter(pixel => pixel.month === calendarMonth && pixel.count > 0), [report.pixels, calendarMonth]);
+  const selectedEntries = useMemo(() => selectedPixel ? entries.filter(entry => !entry.hidden && !entry.deletedAt && entry.status === 'published' && dayKey(entry.createdAt) === selectedPixel.dateKey).sort((a, b) => a.createdAt - b.createdAt) : [], [entries, selectedPixel]);
 
   const pixelLookup = useMemo(() => {
     const m = new Map<string, YearPixel>();
@@ -62,13 +68,17 @@ export default function AnnualReportScreen() {
       <NavBar title="年度回顾" />
 
       {/* 年份切换栏 */}
-      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 22, paddingBottom: 10 }}>
-        <Pressable hitSlop={12} disabled={safeIdx >= years.length - 1} onPress={() => changeYear(1)} style={{ padding: 6 }}>
-          <Text style={{ fontSize: 20, color: safeIdx >= years.length - 1 ? c.textMuted : c.textSub }}>‹</Text>
+      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 18, paddingBottom: 10 }}>
+        <Pressable accessibilityRole="button" accessibilityLabel="上一年" disabled={safeIdx >= years.length - 1} onPress={() => changeYear(1)} style={{ minWidth: 44, minHeight: 44, alignItems: 'center', justifyContent: 'center' }}>
+          <View style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: c.cardAlt, alignItems: 'center', justifyContent: 'center', opacity: safeIdx >= years.length - 1 ? 0.35 : 1 }}>
+            <ChevronLeft size={17} color={c.textSub} />
+          </View>
         </Pressable>
         <Text style={[t.h2, { fontSize: fs(18), minWidth: 96, textAlign: 'center' }]}>{activeYear} 年</Text>
-        <Pressable hitSlop={12} disabled={safeIdx <= 0} onPress={() => changeYear(-1)} style={{ padding: 6 }}>
-          <Text style={{ fontSize: 20, color: safeIdx <= 0 ? c.textMuted : c.textSub }}>›</Text>
+        <Pressable accessibilityRole="button" accessibilityLabel="下一年" disabled={safeIdx <= 0} onPress={() => changeYear(-1)} style={{ minWidth: 44, minHeight: 44, alignItems: 'center', justifyContent: 'center' }}>
+          <View style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: c.cardAlt, alignItems: 'center', justifyContent: 'center', opacity: safeIdx <= 0 ? 0.35 : 1 }}>
+            <ChevronRight size={17} color={c.textSub} />
+          </View>
         </Pressable>
       </View>
 
@@ -86,13 +96,13 @@ export default function AnnualReportScreen() {
       ) : (
         <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 4, paddingBottom: 40, gap: 14 }}>
           {/* 1. 年度封面大数字摘要卡 */}
-          <Card style={{ backgroundColor: c.primaryFaint, borderColor: c.primarySoft }}>
+          <Card style={{ backgroundColor: dark ? c.cardAlt : c.primaryFaint, borderColor: c.primarySoft }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6, gap: 8 }}>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
                 <Sparkles size={15} color={c.primaryDark} />
                 <Text style={[t.h3, { color: c.primaryDark, fontSize: fs(15) }]}>{activeYear} 时光年鉴</Text>
               </View>
-              <View style={{ paddingHorizontal: 9, paddingVertical: 3, borderRadius: 999, backgroundColor: c.card }}>
+              <View style={{ paddingHorizontal: 9, paddingVertical: 3, borderRadius: r(999), backgroundColor: c.card }}>
                 <Text style={{ fontSize: fs(11), color: c.primaryDark, fontWeight: '600' }}>{report.writerPersona.title}</Text>
               </View>
             </View>
@@ -110,10 +120,10 @@ export default function AnnualReportScreen() {
                   style={{
                     width: '48.2%',
                     backgroundColor: c.card,
-                    borderRadius: 12,
+                    borderRadius: r(12),
                     padding: 12,
-                    borderWidth: dark ? 0 : StyleSheet.hairlineWidth,
-                    borderColor: c.divider,
+                    borderWidth: look.flat ? 1 : dark ? 0 : StyleSheet.hairlineWidth,
+                    borderColor: look.flat ? c.border : c.divider,
                   }}
                 >
                   <Text numberOfLines={1} style={{ fontSize: fs(11.5), color: c.textSub }}>{box.label}</Text>
@@ -128,20 +138,22 @@ export default function AnnualReportScreen() {
 
           {/* 2. Year in Pixels 情绪年历（12列 x 31行） */}
           <Card>
-            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+            <View style={{ marginBottom: 12, gap: 8 }}>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
                 <Calendar size={15} color={c.primaryDark} />
                 <Text style={[t.h3, { fontSize: fs(15) }]}>情绪年历 · Year in Pixels</Text>
               </View>
-              <Text style={{ fontSize: fs(11), color: c.textMuted }}>点按查看当日</Text>
+              <Text style={t.caption}>点选日期查看原文；日期列表提供更大的操作区域。</Text>
+              <Segmented value={calendarView} onChange={setCalendarView} items={[{ key: 'pixels', label: '像素图' }, { key: 'days', label: '日期列表' }]} />
             </View>
 
+            {calendarView === 'pixels' ? <>
             {/* 月份列头 */}
             <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 5 }}>
               <View style={{ width: 18 }} />
               {monthCols.map(m => (
                 <View key={m} style={{ flex: 1, alignItems: 'center' }}>
-                  <Text style={{ fontSize: fs(9.5), color: c.textMuted, fontVariant: ['tabular-nums'] }}>{m}</Text>
+                  <Text style={{ fontSize: fs(12), color: c.textSub, fontVariant: ['tabular-nums'] }}>{m}</Text>
                 </View>
               ))}
             </View>
@@ -152,7 +164,7 @@ export default function AnnualReportScreen() {
                 <View key={day} style={{ flexDirection: 'row', alignItems: 'center' }}>
                   <View style={{ width: 18 }}>
                     {(day === 1 || day === 10 || day === 20 || day === 30) && (
-                      <Text style={{ fontSize: 9, color: c.textMuted, fontVariant: ['tabular-nums'] }}>{day}</Text>
+                      <Text style={{ fontSize: fs(11), color: c.textSub, fontVariant: ['tabular-nums'] }}>{day}</Text>
                     )}
                   </View>
                   {monthCols.map(m => {
@@ -164,6 +176,8 @@ export default function AnnualReportScreen() {
                     return (
                       <Pressable
                         key={m}
+                        accessibilityRole="button"
+                        accessibilityLabel={`${p.dateKey}，${p.count} 篇日记`}
                         onPress={() => {
                           haptic('light');
                           setSelectedPixel(p);
@@ -189,26 +203,29 @@ export default function AnnualReportScreen() {
               ))}
             </View>
 
+            </> : <>
+              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 12 }}>
+                {monthCols.map(month => <Pressable key={month} accessibilityRole="radio" accessibilityLabel={`${month}月`} accessibilityState={{ checked: calendarMonth === month }} aria-checked={calendarMonth === month} {...webSpaceAction(() => setCalendarMonth(month))} onPress={() => setCalendarMonth(month)} style={{ minWidth: 48, minHeight: 44, justifyContent: 'center', alignItems: 'center', borderRadius: r(10), backgroundColor: calendarMonth === month ? c.primaryFaint : c.cardAlt, borderWidth: 1, borderColor: calendarMonth === month ? c.primary : c.divider }}>
+                  <Text style={{ fontSize: fs(13), color: calendarMonth === month ? c.primaryDark : c.text }}>{month}月</Text>
+                </Pressable>)}
+              </View>
+              {!recordedDays.length && <Text style={[t.sub, { paddingVertical: 12 }]}>这个月没有已发布的日记，可以选择其他月份。</Text>}
+              {recordedDays.map(pixel => <Pressable key={pixel.dateKey} accessibilityRole="button" accessibilityLabel={`查看 ${pixel.dateKey} 的 ${pixel.count} 篇日记`} onPress={() => setSelectedPixel(pixel)} style={{ minHeight: 52, paddingVertical: 12, gap: 4, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: c.divider }}>
+                <Text style={t.body}>{pixel.dateKey}　{pixel.mood ? moodMeta(pixel.mood)?.label : '未记录心情'}</Text>
+                <Text style={t.caption}>{pixel.count} 篇 · {pixel.words} 字　查看原文 ›</Text>
+              </Pressable>)}
+            </>}
+
             {/* 心情色标图例 */}
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10, justifyContent: 'center', marginTop: 12 }}>
               {MOODS.map(m => (
                 <View key={m.key} style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
                   <View style={{ width: 8, height: 8, borderRadius: 2, backgroundColor: m.color }} />
-                  <Text style={{ fontSize: fs(10.5), color: c.textSub }}>{m.label}</Text>
+                  <Text style={{ fontSize: fs(12), color: c.textSub }}>{m.label}</Text>
                 </View>
               ))}
             </View>
 
-            {selectedPixel && (
-              <View style={{ marginTop: 10, backgroundColor: c.bgDeep, borderRadius: 10, paddingHorizontal: 12, paddingVertical: 8, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-                <Text style={{ fontSize: fs(12), color: c.text, fontWeight: '500' }}>{selectedPixel.dateKey}</Text>
-                <Text style={{ fontSize: fs(12), color: c.textSub }}>
-                  {selectedPixel.count > 0
-                    ? `${selectedPixel.count} 篇 · ${selectedPixel.words} 字${selectedPixel.mood ? ` · ${moodMeta(selectedPixel.mood)?.label}` : ''}`
-                    : '这一天没有写日记'}
-                </Text>
-              </View>
-            )}
           </Card>
 
           {/* 3. 月度记录分布 */}
@@ -228,10 +245,10 @@ export default function AnnualReportScreen() {
           <Card>
             <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
               <Text style={[t.h3, { fontSize: fs(15) }]}>年度情绪光谱</Text>
-              {report.avgMoodScore > 0 && (
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5, paddingHorizontal: 9, paddingVertical: 3, borderRadius: 999, backgroundColor: c.primaryFaint }}>
-                  {domMood && <MoodIcon mood={domMood.key} size={13} />}
-                  <Text style={{ fontSize: fs(11.5), color: c.primaryDark }}>均分 {report.avgMoodScore}/5</Text>
+              {domMood && (
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5, paddingHorizontal: 9, paddingVertical: 3, borderRadius: r(999), backgroundColor: c.primaryFaint }}>
+                  <MoodIcon mood={domMood.key} size={13} />
+                  <Text style={{ fontSize: fs(12), color: c.primaryDark }}>最常记录 · {domMood.label}</Text>
                 </View>
               )}
             </View>
@@ -263,7 +280,7 @@ export default function AnnualReportScreen() {
                         <Pressable
                           key={tg.id}
                           onPress={() => router.push({ pathname: '/search', params: { tag: tg.id } })}
-                          style={{ paddingHorizontal: 11, paddingVertical: 6, borderRadius: 999, backgroundColor: c.primaryFaint }}
+                          style={{ paddingHorizontal: 11, paddingVertical: 6, borderRadius: r(999), backgroundColor: c.primaryFaint }}
                         >
                           <Text style={{ fontSize: fs(12.5), color: c.primaryDark }}>#{meta?.name ?? tg.id} · {tg.count}</Text>
                         </Pressable>
@@ -281,7 +298,7 @@ export default function AnnualReportScreen() {
                       <Pressable
                         key={pl.name}
                         onPress={() => router.push({ pathname: '/search', params: { q: pl.name.split('·')[0].trim() } })}
-                        style={{ flexDirection: 'row', alignItems: 'center', gap: 5, paddingHorizontal: 10, paddingVertical: 6, borderRadius: 999, backgroundColor: c.bgDeep }}
+                        style={{ flexDirection: 'row', alignItems: 'center', gap: 5, paddingHorizontal: 10, paddingVertical: 6, borderRadius: r(999), backgroundColor: c.bgDeep }}
                       >
                         <MapPin size={12} color={c.primaryDark} />
                         <Text style={{ fontSize: fs(12), color: c.text }}>{pl.name}</Text>
@@ -328,10 +345,10 @@ export default function AnnualReportScreen() {
                     onPress={() => router.push({ pathname: '/memory/[id]', params: { id: item.entry.id } })}
                     style={({ pressed }) => ({
                       backgroundColor: c.cardAlt,
-                      borderRadius: 12,
+                      borderRadius: r(12),
                       padding: 12,
-                      borderWidth: StyleSheet.hairlineWidth,
-                      borderColor: c.divider,
+                      borderWidth: look.flat ? 1 : StyleSheet.hairlineWidth,
+                      borderColor: look.flat ? c.border : c.divider,
                       opacity: pressed ? 0.85 : 1,
                     })}
                   >
@@ -362,6 +379,14 @@ export default function AnnualReportScreen() {
           </Card>
         </ScrollView>
       )}
+      <BottomSheet visible={!!selectedPixel} onClose={() => setSelectedPixel(null)} title={selectedPixel ? `${selectedPixel.dateKey} 的日记` : '当日日记'}>
+        <Text style={[t.sub, { marginBottom: 12 }]}>{selectedEntries.length ? `${selectedEntries.length} 篇 · 只展示未隐藏的已发布日记` : '这一天没有可查看的日记。'}</Text>
+        <FlatList data={selectedEntries} keyExtractor={entry => entry.id} style={{ maxHeight: 360 }} initialNumToRender={6} maxToRenderPerBatch={6} windowSize={5} renderItem={({ item }) => <Pressable accessibilityRole="button" accessibilityLabel={`打开日记：${item.title || '无题日记'}`} onPress={() => { setSelectedPixel(null); router.push({ pathname: '/memory/[id]', params: { id: item.id } }); }} style={{ minHeight: 64, paddingVertical: 14, gap: 6, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: c.divider }}>
+          <Text style={t.readingTitle}>{item.title || '无题日记'}</Text>
+          <Text textRole="reading" numberOfLines={2} style={t.sub}>{excerpt(item.body, 70) || '多媒体日记'}</Text>
+          <Text style={t.caption}>{fmtTime(item.createdAt)}</Text>
+        </Pressable>} />
+      </BottomSheet>
     </Screen>
   );
 }

@@ -1,0 +1,247 @@
+[
+  {
+    "source": "app/(tabs)/calendar.tsx",
+    "route": "/calendar",
+    "slug": "tabs-calendar"
+  },
+  {
+    "source": "app/(tabs)/index.tsx",
+    "route": "/",
+    "slug": "tabs-index"
+  },
+  {
+    "source": "app/(tabs)/me.tsx",
+    "route": "/me",
+    "slug": "tabs-me"
+  },
+  {
+    "source": "app/(tabs)/review.tsx",
+    "route": "/review",
+    "slug": "tabs-review"
+  },
+  {
+    "source": "app/(tabs)/stats.tsx",
+    "route": "/stats",
+    "slug": "tabs-stats"
+  },
+  {
+    "source": "app/annual-report.tsx",
+    "route": "/annual-report",
+    "slug": "annual-report"
+  },
+  {
+    "source": "app/auth/choose.tsx",
+    "route": "/auth/choose",
+    "slug": "auth-choose"
+  },
+  {
+    "source": "app/auth/forgot.tsx",
+    "route": "/auth/forgot",
+    "slug": "auth-forgot"
+  },
+  {
+    "source": "app/auth/login.tsx",
+    "route": "/auth/login",
+    "slug": "auth-login"
+  },
+  {
+    "source": "app/auth/register.tsx",
+    "route": "/auth/register",
+    "slug": "auth-register"
+  },
+  {
+    "source": "app/drafts.tsx",
+    "route": "/drafts",
+    "slug": "drafts"
+  },
+  {
+    "source": "app/favorites.tsx",
+    "route": "/favorites",
+    "slug": "favorites"
+  },
+  {
+    "source": "app/hidden.tsx",
+    "route": "/hidden",
+    "slug": "hidden"
+  },
+  {
+    "source": "app/index.tsx",
+    "route": "/",
+    "slug": "index"
+  },
+  {
+    "source": "app/memory/[id].tsx",
+    "route": "/memory/audit-entry",
+    "slug": "memory-id"
+  },
+  {
+    "source": "app/memory-map.tsx",
+    "route": "/memory-map",
+    "slug": "memory-map"
+  },
+  {
+    "source": "app/notebooks.tsx",
+    "route": "/notebooks",
+    "slug": "notebooks"
+  },
+  {
+    "source": "app/offline.tsx",
+    "route": "/offline",
+    "slug": "offline"
+  },
+  {
+    "source": "app/onboarding.tsx",
+    "route": "/onboarding",
+    "slug": "onboarding"
+  },
+  {
+    "source": "app/people/[id].tsx",
+    "route": "/people/audit-person",
+    "slug": "people-id"
+  },
+  {
+    "source": "app/people/index.tsx",
+    "route": "/people",
+    "slug": "people-index"
+  },
+  {
+    "source": "app/photos.tsx",
+    "route": "/photos",
+    "slug": "photos"
+  },
+  {
+    "source": "app/picker/audio.tsx",
+    "route": "/picker/audio",
+    "slug": "picker-audio"
+  },
+  {
+    "source": "app/picker/location.tsx",
+    "route": "/picker/location",
+    "slug": "picker-location"
+  },
+  {
+    "source": "app/picker/mood.tsx",
+    "route": "/picker/mood",
+    "slug": "picker-mood"
+  },
+  {
+    "source": "app/picker/people.tsx",
+    "route": "/picker/people",
+    "slug": "picker-people"
+  },
+  {
+    "source": "app/picker/photos.tsx",
+    "route": "/picker/photos",
+    "slug": "picker-photos"
+  },
+  {
+    "source": "app/picker/tags.tsx",
+    "route": "/picker/tags",
+    "slug": "picker-tags"
+  },
+  {
+    "source": "app/picker/video.tsx",
+    "route": "/picker/video",
+    "slug": "picker-video"
+  },
+  {
+    "source": "app/saved.tsx",
+    "route": "/saved",
+    "slug": "saved"
+  },
+  {
+    "source": "app/search.tsx",
+    "route": "/search",
+    "slug": "search"
+  },
+  {
+    "source": "app/settings/about.tsx",
+    "route": "/settings/about",
+    "slug": "settings-about"
+  },
+  {
+    "source": "app/settings/account.tsx",
+    "route": "/settings/account",
+    "slug": "settings-account"
+  },
+  {
+    "source": "app/settings/ai.tsx",
+    "route": "/settings/ai",
+    "slug": "settings-ai"
+  },
+  {
+    "source": "app/settings/appearance.tsx",
+    "route": "/settings/appearance",
+    "slug": "settings-appearance"
+  },
+  {
+    "source": "app/settings/backup.tsx",
+    "route": "/settings/backup",
+    "slug": "settings-backup"
+  },
+  {
+    "source": "app/settings/delete-account.tsx",
+    "route": "/settings/delete-account",
+    "slug": "settings-delete-account"
+  },
+  {
+    "source": "app/settings/goals.tsx",
+    "route": "/settings/goals",
+    "slug": "settings-goals"
+  },
+  {
+    "source": "app/settings/help.tsx",
+    "route": "/settings/help",
+    "slug": "settings-help"
+  },
+  {
+    "source": "app/settings/index.tsx",
+    "route": "/settings",
+    "slug": "settings-index"
+  },
+  {
+    "source": "app/settings/privacy.tsx",
+    "route": "/settings/privacy",
+    "slug": "settings-privacy"
+  },
+  {
+    "source": "app/settings/reminder-time.tsx",
+    "route": "/settings/reminder-time",
+    "slug": "settings-reminder-time"
+  },
+  {
+    "source": "app/settings/reminders.tsx",
+    "route": "/settings/reminders",
+    "slug": "settings-reminders"
+  },
+  {
+    "source": "app/settings/transfer.tsx",
+    "route": "/settings/transfer",
+    "slug": "settings-transfer"
+  },
+  {
+    "source": "app/settings/typography.tsx",
+    "route": "/settings/typography",
+    "slug": "settings-typography"
+  },
+  {
+    "source": "app/sync-conflict.tsx",
+    "route": "/sync-conflict",
+    "slug": "sync-conflict"
+  },
+  {
+    "source": "app/templates.tsx",
+    "route": "/templates",
+    "slug": "templates"
+  },
+  {
+    "source": "app/trash.tsx",
+    "route": "/trash",
+    "slug": "trash"
+  },
+  {
+    "source": "app/write.tsx",
+    "route": "/write",
+    "slug": "write"
+  }
+]

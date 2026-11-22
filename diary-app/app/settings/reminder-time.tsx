@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Text } from '../../src/components/text';
 import { useTheme } from '../../src/theme/ThemeProvider';
 import { actions, useStore } from '../../src/store/store';
 import type { RepeatRule } from '../../src/store/types';
-import { Card, NavBar, Radio, Screen, TextAction, goBack, haptic } from '../../src/components/ui';
+import { Card, NavBar, Radio, Screen, TextAction, goBack, haptic, webSpaceAction } from '../../src/components/ui';
 import { WheelTimePicker } from '../../src/components/WheelTimePicker';
 import { useFeedback } from '../../src/components/feedback';
 import { pad2, WEEK_SHORT } from '../../src/utils/date';
@@ -26,17 +27,23 @@ export default function ReminderTimeScreen() {
   const [minute, setMinute] = useState(rem.minute);
   const [repeat, setRepeat] = useState<RepeatRule>(rem.repeat);
   const [days, setDays] = useState<number[]>(rem.days);
+  const [saving, setSaving] = useState(false);
 
   const toggleDay = (d: number) => {
     haptic('light');
     setDays(cur => (cur.includes(d) ? (cur.length > 1 ? cur.filter(x => x !== d) : cur) : [...cur, d].sort()));
   };
 
-  const save = () => {
+  const save = async () => {
+    if (saving) return;
+    setSaving(true);
     const patch = { hour, minute, repeat, days };
     actions.setReminders(patch);
-    void rescheduleDailyReminder({ ...rem, ...patch });
-    toast(`已设为 ${pad2(hour)}:${pad2(minute)}`);
+    const status = await rescheduleDailyReminder({ ...rem, ...patch });
+    setSaving(false);
+    if (status === 'denied') { toast('时间已保存；通知权限未开启，提醒尚未生效', { type: 'warning' }); return; }
+    if (status === 'error') { toast('时间已保存，但系统未完成提醒安排，请重试', { type: 'error' }); return; }
+    toast(status === 'web' ? '时间偏好已保存；网页不支持后台定时提醒' : `提醒时间已设为 ${pad2(hour)}:${pad2(minute)}`);
     goBack();
   };
 
@@ -45,7 +52,7 @@ export default function ReminderTimeScreen() {
       <NavBar
         title="设置提醒时间"
         left={<TextAction label="取消" onPress={goBack} />}
-        right={<TextAction label="确定" color={c.primaryDark} bold onPress={save} />}
+        right={<TextAction label={saving ? '保存中…' : '确定'} color={c.primaryDark} bold onPress={() => void save()} />}
       />
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 10, paddingBottom: 32 }}>
@@ -67,6 +74,11 @@ export default function ReminderTimeScreen() {
             return (
               <Pressable
                 key={r.key}
+                accessibilityRole="radio"
+                accessibilityLabel={r.title}
+                accessibilityState={{ checked: on }}
+                aria-checked={on}
+                {...webSpaceAction(() => setRepeat(r.key))}
                 onPress={() => {
                   haptic('light');
                   setRepeat(r.key);
@@ -97,10 +109,15 @@ export default function ReminderTimeScreen() {
               return (
                 <Pressable
                   key={dow}
+                  accessibilityRole="checkbox"
+                  accessibilityLabel={`星期${WEEK_SHORT[dow]}`}
+                  accessibilityState={{ checked: on }}
+                  aria-checked={on}
+                  {...webSpaceAction(() => toggleDay(dow))}
                   onPress={() => toggleDay(dow)}
                   style={{
-                    width: 40,
-                    height: 40,
+                    flex: 1,
+                    minHeight: 44,
                     borderRadius: 20,
                     alignItems: 'center',
                     justifyContent: 'center',

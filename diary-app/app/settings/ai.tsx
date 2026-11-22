@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { Pressable, ScrollView, Text, View } from 'react-native';
+import { Pressable, ScrollView, View } from 'react-native';
+import { Text } from '../../src/components/text';
 import { BookOpenText, EyeOff, KeyRound, Link2, MessageCircleHeart, Sparkles, Trash2 } from 'lucide-react-native';
 import { useTheme } from '../../src/theme/ThemeProvider';
 import { actions, useStore } from '../../src/store/store';
@@ -173,19 +174,19 @@ export default function AISettingsScreen() {
       </ScrollView>
 
       {/* 开启前的知情同意 */}
-      <PopDialog visible={consentOpen} onClose={() => setConsentOpen(false)} maxWidth={350} style={{ padding: 24 }}>
-        <View style={{ alignItems: 'center' }}>
+      <PopDialog accessibilityLabel="开启「记得」之前" visible={consentOpen} onClose={() => setConsentOpen(false)} maxWidth={380} style={{ padding: 24 }}>
+        <ScrollView style={{ flexShrink: 1 }} contentContainerStyle={{ alignItems: 'center' }}>
           <Sparkles size={26} color={c.primaryDark} />
-          <Text style={[t.h2, { fontSize: fs(18), marginTop: 12, textAlign: 'center' }]}>开启「记得」之前</Text>
+          <Text accessibilityRole="header" style={[t.h2, { fontSize: fs(18), marginTop: 12, textAlign: 'center' }]}>开启「记得」之前</Text>
           <Text style={[t.sub, { marginTop: 12, lineHeight: fs(13) * 1.7 }]}>
             开启后，你主动使用追问、整理、回信、回顾时，相关日记的文字会发送到你填写的模型服务。{'\n\n'}
             不会发送：照片、视频、录音、位置，以及设为隐藏和已删除的日记。{'\n'}
             随时可以在这里关掉，关掉后不再发出任何内容。
           </Text>
-          <View style={{ flexDirection: 'row', gap: 12, marginTop: 22, width: '100%' }}>
-            <Button title="再想想" variant="secondary" size="md" style={{ flex: 1 }} onPress={() => setConsentOpen(false)} />
-            <Button title="明白了，开启" size="md" style={{ flex: 1 }} onPress={enable} />
-          </View>
+        </ScrollView>
+        <View style={{ gap: 10, marginTop: 20 }}>
+          <Button title="明白了，开启" size="md" onPress={enable} />
+          <Button title="再想想" variant="secondary" size="md" onPress={() => setConsentOpen(false)} />
         </View>
       </PopDialog>
     </Screen>

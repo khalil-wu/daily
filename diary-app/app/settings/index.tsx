@@ -44,15 +44,17 @@ export default function SettingsIndexScreen() {
     <Screen edges={['top', 'bottom']}>
       <NavBar variant="large" title="设置" />
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 32 }}>
-        <Group>
+        <Group title="账号">
           <Row
             icon={Cloud}
             iconColor={c.primaryDark}
             title="账号与同步"
-            subtitle="本地使用与本机账号同步"
+            subtitle="本地保存与云端同步状态"
             value={account ? '已登录' : '本地使用'}
             onPress={() => router.push('/settings/account')}
           />
+        </Group>
+        <Group title="记录与回顾">
           <Row
             icon={BookMarked}
             iconColor={c.primaryDark}
@@ -84,11 +86,13 @@ export default function SettingsIndexScreen() {
             value={ai.enabled ? '已开启' : '未开启'}
             onPress={() => router.push('/settings/ai')}
           />
+        </Group>
+        <Group title="外观与阅读">
           <Row
             icon={Palette}
             iconColor={c.primaryDark}
             title="外观主题"
-            subtitle="浅色 / 深色、强调色与字体"
+            subtitle="明暗模式、风格与主题颜色"
             onPress={() => router.push('/settings/appearance')}
           />
           <Row
@@ -98,6 +102,8 @@ export default function SettingsIndexScreen() {
             subtitle="正文宽度、行距、卡片样式"
             onPress={() => router.push('/settings/typography')}
           />
+        </Group>
+        <Group title="隐私与数据">
           <Row
             icon={Shield}
             iconColor={c.primaryDark}
@@ -119,6 +125,8 @@ export default function SettingsIndexScreen() {
             subtitle="Markdown、PDF 等格式"
             onPress={() => router.push('/settings/transfer')}
           />
+        </Group>
+        <Group title="应用">
           {Platform.OS !== 'web' && (
             <Row
               icon={RefreshCw}

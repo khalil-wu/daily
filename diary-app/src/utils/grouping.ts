@@ -125,7 +125,7 @@ export function computeTodaySummary(entries: Entry[], now = Date.now()): TodaySu
   let count = 0;
   let words = 0;
   for (const e of entries) {
-    if (e.deletedAt) continue;
+    if (e.deletedAt || e.hidden) continue;
     const today = isSameDay(e.createdAt, now);
     if (today && !e.hidden) words += wordCount(e.title) + wordCount(e.body);
     if (e.status !== 'published') continue;

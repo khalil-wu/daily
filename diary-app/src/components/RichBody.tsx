@@ -1,5 +1,6 @@
 import React from 'react';
-import { Pressable, StyleSheet, Text, View, type TextStyle } from 'react-native';
+import { Pressable, StyleSheet, View, type TextStyle } from 'react-native';
+import { Text } from './text';
 import { Check } from 'lucide-react-native';
 import { useTheme } from '../theme/ThemeProvider';
 import { parseBlocks } from '../utils/richtext';
@@ -28,7 +29,7 @@ export function HighlightText({ text, query, style, numberOfLines }: { text: str
     <Text numberOfLines={numberOfLines} style={style}>
       {parts.map((p, i) =>
         p.hit ? (
-          <Text key={i} style={{ backgroundColor: c.primarySoft, color: c.primaryDark, fontWeight: '600' }}>
+          <Text key={i} style={{ fontFamily: style?.fontFamily, backgroundColor: c.primarySoft, color: c.primaryDark, fontWeight: '600' }}>
             {p.str}
           </Text>
         ) : (
@@ -71,14 +72,15 @@ export function RichBody({
   serif?: boolean;
   onToggleTodo?: (lineIndex: number) => void;
 }) {
-  const { c, t, fs, lineHeight } = useTheme();
+  const { c, t, fs, lineHeight, dark, r } = useTheme();
   const baseStyle: TextStyle = serif
     ? t.bodySerif
     : { fontSize: fs(15), color: c.text, lineHeight: fs(15) * lineHeight };
-  const blocks = parseBlocks(body);
+  const headingStyle = serif ? { ...t.readingTitle, fontSize: fs(19), lineHeight: fs(19) * 1.5 } : t.h2;
+  const blocks = React.useMemo(() => parseBlocks(body), [body]);
 
   return (
-    <View style={{ gap: 6 }}>
+    <View style={{ gap: 10 }}>
       {blocks.map((block, i) => {
         if (block.type === 'blank') {
           return <View key={block.lineIndex} style={{ height: 8 }} />;
@@ -86,16 +88,18 @@ export function RichBody({
 
         if (block.type === 'divider') {
           return (
-            <View key={block.lineIndex} style={{ paddingVertical: 10, alignItems: 'center' }}>
-              <View style={{ width: '58%', height: StyleSheet.hairlineWidth * 2, backgroundColor: c.divider, borderRadius: 1 }} />
+            <View key={block.lineIndex} style={{ paddingVertical: 12, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10 }}>
+              <View style={{ width: 42, height: StyleSheet.hairlineWidth, backgroundColor: c.divider }} />
+              <Text style={{ fontSize: 12, color: c.textMuted }}>·</Text>
+              <View style={{ width: 42, height: StyleSheet.hairlineWidth, backgroundColor: c.divider }} />
             </View>
           );
         }
 
         if (block.type === 'heading') {
           return (
-            <Text key={block.lineIndex} style={[t.h2, { marginTop: i > 0 ? 10 : 0, marginBottom: 2, color: c.text }]}>
-              {renderInline(block.text, t.h2, c.primary)}
+            <Text key={block.lineIndex} style={[headingStyle, { marginTop: i > 0 ? 10 : 0, marginBottom: 2, color: c.text }]}>
+              {renderInline(block.text, headingStyle, c.primary)}
             </Text>
           );
         }
@@ -108,11 +112,11 @@ export function RichBody({
               style={{
                 borderLeftWidth: 3,
                 borderLeftColor: c.primary,
-                backgroundColor: c.cardAlt,
+                backgroundColor: dark ? c.cardAlt : c.primaryFaint,
                 paddingVertical: 8,
                 paddingHorizontal: 12,
-                borderTopRightRadius: 10,
-                borderBottomRightRadius: 10,
+                borderTopRightRadius: r(10),
+                borderBottomRightRadius: r(10),
                 marginVertical: 2,
               }}
             >
@@ -155,7 +159,7 @@ export function RichBody({
                   justifyContent: 'center',
                 }}
               >
-                {block.checked && <Check size={12} color="#fff" strokeWidth={3} />}
+                {block.checked && <Check size={12} color={c.textOnPrimary} strokeWidth={3} />}
               </View>
               <Text style={[todoStyle, { flex: 1 }]}>
                 {renderInline(block.text, todoStyle, c.primary)}

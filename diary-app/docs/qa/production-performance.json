@@ -1,0 +1,141 @@
+{
+  "base": "http://39.105.19.77",
+  "at": "2026-11-22T08:53:35.891Z",
+  "firstInteractiveMs": 564,
+  "fontRequests": [
+    {
+      "url": "http://39.105.19.77/fonts/NotoSerifSC-SemiBold-ui-65ebcb49a614710d.woff2",
+      "bytes": 678516,
+      "durationMs": 162
+    }
+  ],
+  "transferBytes": 2529989,
+  "paints": [
+    {
+      "name": "first-paint",
+      "ms": 112
+    },
+    {
+      "name": "first-contentful-paint",
+      "ms": 564
+    }
+  ],
+  "overflow": false,
+  "language": "zh-CN",
+  "expectedEntry": "_expo/static/js/web/entry-eba286dd56d3b1f8050604cff78e6c64.js",
+  "entryMatches": true,
+  "localSaveVerified": true,
+  "feedbackDraftAvailable": true,
+  "secureContext": false,
+  "assetHeaders": [
+    {
+      "url": "http://39.105.19.77/_expo/static/css/fonts-87e03e075548a67530ffbb199ef63d46.css",
+      "encoding": "gzip",
+      "cache": "max-age=31536000, public, immutable",
+      "type": "text/css"
+    },
+    {
+      "url": "http://39.105.19.77/_expo/static/js/web/entry-eba286dd56d3b1f8050604cff78e6c64.js",
+      "encoding": "gzip",
+      "cache": "max-age=31536000, public, immutable",
+      "type": "application/javascript"
+    },
+    {
+      "url": "http://39.105.19.77/fonts/NotoSerifSC-SemiBold-ui-65ebcb49a614710d.woff2",
+      "encoding": "",
+      "cache": "max-age=31536000, public, immutable",
+      "type": "font/woff2"
+    },
+    {
+      "url": "http://39.105.19.77/_expo/static/css/fonts-87e03e075548a67530ffbb199ef63d46.css",
+      "encoding": "gzip",
+      "cache": "max-age=31536000, public, immutable",
+      "type": "text/css"
+    },
+    {
+      "url": "http://39.105.19.77/_expo/static/js/web/entry-eba286dd56d3b1f8050604cff78e6c64.js",
+      "encoding": "gzip",
+      "cache": "max-age=31536000, public, immutable",
+      "type": "application/javascript"
+    },
+    {
+      "url": "http://39.105.19.77/fonts/NotoSerifSC-SemiBold-ui-65ebcb49a614710d.woff2",
+      "encoding": "",
+      "cache": "max-age=31536000, public, immutable",
+      "type": "font/woff2"
+    },
+    {
+      "url": "http://39.105.19.77/fonts/NotoSerifSC-Regular-ui-8f0d696813273634.woff2",
+      "encoding": "",
+      "cache": "max-age=31536000, public, immutable",
+      "type": "font/woff2"
+    },
+    {
+      "url": "http://39.105.19.77/_expo/static/css/fonts-87e03e075548a67530ffbb199ef63d46.css",
+      "encoding": "gzip",
+      "cache": "max-age=31536000, public, immutable",
+      "type": "text/css"
+    },
+    {
+      "url": "http://39.105.19.77/_expo/static/js/web/entry-eba286dd56d3b1f8050604cff78e6c64.js",
+      "encoding": "gzip",
+      "cache": "max-age=31536000, public, immutable",
+      "type": "application/javascript"
+    },
+    {
+      "url": "http://39.105.19.77/fonts/NotoSerifSC-Regular-ui-8f0d696813273634.woff2",
+      "encoding": "",
+      "cache": "max-age=31536000, public, immutable",
+      "type": "font/woff2"
+    },
+    {
+      "url": "http://39.105.19.77/fonts/NotoSerifSC-SemiBold-ui-65ebcb49a614710d.woff2",
+      "encoding": "",
+      "cache": "max-age=31536000, public, immutable",
+      "type": "font/woff2"
+    }
+  ],
+  "errors": [],
+  "failed": [],
+  "probes": [
+    {
+      "path": "/healthz",
+      "status": 200,
+      "type": "application/json",
+      "cache": "no-store"
+    },
+    {
+      "path": "/api/feedback/health",
+      "status": 200,
+      "type": "application/json; charset=utf-8",
+      "cache": "no-store, no-store"
+    },
+    {
+      "path": "/cb/",
+      "status": 401,
+      "type": "application/json; charset=utf-8",
+      "cache": "no-store"
+    },
+    {
+      "path": "/_expo/static/missing-jide.js",
+      "status": 404,
+      "type": "text/html"
+    },
+    {
+      "path": "/fonts/missing-jide.woff2",
+      "status": 404,
+      "type": "text/html"
+    },
+    {
+      "path": "/server/feedback.py",
+      "status": 403,
+      "type": "text/html"
+    },
+    {
+      "path": "/write",
+      "status": 200,
+      "type": "text/html",
+      "cache": "no-cache, must-revalidate"
+    }
+  ]
+}

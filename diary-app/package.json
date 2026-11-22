@@ -12,7 +12,16 @@
     "test": "node --import tsx --test tests/*.test.ts",
     "export:web": "expo export --platform web",
     "build:android:preview": "eas build -p android --profile preview",
-    "build:ios": "eas build -p ios --profile production"
+    "build:ios": "eas build -p ios --profile production",
+    "test:web": "node --import tsx scripts/verify-interactions.mts",
+    "test:ui": "node --import tsx scripts/verify-ui.mts",
+    "test:backup": "node --import tsx scripts/verify-backup.mts",
+    "verify:release": "node --import tsx scripts/verify-release.mts",
+    "test:overlays": "node --import tsx scripts/verify-overlays.mts",
+    "test:design": "node scripts/verify-design-system.mjs",
+    "test:editor": "node --import tsx scripts/verify-editor-workflows.mts",
+    "test:review": "node --import tsx scripts/verify-review-reminders.mts",
+    "test:feedback": "python3 -m unittest discover -s server -p 'test_*.py' -v"
   },
   "dependencies": {
     "@cloudbase/adapter-rn": "^1.0.3",

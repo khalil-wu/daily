@@ -1,5 +1,7 @@
 import React, { useMemo, useState } from 'react';
-import { Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Image, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Image as ExpoImage } from 'expo-image';
+import { Text } from '../../src/components/text';
 import { router } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -10,9 +12,9 @@ import {
 } from 'lucide-react-native';
 import { useTheme } from '../../src/theme/ThemeProvider';
 import { actions, useStore } from '../../src/store/store';
-import { Button, Card, Field, Group, IconTile, Row, Screen } from '../../src/components/ui';
+import { Button, Card, Field, Group, Row, Screen } from '../../src/components/ui';
 import { useFeedback } from '../../src/components/feedback';
-import { BottomSheet, FadeIn, PressableScale } from '../../src/components/motion';
+import { BottomSheet, PressableScale, useCountUp } from '../../src/components/motion';
 import { startHomeTour } from '../../src/components/TutorialOverlay';
 import { IMAGES, photoSource } from '../../src/data/assets';
 import { storePhoto } from '../../src/services/photoStore';
@@ -24,7 +26,8 @@ import { fmtNumber } from '../../src/utils/text';
 
 /** 16 & 设计稿3 #1. 个人中心页 */
 export default function MeScreen() {
-  const { c, t, fs, dark } = useTheme();
+  const { c, t, fs, dark, ink } = useTheme();
+  const inkLook = ink.on;
   const insets = useSafeAreaInsets();
   const { toast } = useFeedback();
   const entries = useStore(s => s.entries);
@@ -40,14 +43,14 @@ export default function MeScreen() {
   const [nameInput, setNameInput] = useState(profile.name);
   const [sigInput, setSigInput] = useState(profile.signature);
 
-  const stats = useMemo(() => computeStats(entries), [entries]);
-  const draftCount = useMemo(() => entries.filter(e => !e.deletedAt && e.status === 'draft').length, [entries]);
-  const favCount = useMemo(() => entries.filter(e => !e.deletedAt && e.favorite).length, [entries]);
+  const stats = useMemo(() => computeStats(entries.filter(e => !e.hidden)), [entries]);
+  const draftCount = useMemo(() => entries.filter(e => !e.deletedAt && !e.hidden && e.status === 'draft').length, [entries]);
+  const favCount = useMemo(() => entries.filter(e => !e.deletedAt && !e.hidden && e.favorite).length, [entries]);
   const trashCount = useMemo(() => entries.filter(e => !!e.deletedAt).length, [entries]);
   // 从「开始使用」和「最早一篇日记」里取更早的那天算起：恢复或导入的旧日记也算陪伴的日子
   const companionDays = useMemo(() => {
     let start = firstUseAt;
-    for (const e of entries) if (!e.deletedAt && e.createdAt < start) start = e.createdAt;
+    for (const e of entries) if (!e.deletedAt && !e.hidden && e.createdAt < start) start = e.createdAt;
     return Math.max(1, daysBetween(start, Date.now()) + 1);
   }, [entries, firstUseAt]);
 
@@ -80,25 +83,29 @@ export default function MeScreen() {
   return (
     <Screen edges={[]}>
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 36 }}>
-        {/* 顶部暮色芦苇封面 + 渐变融合 */}
-        <View style={{ height: 184, width: '100%', overflow: 'hidden' }}>
-          <Image source={IMAGES.meCover} style={{ width: '100%', height: '100%', opacity: dark ? 0.55 : 0.92 }} resizeMode="cover" />
-          <LinearGradient colors={['transparent', c.bg]} style={{ position: 'absolute', left: 0, right: 0, bottom: 0, height: 110 }} />
+        {/* 顶部线绘湖畔小鸟封面 + 柔和渐变融合 */}
+        <View style={{ height: 196, width: '100%', overflow: 'hidden', backgroundColor: dark ? c.bgDeep : '#FFFFFF' }}>
+          <ExpoImage source={IMAGES.meCover as any} contentFit="cover" cachePolicy="memory-disk" transition={0} style={{ width: '100%', height: '100%', opacity: dark ? 0.6 : 0.98 }} />
+          <LinearGradient colors={['transparent', c.bg]} style={{ position: 'absolute', left: 0, right: 0, bottom: 0, height: 64 }} />
           <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="设置"
             onPress={() => router.push('/settings')}
             hitSlop={12}
-            style={{ position: 'absolute', top: insets.top + 8, right: 18, width: 36, height: 36, borderRadius: 18, backgroundColor: dark ? 'rgba(0,0,0,0.4)' : 'rgba(255,255,255,0.75)', alignItems: 'center', justifyContent: 'center' }}
+            style={{ position: 'absolute', top: insets.top + 4, right: 14, minWidth: 44, minHeight: 44, alignItems: 'center', justifyContent: 'center' }}
           >
-            <Settings size={19} color={c.text} strokeWidth={1.7} />
+            <View style={{ width: 38, height: 38, borderRadius: 19, backgroundColor: dark ? 'rgba(0,0,0,0.45)' : 'rgba(255,255,255,0.9)', borderWidth: inkLook ? 1.25 : 0, borderColor: ink.line, alignItems: 'center', justifyContent: 'center' }}>
+              <Settings size={19} color={c.text} strokeWidth={1.8} />
+            </View>
           </Pressable>
         </View>
 
-        <FadeIn dy={14} duration={380} style={{ paddingHorizontal: 20, marginTop: -46 }}>
+        <View style={{ paddingHorizontal: 20, marginTop: -38 }}>
           {/* 头像与用户信息 */}
           <Pressable onPress={openProfileEdit} style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 18 }}>
             <Image
               source={photoSource(avatarUri) ?? IMAGES.avatar}
-              style={{ width: 68, height: 68, borderRadius: 34, borderWidth: 3, borderColor: c.card, backgroundColor: c.primarySoft }}
+              style={{ width: 68, height: 68, borderRadius: 34, borderWidth: inkLook ? 2 : 3, borderColor: inkLook ? ink.line : c.card, backgroundColor: c.primarySoft }}
             />
             <View style={{ flex: 1, minWidth: 0, marginLeft: 14 }}>
               <Text style={[t.h1, { fontSize: fs(20) }]} numberOfLines={1}>{profile.name}</Text>
@@ -112,33 +119,29 @@ export default function MeScreen() {
             <ChevronRight size={18} color={c.textMuted} />
           </Pressable>
 
-          {/* 3 栏核心数字 */}
-          <Card style={{ flexDirection: 'row', paddingVertical: 16, marginBottom: 14 }}>
+          {/* 3 栏核心数字（轻点直达统计） */}
+          <Card onPress={() => router.push('/(tabs)/stats')} style={{ flexDirection: 'row', paddingVertical: 16, marginBottom: 14 }}>
             {[
-              { val: String(stats.recordDays), label: '记录天数' },
-              { val: String(stats.totalEntries), label: '日记篇数' },
-              { val: String(stats.currentStreak), label: '连续记录' },
+              { num: stats.recordDays, label: '记录天数' },
+              { num: stats.totalEntries, label: '日记篇数' },
+              { num: stats.currentStreak, label: '连续记录' },
             ].map((item, idx) => (
-              <View key={item.label} style={{ flex: 1, alignItems: 'center', borderLeftWidth: idx ? StyleSheet.hairlineWidth : 0, borderLeftColor: c.divider }}>
-                <Text style={{ fontSize: fs(21), color: c.text, fontWeight: '600', fontVariant: ['tabular-nums'] }}>{item.val}</Text>
-                <Text style={{ fontSize: fs(12), color: c.textSub, marginTop: 4 }}>{item.label}</Text>
-              </View>
+              <MeStat key={item.label} num={item.num} label={item.label} divider={idx > 0} />
             ))}
           </Card>
 
-          {/* 我的空间：内容入口用图标宫格，替代原来 8 行长列表（IconTile 来自 ui.tsx） */}
-          <Text style={{ fontSize: fs(13), color: c.textSub, marginBottom: 8, marginLeft: 4, fontWeight: '500' }}>我的空间</Text>
+          {/* 我的空间：工整 4×2 宫格（最近删除归入下方数据分组） */}
+          <Text style={{ fontSize: fs(12.5), letterSpacing: 0.4, color: c.textSub, marginBottom: 8, marginLeft: 6, fontWeight: '500' }}>我的空间</Text>
           <Card style={{ flexDirection: 'row', flexWrap: 'wrap', paddingHorizontal: 6, paddingVertical: 10, marginBottom: 14 }}>
             {[
               { icon: BookMarked, label: '日记本', badge: `${notebooks.length}`, path: '/notebooks' as const },
               { icon: Users, label: '身边人', badge: people.length ? `${people.length}` : undefined, path: '/people' as const },
-              { icon: Sparkles, label: '年度回顾', path: '/annual-report' as const },
-              { icon: FileText, label: '草稿箱', badge: draftCount ? `${draftCount}` : undefined, path: '/drafts' as const },
-              { icon: Heart, label: '收藏置顶', badge: favCount ? `${favCount}` : undefined, path: '/favorites' as const },
               { icon: ImageIcon, label: '影像记忆', badge: stats.totalPhotos ? `${stats.totalPhotos}` : undefined, path: '/photos' as const },
               { icon: MapPin, label: '足迹地图', badge: stats.placeCounts.length ? `${stats.placeCounts.length}` : undefined, path: '/memory-map' as const },
+              { icon: Heart, label: '收藏置顶', badge: favCount ? `${favCount}` : undefined, path: '/favorites' as const },
+              { icon: FileText, label: '草稿箱', badge: draftCount ? `${draftCount}` : undefined, path: '/drafts' as const },
+              { icon: Sparkles, label: '年度回顾', path: '/annual-report' as const },
               { icon: Target, label: '写作目标', badge: goals.enabled ? `${goals.dailyWords}字` : undefined, path: '/settings/goals' as const },
-              { icon: Trash2, label: '最近删除', badge: trashCount ? `${trashCount}` : undefined, path: '/trash' as const },
             ].map(item => (
               <PressableScale
                 key={item.label}
@@ -147,7 +150,9 @@ export default function MeScreen() {
                 accessibilityLabel={item.label}
                 style={{ width: '25%', alignItems: 'center', paddingVertical: 10 }}
               >
-                <IconTile icon={item.icon} size={42} />
+                <View style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: c.primaryFaint, alignItems: 'center', justifyContent: 'center' }}>
+                  <item.icon size={21} color={c.primaryDark} strokeWidth={1.75} />
+                </View>
                 <Text style={{ fontSize: fs(12), color: c.text, marginTop: 7 }} numberOfLines={1}>{item.label}</Text>
                 <Text style={{ fontSize: fs(10.5), color: c.textMuted, marginTop: 2, fontVariant: ['tabular-nums'] }} numberOfLines={1}>
                   {item.badge ?? ' '}
@@ -170,6 +175,7 @@ export default function MeScreen() {
             <Row icon={Palette} iconColor={c.primaryDark} title="外观与写作排版" onPress={() => router.push('/settings/appearance')} />
             <Row icon={Bell} iconColor={c.primaryDark} title="提醒与通知" onPress={() => router.push('/settings/reminders')} />
             <Row icon={Shield} iconColor={c.primaryDark} title="隐私与安全" onPress={() => router.push('/settings/privacy')} />
+            <Row icon={Trash2} iconColor={c.primaryDark} title="最近删除" value={trashCount ? `${trashCount} 篇` : undefined} onPress={() => router.push('/trash')} />
           </Group>
 
           <Group>
@@ -183,7 +189,7 @@ export default function MeScreen() {
             <Row icon={HelpCircle} iconColor={c.primaryDark} title="帮助与教程" value="技巧 · 常见问题" onPress={() => router.push('/settings/help')} />
             <Row icon={Info} iconColor={c.primaryDark} title="关于记得日记" value="v1.0.0" onPress={() => router.push('/settings/about')} />
           </Group>
-        </FadeIn>
+        </View>
       </ScrollView>
 
       {/* 编辑个人资料面板 */}
@@ -199,5 +205,17 @@ export default function MeScreen() {
         <Button title="保存修改" onPress={saveProfile} style={{ marginTop: 8 }} />
       </BottomSheet>
     </Screen>
+  );
+}
+
+/** 「我的」三栏数字：挂载时滚动到位（减弱动态时直接显示） */
+function MeStat({ num, label, divider }: { num: number; label: string; divider: boolean }) {
+  const { c, fs } = useTheme();
+  const v = useCountUp(num, 600);
+  return (
+    <View style={{ flex: 1, alignItems: 'center', borderLeftWidth: divider ? StyleSheet.hairlineWidth : 0, borderLeftColor: c.divider }}>
+      <Text style={{ fontSize: fs(22), color: c.text, fontWeight: '600', fontVariant: ['tabular-nums'] }}>{v}</Text>
+      <Text style={{ fontSize: fs(12), color: c.textSub, marginTop: 4 }}>{label}</Text>
+    </View>
   );
 }

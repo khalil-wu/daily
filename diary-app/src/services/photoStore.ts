@@ -113,7 +113,9 @@ export async function storePhoto(id: string, sourceUri: string, opts?: { blob?: 
     try {
       const blob = opts?.blob ?? (await (await fetch(sourceUri)).blob());
       await idbRun('readwrite', s => s.put(blob, id));
-      objectUrls.set(id, sourceUri);
+      const old = objectUrls.get(id);
+      if (old) URL.revokeObjectURL(old);
+      objectUrls.set(id, URL.createObjectURL(blob));
       return { uri: `${IDB_PREFIX}${id}`, durable: true };
     } catch {
       return { uri: sourceUri, durable: false };

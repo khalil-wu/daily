@@ -1,10 +1,14 @@
+import { HiddenAccessBoundary } from '../src/components/HiddenAccessBoundary';
 import React, { useEffect, useMemo } from 'react';
-import { ActivityIndicator, Image, Pressable, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Image, Pressable, View } from 'react-native';
+import { Text } from '../src/components/text';
 import { router, useLocalSearchParams } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Sparkles } from 'lucide-react-native';
 import { useTheme } from '../src/theme/ThemeProvider';
-import { useEntry, useStore } from '../src/store/store';
+import { actions, useEntry, useEntrySaveStatus, useStore } from '../src/store/store';
+import { flushPendingState, saveState } from '../src/store/storage';
+import { useFeedback } from '../src/components/feedback';
 import { Button, Screen } from '../src/components/ui';
 import { IMAGES } from '../src/data/assets';
 import { FadeIn } from '../src/components/motion';
@@ -14,10 +18,29 @@ import { shouldAutoReply, startReply, useReplyJob } from '../src/services/ai';
 /** 11. 保存成功页（1:1 复刻设计稿2 #11） */
 export default function SavedScreen() {
   const { id } = useLocalSearchParams<{ id?: string }>();
-  const { c, t, fs, dark } = useTheme();
-  const synced = useStore(s => !!(s.account && s.sync.cloud));
+  return <HiddenAccessBoundary entryId={id}><SavedContent /></HiddenAccessBoundary>;
+}
+
+function SavedContent() {
+  const { id, revision } = useLocalSearchParams<{ id?: string; revision?: string }>();
+  const { c, t, fs, dark, r, frame } = useTheme();
+  const status = useEntrySaveStatus(id, Number(revision) || undefined);
+  const { toast } = useFeedback();
+  const synced = status.synced;
   const entries = useStore(s => s.entries);
   const entry = useEntry(id);
+  const title = !entry ? '暂未找到这篇日记' : status.error ? '还未保存到设备' : !status.local ? '正在保存到设备' : synced ? '已保存并同步' : '已保存到本地';
+  const detail = status.error || (!entry ? '返回首页查看日记列表。' : !status.local ? '请稍候，正在写入设备存储。' : status.conflict ? '云端有另一份修改，请确认要保留的版本。' : synced ? '当前版本及附件已获云端确认。' : status.progress.status === 'syncing' ? '正在同步，完成前以本机版本为准。' : status.enabled ? status.progress.message || '当前版本尚未获得云端确认，可稍后重试同步。' : '当前版本已写入设备，可在日记列表中查看。');
+  const retry = async () => {
+    if (!status.local) { await saveState(actions.snapshot(), true); await flushPendingState(); }
+    else if (status.conflict) { router.push('/sync-conflict'); return; }
+    else {
+      const result = await actions.syncNow();
+      if (!result.ok) toast(result.message || '同步未完成', { type: 'warning' });
+      else if (result.conflicts) router.push('/sync-conflict');
+      else if (result.partial) toast('部分内容已同步，其他类别的同步已关闭', { type: 'info' });
+    }
+  };
   const replyJob = useReplyJob(id);
   const today = useMemo(() => computeTodaySummary(entries), [entries]);
   // 保存之后给一句具体的鼓励：连续天数或今日篇数
@@ -43,20 +66,33 @@ export default function SavedScreen() {
       <View style={{ flex: 1, justifyContent: 'space-between' }}>
         <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 32 }}>
           <FadeIn dy={0} scaleFrom={0.86} duration={420}>
-            <Image
-              source={IMAGES.savedSuccess}
-              style={{ width: 136, height: 136, borderRadius: 68, marginBottom: 20 }}
-              resizeMode="cover"
-            />
+            <View
+              style={{
+                width: 152,
+                height: 152,
+                borderRadius: dark ? 76 : 0,
+                backgroundColor: dark ? 'rgba(236,246,247,0.92)' : 'transparent',
+                padding: dark ? 14 : 0,
+                alignItems: 'center',
+                justifyContent: 'center',
+                marginBottom: 16,
+              }}
+            >
+              <Image
+                source={IMAGES.savedSuccess}
+                style={{ width: '100%', height: '100%' }}
+                resizeMode="contain"
+              />
+            </View>
           </FadeIn>
           <FadeIn delay={120} style={{ alignItems: 'center' }}>
             <Text style={[t.h1, { fontSize: fs(23), textAlign: 'center' }]}>
-              {synced ? '已保存并同步' : '已保存到本地'}
+              {title}
             </Text>
             <Text style={[t.sub, { textAlign: 'center', marginTop: 10 }]}>
-              你的日记已安全保存，可在「全部日记」中查看
+              {detail}
             </Text>
-            <View style={{ marginTop: 14, paddingHorizontal: 12, paddingVertical: 5, borderRadius: 999, backgroundColor: c.primaryFaint }}>
+            <View style={{ marginTop: 14, paddingHorizontal: 12, paddingVertical: 5, borderRadius: r(999), backgroundColor: c.primaryFaint }}>
               <Text style={{ fontSize: fs(12.5), color: c.primaryDark, fontWeight: '500' }}>{cheer}</Text>
             </View>
           </FadeIn>
@@ -64,7 +100,7 @@ export default function SavedScreen() {
           {/* 「记得」的回信：自动回信开启时，写完就在这里回一封 */}
           {(reply || replyJob.status !== 'idle') && (
             <FadeIn delay={200} style={{ width: '100%', marginTop: 18 }}>
-              <View style={{ backgroundColor: c.card, borderRadius: 16, padding: 16, borderWidth: StyleSheet.hairlineWidth, borderColor: c.primarySoft }}>
+              <View style={{ backgroundColor: c.card, borderRadius: r(16), padding: 16, ...frame, borderColor: c.primarySoft }}>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
                   <Sparkles size={13} color={c.primaryDark} />
                   <Text style={{ fontSize: fs(12), color: c.primaryDark, fontWeight: '600' }}>记得的回信</Text>
@@ -86,6 +122,7 @@ export default function SavedScreen() {
           )}
 
           <FadeIn delay={240} style={{ width: '100%', gap: 12, marginTop: 28 }}>
+            {!!entry && (!status.local || (status.enabled && !synced)) && <Button title={!status.local ? '重试保存' : status.conflict ? '处理版本冲突' : '立即同步'} variant="secondary" loading={status.progress.status === 'syncing'} onPress={() => void retry().catch(e => toast(e.message || '重试失败', { type: 'error' }))} />}
             <Button
               title="查看日记"
               onPress={() => {

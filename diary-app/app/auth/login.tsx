@@ -1,11 +1,14 @@
 import React, { useState } from 'react';
-import { Image, Pressable, Text, View } from 'react-native';
+import { Image, Pressable, View } from 'react-native';
+import { Text } from '../../src/components/text';
 import { router } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Lock, ShieldCheck, User } from 'lucide-react-native';
 import { useTheme } from '../../src/theme/ThemeProvider';
 import { actions, useStore } from '../../src/store/store';
 import { cloudConfigured } from '../../src/services/cloud';
+import { captchaGateActive, withOtpTicket } from '../../src/services/mailgate';
+import { CaptchaSheet } from '../../src/components/captchaSheet';
 import { isEmail, isPhone } from '../../src/utils/text';
 import { Button, Field, NavBar, Screen } from '../../src/components/ui';
 import { BotanicalAccent } from '../../src/components/MoodIcon';
@@ -17,19 +20,17 @@ export default function LoginScreen() {
   const { c, t, fs, dark } = useTheme();
   const { toast } = useFeedback();
   const onboarded = useStore(s => s.onboarded);
+  const knownAccounts = useStore(s => s.accounts);
   const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');
   const [code, setCode] = useState('');
   const [codeMode, setCodeMode] = useState(false);
   const [countdown, setCountdown] = useState(0);
   const [loading, setLoading] = useState(false);
+  const [captchaOpen, setCaptchaOpen] = useState(false);
 
-  const sendCode = async () => {
+  const remoteSend = async () => {
     const id = identifier.trim();
-    if (!isPhone(id) && !isEmail(id)) {
-      toast('请先输入正确的手机号或邮箱', { type: 'warning' });
-      return;
-    }
     const res = await actions.sendLoginCode(id);
     if (!res.ok) {
       toast(res.message || '验证码发送失败', { type: 'error' });
@@ -41,6 +42,19 @@ export default function LoginScreen() {
       return v - 1;
     }), 1000);
     toast(isPhone(id) ? '验证码已发送，请查收短信' : '验证码已发送，请查收邮件（含垃圾箱）', { type: 'info' });
+  };
+
+  const sendCode = async () => {
+    const id = identifier.trim();
+    if (!isPhone(id) && !isEmail(id)) {
+      toast('请先输入正确的手机号或邮箱', { type: 'warning' });
+      return;
+    }
+    if (captchaGateActive() && cloudConfigured()) {
+      setCaptchaOpen(true);
+      return;
+    }
+    await remoteSend();
   };
 
   const submit = async () => {
@@ -138,6 +152,29 @@ export default function LoginScreen() {
               </Pressable>
             </View>
             <Button title="登录" onPress={() => void submit()} loading={loading} />
+
+            {knownAccounts.length > 0 && (
+              <View style={{ marginTop: 18 }}>
+                <Text style={{ fontSize: fs(12), color: c.textMuted, marginBottom: 8 }}>本机登录过的账号</Text>
+                <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+                  {knownAccounts.map(a => (
+                    <Pressable
+                      key={a.id}
+                      accessibilityRole="button"
+                      accessibilityLabel={`使用账号 ${a.identifier}`}
+                      onPress={() => void (async () => {
+                        const res = await actions.quickSwitchTo(a.id);
+                        if (res.ok) { toast('已切换账号'); router.replace('/(tabs)'); return; }
+                        setIdentifier(a.identifier);
+                      })()}
+                      style={{ paddingHorizontal: 12, paddingVertical: 7, borderRadius: 999, backgroundColor: c.card, borderWidth: 1, borderColor: c.divider }}
+                    >
+                      <Text style={{ fontSize: fs(12), color: c.textSub }}>{a.identifier}</Text>
+                    </Pressable>
+                  ))}
+                </View>
+              </View>
+            )}
           </View>
 
           <Pressable onPress={() => router.push('/auth/register')} style={{ alignItems: 'center', marginTop: 22 }}>
@@ -152,6 +189,15 @@ export default function LoginScreen() {
           <LinearGradient colors={[c.bg, 'transparent']} style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 80 }} />
         </View>
       </View>
+
+      <CaptchaSheet
+        visible={captchaOpen}
+        onCancel={() => setCaptchaOpen(false)}
+        onSolved={ticket => {
+          setCaptchaOpen(false);
+          void withOtpTicket(ticket, remoteSend);
+        }}
+      />
     </Screen>
   );
 }

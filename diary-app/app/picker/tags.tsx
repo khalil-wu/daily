@@ -1,23 +1,25 @@
 import React, { useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Text } from '../../src/components/text';
 import { Check, Plus } from 'lucide-react-native';
 import { useTheme } from '../../src/theme/ThemeProvider';
 import { actions, useStore } from '../../src/store/store';
 import { getEditorDraft, setEditorTags } from '../../src/store/editorSession';
 import { TAG_ICONS } from '../../src/data/constants';
-import { Button, Chip, Field, NavBar, Screen, goBack, haptic } from '../../src/components/ui';
+import { Button, Chip, Field, NavBar, Screen, goBack, haptic, webSpaceAction } from '../../src/components/ui';
 import { getTagIcon } from '../../src/components/MoodIcon';
 import { useFeedback } from '../../src/components/feedback';
 import { BottomSheet } from '../../src/components/motion';
 
 /** 5. 标签选择页（1:1 复刻设计稿2 #5） */
 export default function TagPickerScreen() {
-  const { c, t, fs, dark } = useTheme();
+  const { c, t, fs, dark, r } = useTheme();
   const { toast } = useFeedback();
   const tags = useStore(s => s.tags);
   const [selected, setSelected] = useState<string[]>(() => getEditorDraft()?.entry.tags ?? []);
   const [createOpen, setCreateOpen] = useState(false);
   const [newName, setNewName] = useState('');
+  const [nameError, setNameError] = useState('');
   const [newIcon, setNewIcon] = useState<string>('Star');
 
   const toggle = (id: string) => {
@@ -28,7 +30,7 @@ export default function TagPickerScreen() {
   const addCustomTag = () => {
     const clean = newName.trim();
     if (!clean) {
-      toast('请输入标签名称', { type: 'warning' });
+      setNameError('请输入标签名称');
       return;
     }
     const created = actions.addTag(clean, newIcon);
@@ -54,13 +56,15 @@ export default function TagPickerScreen() {
             return (
               <Pressable
                 key={tg.id}
+                accessibilityRole="checkbox" accessibilityLabel={tg.name} accessibilityState={{ checked: on }} aria-checked={on}
+                {...webSpaceAction(() => toggle(tg.id))}
                 onPress={() => toggle(tg.id)}
                 style={{
                   width: '48.2%',
                   flexDirection: 'row',
                   alignItems: 'center',
                   backgroundColor: on ? c.primaryFaint : c.card,
-                  borderRadius: 14,
+                  borderRadius: r(14),
                   paddingHorizontal: 14,
                   paddingVertical: 14,
                   borderWidth: on ? 1.5 : StyleSheet.hairlineWidth,
@@ -83,11 +87,12 @@ export default function TagPickerScreen() {
         </View>
 
         <Pressable
-          onPress={() => setCreateOpen(true)}
+          accessibilityRole="button" accessibilityLabel="新建标签"
+          onPress={() => { setNameError(''); setCreateOpen(true); }}
           style={{
             marginTop: 16,
             height: 46,
-            borderRadius: 14,
+            borderRadius: r(14),
             borderWidth: 1,
             borderStyle: 'dashed',
             borderColor: c.border,
@@ -117,10 +122,9 @@ export default function TagPickerScreen() {
       </View>
 
       {/* 新建自定义标签弹窗 */}
-      <BottomSheet visible={createOpen} onClose={() => setCreateOpen(false)} keyboard>
-          <View style={{ flexShrink: 1, paddingTop: 6 }}>
-            <Text style={[t.h2, { textAlign: 'center', marginBottom: 16 }]}>新建标签</Text>
-            <Field value={newName} onChangeText={setNewName} placeholder="输入标签名称（如：摄影、冥想）" maxLength={10} autoFocus />
+      <BottomSheet visible={createOpen} onClose={() => setCreateOpen(false)} title="新建标签" keyboard>
+          <ScrollView style={{ flexShrink: 1 }} keyboardShouldPersistTaps="handled">
+            <Field accessibilityLabel="标签名称" error={nameError} value={newName} onChangeText={value => { setNewName(value); setNameError(''); }} placeholder="输入标签名称（如：摄影、冥想）" maxLength={10} autoFocus />
             <Text style={{ fontSize: fs(12.5), color: c.textSub, marginBottom: 10 }}>选择一个图标</Text>
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginBottom: 20 }}>
               {TAG_ICONS.map(iconName => {
@@ -129,11 +133,13 @@ export default function TagPickerScreen() {
                 return (
                   <Pressable
                     key={iconName}
+                    accessibilityRole="radio" accessibilityLabel={`图标 ${TAG_ICONS.indexOf(iconName) + 1}`} accessibilityState={{ checked: on }} aria-checked={on}
+                    {...webSpaceAction(() => setNewIcon(iconName))}
                     onPress={() => setNewIcon(iconName)}
                     style={{
-                      width: 40,
-                      height: 40,
-                      borderRadius: 12,
+                      width: 44,
+                      height: 44,
+                      borderRadius: r(12),
                       alignItems: 'center',
                       justifyContent: 'center',
                       backgroundColor: on ? c.primary : c.card,
@@ -141,13 +147,13 @@ export default function TagPickerScreen() {
                       borderColor: on ? c.primary : c.divider,
                     }}
                   >
-                    <Icon size={18} color={on ? '#fff' : c.textSub} />
+                    <Icon size={18} color={on ? c.textOnPrimary : c.textSub} />
                   </Pressable>
                 );
               })}
             </View>
-            <Button title="创建标签" onPress={addCustomTag} />
-          </View>
+          </ScrollView>
+          <Button title="创建标签" onPress={addCustomTag} style={{ marginTop: 12 }} />
       </BottomSheet>
     </Screen>
   );

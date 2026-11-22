@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { Image, ScrollView, Text, View } from 'react-native';
+import { Image, ScrollView, View } from 'react-native';
+import { Text } from '../../src/components/text';
 import { router } from 'expo-router';
 import { BookOpen, CloudOff, Compass, GitMerge, ShieldAlert } from 'lucide-react-native';
 import { useTheme } from '../../src/theme/ThemeProvider';
@@ -63,11 +64,11 @@ export default function AboutScreen() {
           />
         </Group>
 
-        <Group title="状态页查看">
+        <Group title="数据状态">
           <Row
             icon={CloudOff}
             iconColor={c.primaryDark}
-            title="离线状态提示"
+            title="本机保存与离线使用"
             onPress={() => router.push('/offline')}
           />
           <Row

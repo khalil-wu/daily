@@ -1,6 +1,6 @@
 import type { AppState, Entry, Person, Tag } from '../store/types';
 import { moodMeta, weatherMeta } from '../data/constants';
-import { normalizeEntry } from '../store/storage';
+import { isEntryRecord, normalizeEntry } from '../store/storage';
 import { fmtDateTime, fmtFullDate } from './date';
 import { plainText, uid } from './text';
 import { videoNote } from './video';
@@ -89,14 +89,19 @@ export function entriesToHtml(entries: Entry[], tags: Tag[]): string {
 
 /** 解析导入的 Markdown / TXT / JSON 内容 */
 export function parseImportedEntries(raw: string, format: 'md' | 'txt' | 'json'): { entries: Entry[]; snapshot?: Partial<AppState> } {
+  raw = raw.replace(/^\uFEFF/, '').replace(/\r\n?/g, '\n');
   if (format === 'json') {
     const parsed = JSON.parse(raw);
+    const normalizeList = (list: unknown[]): Entry[] => {
+      if (!list.every(isEntryRecord)) throw new Error('导入文件中有无效的日记记录，请检查 JSON 内容');
+      return list.map(normalizeEntry);
+    };
     // 逐篇补全字段：旧版本导出的文件没有 videos 等后来新增的字段
     if (parsed && typeof parsed === 'object' && Array.isArray(parsed.entries)) {
-      return { entries: parsed.entries.map(normalizeEntry), snapshot: parsed };
+      return { entries: normalizeList(parsed.entries), snapshot: parsed };
     }
     if (Array.isArray(parsed)) {
-      return { entries: parsed.map(normalizeEntry) };
+      return { entries: normalizeList(parsed) };
     }
     throw new Error('JSON 格式不正确，未找到日记数组');
   }

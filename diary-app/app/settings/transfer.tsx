@@ -1,7 +1,9 @@
+import { HiddenAccessBoundary } from '../../src/components/HiddenAccessBoundary';
 import React, { useState } from 'react';
 import { ScrollView } from 'react-native';
 import { Braces, FileCode2, FileSpreadsheet, FileText, Printer } from 'lucide-react-native';
 import { useTheme } from '../../src/theme/ThemeProvider';
+import { flushPendingState, getPersistenceError } from '../../src/store/storage';
 import { actions, useStore } from '../../src/store/store';
 import { Group, NavBar, Row, Screen } from '../../src/components/ui';
 import { useFeedback } from '../../src/components/feedback';
@@ -15,7 +17,9 @@ import {
 } from '../../src/utils/transfer';
 
 /** 12. 导入与导出（1:1 复刻设计稿3 #12） */
-export default function TransferScreen() {
+export default function TransferScreen() { return <HiddenAccessBoundary required><TransferScreenContent /></HiddenAccessBoundary>; }
+
+function TransferScreenContent() {
   const { c } = useTheme();
   const { toast } = useFeedback();
   const entries = useStore(s => s.entries);
@@ -23,6 +27,8 @@ export default function TransferScreen() {
   const [busy, setBusy] = useState(false);
 
   const importFile = async (format: 'md' | 'txt' | 'json') => {
+    if (busy) return;
+    setBusy(true);
     try {
       const picked = await pickAndReadTextFile(
         format === 'json' ? ['application/json', '*/*'] : ['text/plain', 'text/markdown', '*/*'],
@@ -34,19 +40,23 @@ export default function TransferScreen() {
         return;
       }
       const n = actions.importEntries(parsed);
+      await flushPendingState();
+      if (getPersistenceError()) throw new Error(getPersistenceError()!);
       toast('导入成功', { message: `已从「${picked.name}」导入 ${n} 篇日记` });
     } catch (e: any) {
       toast(e?.message || '导入失败，请检查文件编码与格式', { type: 'error' });
-    }
+    } finally { setBusy(false); }
   };
 
   const doExport = async (kind: 'md' | 'pdf' | 'txt' | 'json') => {
+    if (busy) return;
     const published = entries.filter(e => !e.deletedAt && e.status === 'published');
     if (!published.length) {
       toast('当前还没有可导出的日记', { type: 'warning' });
       return;
     }
     setBusy(true);
+    try {
     const stamp = new Date().toISOString().slice(0, 10);
     let res: { ok: boolean; message?: string };
     if (kind === 'md') {
@@ -62,9 +72,10 @@ export default function TransferScreen() {
     } else {
       res = await exportPdf(entries, tags);
     }
-    setBusy(false);
     if (res.ok) toast('导出成功', { message: `已准备 ${published.length} 篇日记` });
     else toast(res.message || '导出失败', { type: 'error' });
+    } catch (error) { toast(error instanceof Error ? error.message : '导出失败', { type: 'error' }); }
+    finally { setBusy(false); }
   };
 
   return (

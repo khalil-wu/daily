@@ -257,6 +257,42 @@ test('账号体系：注册、重名校验、登录、重置密码与模拟云�
   assert.equal(getState().account, undefined);
 });
 
+test('多账号：免密快速切换保留各账号独立空间', async () => {
+  await actions.wipeAll();
+
+  const regA = await actions.register('a@jide.app', 'pass111');
+  assert.equal(regA.ok, true);
+  const idA = getState().account!.id;
+  const eA = actions.newEntry({ title: '账号A的日记', body: 'a' });
+  actions.publishEntry(eA);
+  const countA = getState().entries.length;
+
+  const regB = await actions.register('b@jide.app', 'pass222');
+  assert.equal(regB.ok, true);
+  const idB = getState().account!.id;
+  assert.equal(getState().entries.some(e => e.id === eA.id), false);
+
+  // 本机账号直接免密切回 A，A 的日记原样恢复
+  const swA = await actions.quickSwitchTo(idA);
+  assert.equal(swA.ok, true);
+  assert.equal(getState().account?.identifier, 'a@jide.app');
+  assert.equal(getState().entries.length, countA);
+  assert.ok(getState().entries.some(e => e.id === eA.id));
+
+  const swB = await actions.quickSwitchTo(idB);
+  assert.equal(swB.ok, true);
+  assert.equal(getState().account?.identifier, 'b@jide.app');
+
+  // 当前账号与未知账号
+  const swSame = await actions.quickSwitchTo(idB);
+  assert.equal(swSame.ok, true);
+  const swMissing = await actions.quickSwitchTo('nope');
+  assert.equal(swMissing.ok, false);
+
+  // 账号表中保留两个账号（本机账号列表）
+  assert.equal(getState().accounts.length, 2);
+});
+
 test('同步冲突检测与解决、以及超过30天回收站自动清理', async () => {
   await actions.wipeAll();
   await actions.register('sync@jide.app', 'pass1234');

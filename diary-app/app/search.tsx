@@ -1,18 +1,17 @@
-import React, { useCallback, useMemo, useState } from 'react';
-import { FlatList, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import React, { useCallback, useDeferredValue, useMemo, useState } from 'react';
+import { FlatList, Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Text } from '../src/components/text';
 import { router, useLocalSearchParams } from 'expo-router';
 import { ChevronLeft, Clock, X } from 'lucide-react-native';
 import { useTheme } from '../src/theme/ThemeProvider';
 import { actions, useStore } from '../src/store/store';
 import { MOODS } from '../src/data/constants';
 import type { Entry, MoodKey } from '../src/store/types';
-import { personNames } from '../src/utils/people';
 import { Chip, EmptyState, Screen, SearchBar, goBack } from '../src/components/ui';
 import { EntryListCard } from '../src/components/EntryCard';
 import { MoodIcon } from '../src/components/MoodIcon';
 import { IMAGES } from '../src/data/assets';
-import { plainText } from '../src/utils/text';
-import { videoSearchWords } from '../src/utils/video';
+import { buildSearchIndex, searchEntries } from '../src/utils/search';
 
 const HOT_KEYWORDS = ['成长', '情绪', '旅行', '生活', '工作', '阅读', '自我', '感恩', '视频'];
 
@@ -32,27 +31,24 @@ export default function SearchScreen() {
 
   const searching = !!(query.trim() || filterTag || filterMood || filterPerson);
 
-  const results = useMemo(() => {
-    if (!searching) return [];
-    const q = query.trim().toLowerCase();
-    return entries
-      .filter(e => !e.deletedAt && !e.hidden && e.status === 'published')
-      .filter(e => {
-        if (filterTag && !e.tags.includes(filterTag)) return false;
-        if (filterMood && e.mood !== filterMood) return false;
-        if (filterPerson && !e.people.includes(filterPerson)) return false;
-        if (!q) return true;
-        const tagNames = e.tags.map(id => tags.find(tg => tg.id === id)?.name ?? '').join(' ');
-        const peopleNames = e.people
-          .map(id => people.find(p => p.id === id))
-          .filter(Boolean)
-          .flatMap(p => personNames(p!))
-          .join(' ');
-        const hay = `${e.title} ${plainText(e.body)} ${e.place?.name ?? ''} ${tagNames} ${peopleNames} ${videoSearchWords(e)}`.toLowerCase();
-        return hay.includes(q);
-      })
-      .sort((a, b) => b.createdAt - a.createdAt);
-  }, [entries, tags, people, query, filterTag, filterMood, filterPerson, searching]);
+  const deferredQuery = useDeferredValue(query);
+  const index = useMemo(() => buildSearchIndex(entries, tags, people), [entries, tags, people]);
+  const results = useMemo(() => searchEntries(index, deferredQuery, {
+    tag: filterTag, mood: filterMood, person: filterPerson,
+  }), [index, deferredQuery, filterTag, filterMood, filterPerson]);
+
+  const topUsedTags = useMemo(() => {
+    const counts = new Map<string, number>();
+    for (const e of entries) {
+      if (e.deletedAt || e.hidden || e.status !== 'published') continue;
+      for (const tid of e.tags) counts.set(tid, (counts.get(tid) ?? 0) + 1);
+    }
+    return [...counts.entries()]
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 6)
+      .map(([id, count]) => ({ tag: tags.find(x => x.id === id), count }))
+      .filter((x): x is { tag: NonNullable<typeof x.tag>; count: number } => !!x.tag);
+  }, [entries, tags]);
 
   const commitQuery = (q: string) => {
     setQuery(q);
@@ -63,20 +59,20 @@ export default function SearchScreen() {
     ({ item: entry }: { item: Entry }) => (
       <EntryListCard
         entry={entry}
-        query={query}
+        query={deferredQuery.trim()}
         onPress={() => {
           if (query.trim()) actions.pushSearch(query.trim());
           router.push({ pathname: '/memory/[id]', params: { id: entry.id } });
         }}
       />
     ),
-    [query],
+    [query, deferredQuery],
   );
 
   return (
     <Screen edges={['top', 'bottom']}>
-      <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 14, paddingVertical: 10, gap: 8 }}>
-        <Pressable hitSlop={10} onPress={goBack} style={{ padding: 4 }}>
+      <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 14, paddingVertical: 6, gap: 6 }}>
+        <Pressable accessibilityRole="button" accessibilityLabel="返回" onPress={goBack} style={{ width: 44, height: 44, alignItems: 'center', justifyContent: 'center', marginLeft: -8 }}>
           <ChevronLeft size={24} color={c.text} strokeWidth={1.8} />
         </Pressable>
         <SearchBar
@@ -131,27 +127,42 @@ export default function SearchScreen() {
               </View>
               <View>
                 {recent.map((item, idx) => (
-                  <Pressable
+                  <View
                     key={item}
-                    onPress={() => commitQuery(item)}
-                    style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: 12, borderTopWidth: idx > 0 ? StyleSheet.hairlineWidth : 0, borderTopColor: c.divider }}
+                    style={{ flexDirection: 'row', alignItems: 'center', borderTopWidth: idx > 0 ? StyleSheet.hairlineWidth : 0, borderTopColor: c.divider }}
                   >
-                    <Clock size={15} color={c.textMuted} style={{ marginRight: 10 }} />
-                    <Text style={{ flex: 1, fontSize: fs(14), color: c.text }}>{item}</Text>
-                    <Pressable hitSlop={10} onPress={() => actions.removeSearch(item)}>
+                    <Pressable
+                      onPress={() => commitQuery(item)}
+                      style={{ flex: 1, flexDirection: 'row', alignItems: 'center', minHeight: 44, paddingVertical: 10 }}
+                    >
+                      <Clock size={15} color={c.textMuted} style={{ marginRight: 10 }} />
+                      <Text style={{ flex: 1, fontSize: fs(14), color: c.text }}>{item}</Text>
+                    </Pressable>
+                    <Pressable
+                      accessibilityRole="button"
+                      accessibilityLabel={`删除搜索记录：${item}`}
+                      onPress={() => actions.removeSearch(item)}
+                      style={{ minWidth: 44, minHeight: 44, alignItems: 'center', justifyContent: 'center', marginRight: -10 }}
+                    >
                       <X size={15} color={c.textMuted} />
                     </Pressable>
-                  </Pressable>
+                  </View>
                 ))}
               </View>
             </View>
           )}
 
-          <Text style={{ fontSize: fs(13.5), color: c.textSub, fontWeight: '500', marginBottom: 12 }}>热门关键词</Text>
+          <Text style={{ fontSize: fs(13.5), color: c.textSub, fontWeight: '500', marginBottom: 12 }}>
+            {topUsedTags.length >= 4 ? '常用标签' : '建议关键词'}
+          </Text>
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginBottom: 24 }}>
-            {HOT_KEYWORDS.map(kw => (
-              <Chip key={kw} label={kw} onPress={() => commitQuery(kw)} />
+            {topUsedTags.map(({ tag, count }) => (
+              <Chip key={tag.id} label={`#${tag.name} · ${count}`} onPress={() => setFilterTag(tag.id)} />
             ))}
+            {topUsedTags.length < 4 &&
+              HOT_KEYWORDS.filter(kw => !topUsedTags.some(item => item.tag.name === kw))
+                .slice(0, Math.max(0, 8 - topUsedTags.length))
+                .map(kw => <Chip key={kw} label={kw} onPress={() => commitQuery(kw)} />)}
           </View>
 
           <Text style={{ fontSize: fs(13.5), color: c.textSub, fontWeight: '500', marginBottom: 12 }}>按心情筛选</Text>
@@ -197,6 +208,8 @@ export default function SearchScreen() {
             <Text style={{ fontSize: fs(12.5), color: c.textSub, marginBottom: 12 }}>找到 {results.length} 篇相关日记</Text>
           }
           showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+          keyboardDismissMode="on-drag"
           contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 10, paddingBottom: 32 }}
           initialNumToRender={12}
           windowSize={7}

@@ -1,0 +1,153 @@
+[
+  {
+    "viewport": {
+      "width": 320,
+      "height": 568
+    },
+    "fontStats": {
+      "regular": true,
+      "bold": true,
+      "resources": [
+        {
+          "name": "NotoSerifSC-SemiBold-ui-65ebcb49a614710d.woff2",
+          "bytes": 678216,
+          "status": 200
+        },
+        {
+          "name": "NotoSerifSC-Regular-ui-8f0d696813273634.woff2",
+          "bytes": 418548,
+          "status": 200
+        },
+        {
+          "name": "NotoSerifSC-SemiBold-0051-16bbafe5a65ef8d5.woff2",
+          "bytes": 130204,
+          "status": 200
+        },
+        {
+          "name": "NotoSerifSC-Regular-008a-4c2256255d630b76.woff2",
+          "bytes": 84488,
+          "status": 200
+        },
+        {
+          "name": "NotoSerifSC-Regular-0075-3ecf00865b496079.woff2",
+          "bytes": 78312,
+          "status": 200
+        },
+        {
+          "name": "NotoSerifSC-Regular-0066-02300b9bdb36eafd.woff2",
+          "bytes": 82000,
+          "status": 200
+        }
+      ]
+    },
+    "errors": [],
+    "result": "pass"
+  },
+  {
+    "case": "dark-extra-large",
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "result": "pass"
+  },
+  {
+    "case": "deep-link-app-lock",
+    "observedFrames": 40,
+    "keyboardTabs": 14,
+    "result": "pass"
+  },
+  {
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "fontStats": {
+      "regular": true,
+      "bold": true,
+      "resources": [
+        {
+          "name": "NotoSerifSC-SemiBold-ui-65ebcb49a614710d.woff2",
+          "bytes": 678216,
+          "status": 200
+        },
+        {
+          "name": "NotoSerifSC-Regular-ui-8f0d696813273634.woff2",
+          "bytes": 418548,
+          "status": 200
+        },
+        {
+          "name": "NotoSerifSC-SemiBold-0051-16bbafe5a65ef8d5.woff2",
+          "bytes": 130204,
+          "status": 200
+        },
+        {
+          "name": "NotoSerifSC-Regular-008a-4c2256255d630b76.woff2",
+          "bytes": 84488,
+          "status": 200
+        },
+        {
+          "name": "NotoSerifSC-Regular-0075-3ecf00865b496079.woff2",
+          "bytes": 78312,
+          "status": 200
+        },
+        {
+          "name": "NotoSerifSC-Regular-0066-02300b9bdb36eafd.woff2",
+          "bytes": 82000,
+          "status": 200
+        }
+      ]
+    },
+    "errors": [],
+    "result": "pass"
+  },
+  {
+    "viewport": {
+      "width": 1280,
+      "height": 900
+    },
+    "fontStats": {
+      "regular": true,
+      "bold": true,
+      "resources": [
+        {
+          "name": "NotoSerifSC-SemiBold-ui-65ebcb49a614710d.woff2",
+          "bytes": 678216,
+          "status": 200
+        },
+        {
+          "name": "NotoSerifSC-Regular-ui-8f0d696813273634.woff2",
+          "bytes": 418548,
+          "status": 200
+        },
+        {
+          "name": "NotoSerifSC-SemiBold-0051-16bbafe5a65ef8d5.woff2",
+          "bytes": 130204,
+          "status": 200
+        },
+        {
+          "name": "NotoSerifSC-Regular-008a-4c2256255d630b76.woff2",
+          "bytes": 84488,
+          "status": 200
+        },
+        {
+          "name": "NotoSerifSC-Regular-0075-3ecf00865b496079.woff2",
+          "bytes": 78312,
+          "status": 200
+        },
+        {
+          "name": "NotoSerifSC-Regular-0066-02300b9bdb36eafd.woff2",
+          "bytes": 82000,
+          "status": 200
+        }
+      ]
+    },
+    "errors": [],
+    "result": "pass"
+  },
+  {
+    "case": "fonts-unavailable",
+    "result": "pass",
+    "interactiveMs": 268
+  }
+]

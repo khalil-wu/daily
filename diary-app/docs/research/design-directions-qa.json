@@ -1,0 +1,71 @@
+[
+  {
+    "theme": "paper",
+    "mode": "light",
+    "colors": {
+      "body": 13.669868165684504,
+      "sub": 5.801921453850965,
+      "action": 5.941636176507367
+    },
+    "result": "pass"
+  },
+  {
+    "theme": "paper",
+    "mode": "dark",
+    "colors": {
+      "body": 15.579386512299081,
+      "sub": 7.205395806194244,
+      "action": 7.716291571809739
+    },
+    "result": "pass"
+  },
+  {
+    "theme": "day",
+    "mode": "light",
+    "colors": {
+      "body": 13.108251558995883,
+      "sub": 5.068862405830302,
+      "action": 6.6921955296080755
+    },
+    "result": "pass"
+  },
+  {
+    "theme": "day",
+    "mode": "dark",
+    "colors": {
+      "body": 15.956720507233035,
+      "sub": 7.627062763595611,
+      "action": 7.326842658580524
+    },
+    "result": "pass"
+  },
+  {
+    "theme": "forest",
+    "mode": "light",
+    "colors": {
+      "body": 11.95469510714498,
+      "sub": 5.1555923068487,
+      "action": 6.059792014660764
+    },
+    "result": "pass"
+  },
+  {
+    "theme": "forest",
+    "mode": "dark",
+    "colors": {
+      "body": 15.551073160539714,
+      "sub": 7.315670685549094,
+      "action": 6.9921554655255465
+    },
+    "result": "pass"
+  },
+  {
+    "readingFonts": {
+      "body": "\"Songti SC\", STSong, \"Noto Serif CJK SC\", serif",
+      "ui": "-apple-system, \"system-ui\", \"PingFang SC\", \"Microsoft YaHei\", sans-serif"
+    },
+    "mobileWidth": 390,
+    "errors": [],
+    "result": "pass"
+  }
+]

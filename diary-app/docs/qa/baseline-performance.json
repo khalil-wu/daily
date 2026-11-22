@@ -1,0 +1,74 @@
+{
+  "base": "http://39.105.19.77",
+  "at": "2026-11-21T10:43:36.015Z",
+  "firstInteractiveMs": 3570,
+  "fontRequests": [
+    {
+      "url": "http://39.105.19.77/assets/assets/fonts/NotoSerifSC-Regular.845c744c42d26782026bcd693fcb5611.otf",
+      "bytes": 11626100,
+      "durationMs": 2238
+    },
+    {
+      "url": "http://39.105.19.77/assets/assets/fonts/NotoSerifSC-SemiBold.c9718d128c2531b5b009ff869798ff5d.otf",
+      "bytes": 19767524,
+      "durationMs": 2590
+    }
+  ],
+  "transferBytes": 38470030,
+  "paints": [
+    {
+      "name": "first-paint",
+      "ms": 768
+    },
+    {
+      "name": "first-contentful-paint",
+      "ms": 3528
+    }
+  ],
+  "overflow": false,
+  "language": "en",
+  "assetHeaders": [
+    {
+      "url": "http://39.105.19.77/_expo/static/js/web/entry-b76dc40a0955de1813a4105b49caa014.js",
+      "encoding": "",
+      "cache": "",
+      "type": "application/javascript"
+    },
+    {
+      "url": "http://39.105.19.77/assets/assets/fonts/NotoSerifSC-Regular.845c744c42d26782026bcd693fcb5611.otf",
+      "encoding": "",
+      "cache": "",
+      "type": "application/octet-stream"
+    },
+    {
+      "url": "http://39.105.19.77/assets/assets/fonts/NotoSerifSC-SemiBold.c9718d128c2531b5b009ff869798ff5d.otf",
+      "encoding": "",
+      "cache": "",
+      "type": "application/octet-stream"
+    }
+  ],
+  "errors": [],
+  "failed": [],
+  "probes": [
+    {
+      "path": "/healthz",
+      "status": 200,
+      "type": "text/html"
+    },
+    {
+      "path": "/cb/",
+      "status": 401,
+      "type": "application/json; charset=utf-8"
+    },
+    {
+      "path": "/_expo/static/missing-jide.js",
+      "status": 200,
+      "type": "text/html"
+    },
+    {
+      "path": "/write",
+      "status": 200,
+      "type": "text/html"
+    }
+  ]
+}

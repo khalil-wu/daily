@@ -5,3 +5,9 @@ web-build/
 *.log
 ios/
 android/
+
+# Large raw research/asset archives (kept locally, not versioned)
+assets-generated/
+docs/research/evidence/
+docs/竞品调研/screenshots/
+.claude/

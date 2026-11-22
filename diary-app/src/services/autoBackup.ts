@@ -1,3 +1,5 @@
+import { accountSpaceKey } from '../store/accountSpaces';
+import { sha256 } from '@noble/hashes/sha2.js';
 import type { AppState } from '../store/types';
 
 /**
@@ -10,11 +12,13 @@ export const AUTO_INTERVAL_MS = 7 * 24 * 3600 * 1000;
 const KEEP = 4;
 const WEB_KEY = 'jide-diary:auto-backups:v1';
 const DIR = 'auto-backups';
+const ownerToken = (owner: string) => Array.from(sha256(new TextEncoder().encode(owner)), n => n.toString(16).padStart(2, '0')).join('').slice(0, 20);
 
 export interface AutoBackupInfo {
   id: string;
   at: number;
   count: number;
+  owner?: string;
 }
 
 export function isAutoBackupDue(s: Pick<AppState, 'backup' | 'entries'>, now = Date.now()) {
@@ -26,8 +30,12 @@ export function isAutoBackupDue(s: Pick<AppState, 'backup' | 'entries'>, now = D
 export function buildSnapshotPayload(snap: AppState) {
   // 账号与待处理冲突属于本机会话状态，不进备份
   // AI 的服务地址和授权时间属于这台设备，也不进备份（密钥本来就不在 state 里）
-  const { accounts: _a, account: _b, conflicts: _c, ai: _d, ...data } = snap as any;
-  return { app: '记得日记', version: snap.version, exportedAt: Date.now(), ...data };
+  const { accounts: _a, account: _b, conflicts: _c, ai: _d, accountSpaces: _spaces, ...data } = snap;
+  const { passcodeHash: _passcode, ...privacy } = data.privacy;
+  return { app: '记得日记', exportedAt: Date.now(), ...data,
+    privacy: { ...privacy, appLock: false, biometric: false },
+    sync: { cloud: false, wifiOnly: snap.sync.wifiOnly, syncPhotos: snap.sync.syncPhotos, syncTags: snap.sync.syncTags, syncSettings: snap.sync.syncSettings },
+  };
 }
 
 function countOf(snap: AppState) {
@@ -41,13 +49,14 @@ type WebItem = AutoBackupInfo & { data: string };
 function webRead(): WebItem[] {
   try {
     const t = globalThis.localStorage?.getItem(WEB_KEY);
-    return t ? (JSON.parse(t) as WebItem[]) : [];
+    const parsed = t ? JSON.parse(t) : [];
+    return Array.isArray(parsed) ? parsed.filter(x => x && typeof x.id === 'string' && typeof x.at === 'number' && typeof x.count === 'number' && typeof x.data === 'string') : [];
   } catch {
     return [];
   }
 }
 
-function webWrite(list: WebItem[]) {
+function webWrite(list: WebItem[], owner: string) {
   // localStorage 容量有限：写不下时逐份丢掉最旧的
   let l = list;
   while (l.length) {
@@ -55,7 +64,9 @@ function webWrite(list: WebItem[]) {
       globalThis.localStorage?.setItem(WEB_KEY, JSON.stringify(l));
       return true;
     } catch {
-      l = l.slice(1);
+      const own = l.filter(x => x.owner === owner);
+      if (own.length <= 1) return false;
+      l = l.filter(x => x !== own[0]);
     }
   }
   return false;
@@ -63,10 +74,10 @@ function webWrite(list: WebItem[]) {
 
 /* ---------------- 原生 ---------------- */
 
-function nativeDir() {
+function nativeDir(owner?: string) {
   // eslint-disable-next-line @typescript-eslint/no-var-requires
   const { Directory, Paths } = require('expo-file-system');
-  const dir = new Directory(Paths.document, DIR);
+  const dir = new Directory(Paths.document, DIR, ...(owner ? [ownerToken(owner)] : []));
   if (!dir.exists) dir.create({ intermediates: true });
   return dir;
 }
@@ -80,22 +91,40 @@ function parseName(name: string): AutoBackupInfo | null {
 
 const isWeb = () => typeof document !== 'undefined' && typeof localStorage !== 'undefined';
 
+/** Attribute old snapshots once, before a user can switch the loaded account. */
+export async function migrateLegacyAutoBackups(owner: string) {
+  if (isWeb()) {
+    const items = webRead();
+    if (items.some(x => !x.owner)) localStorage.setItem(WEB_KEY, JSON.stringify(items.map(x => x.owner ? x : { ...x, owner })));
+    return;
+  }
+  if (typeof process !== 'undefined' && process.versions?.node && typeof window === 'undefined') return;
+  const { File } = require('expo-file-system');
+  const root = nativeDir();
+  const target = nativeDir(owner);
+  for (const file of root.list() as { name: string }[]) {
+    if (parseName(file.name)) new File(root, file.name).move(new File(target, file.name));
+  }
+}
+
 export async function writeAutoBackup(snap: AppState): Promise<AutoBackupInfo> {
   const at = Date.now();
+  const owner = accountSpaceKey(snap.account);
   const count = countOf(snap);
   const data = JSON.stringify(buildSnapshotPayload(snap));
   const id = `auto-${at}-${count}.json`;
   if (isWeb()) {
-    const list = [...webRead(), { id, at, count, data }].slice(-KEEP);
-    if (!webWrite(list)) throw new Error('浏览器存储空间不足');
+    const all = webRead();
+    const list = [...all.filter(x => x.owner !== owner), ...[...all.filter(x => x.owner === owner), { id, at, count, data, owner }].slice(-KEEP)];
+    if (!webWrite(list, owner)) throw new Error('浏览器存储空间不足');
   } else {
     // eslint-disable-next-line @typescript-eslint/no-var-requires
     const { File } = require('expo-file-system');
-    const dir = nativeDir();
+    const dir = nativeDir(owner);
     const f = new File(dir, id);
     f.create({ overwrite: true });
     f.write(data);
-    const old = (await listAutoBackups()).slice(KEEP);
+    const old = (await listAutoBackups(owner)).slice(KEEP);
     for (const o of old) {
       try {
         new File(dir, o.id).delete();
@@ -104,14 +133,14 @@ export async function writeAutoBackup(snap: AppState): Promise<AutoBackupInfo> {
       }
     }
   }
-  return { id, at, count };
+  return { id, at, count, owner };
 }
 
 /** 最新的在前 */
-export async function listAutoBackups(): Promise<AutoBackupInfo[]> {
+export async function listAutoBackups(owner = 'guest'): Promise<AutoBackupInfo[]> {
   try {
-    if (isWeb()) return webRead().map(({ id, at, count }) => ({ id, at, count })).reverse();
-    const dir = nativeDir();
+    if (isWeb()) return webRead().filter(x => x.owner === owner).map(({ id, at, count }) => ({ id, at, count, owner })).reverse();
+    const dir = nativeDir(owner);
     return (dir.list() as { name: string }[])
       .map(x => parseName(x.name))
       .filter((x): x is AutoBackupInfo => !!x)
@@ -121,13 +150,28 @@ export async function listAutoBackups(): Promise<AutoBackupInfo[]> {
   }
 }
 
-export async function readAutoBackup(id: string): Promise<unknown> {
+export async function readAutoBackup(id: string, owner = 'guest'): Promise<unknown> {
+  if (!parseName(id)) throw new Error('备份文件名不正确');
   if (isWeb()) {
-    const item = webRead().find(x => x.id === id);
+    const item = webRead().find(x => x.id === id && (x.owner === owner));
     if (!item) throw new Error('找不到这份自动备份');
     return JSON.parse(item.data);
   }
   // eslint-disable-next-line @typescript-eslint/no-var-requires
   const { File } = require('expo-file-system');
-  return JSON.parse(await new File(nativeDir(), id).text());
+  return JSON.parse(await new File(nativeDir(owner), id).text());
+}
+
+/** Clear retained snapshots together with the user's diary data. */
+export async function clearAutoBackups(owner?: string): Promise<void> {
+  if (isWeb()) {
+    if (owner) { localStorage.setItem(WEB_KEY, JSON.stringify(webRead().filter(x => x.owner !== owner))); }
+    else localStorage.removeItem(WEB_KEY);
+    return;
+  }
+  if (typeof process !== 'undefined' && process.versions?.node && typeof window === 'undefined') return;
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const { Directory, Paths } = require('expo-file-system');
+  const dir = new Directory(Paths.document, DIR, ...(owner ? [ownerToken(owner)] : []));
+  if (dir.exists) dir.delete();
 }

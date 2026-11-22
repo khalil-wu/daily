@@ -1,21 +1,25 @@
-import React, { useState } from 'react';
-import { Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { Image, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Text } from '../src/components/text';
 import { useTheme } from '../src/theme/ThemeProvider';
 import { actions, useStore } from '../src/store/store';
 import { Button, NavBar, Radio, Screen, goBack, haptic } from '../src/components/ui';
 import { useFeedback } from '../src/components/feedback';
 import { IMAGES } from '../src/data/assets';
 import { fmtDateTime } from '../src/utils/date';
+import { HiddenAccessBoundary } from '../src/components/HiddenAccessBoundary';
 import { cloudConfigured } from '../src/services/cloud';
 
 const OPTIONS = (): { key: 'local' | 'cloud' | 'latest'; title: string; desc: string }[] => [
   { key: 'local', title: '保留本机', desc: '使用当前设备上的版本' },
   { key: 'cloud', title: cloudConfigured() ? '保留云端' : '保留账号端', desc: cloudConfigured() ? '使用云端同步过来的版本' : '使用账号同步过来的版本' },
-  { key: 'latest', title: '合并最近修改', desc: '合并双方的修改，并保留最新的版本' },
+  { key: 'latest', title: '保留最新版本', desc: '逐篇比较修改时间，保留较新的完整版本' },
 ];
 
 /** 11. 同步冲突处理（1:1 复刻设计稿3 #11） */
-export default function SyncConflictScreen() {
+export default function SyncConflictScreen() { return <HiddenAccessBoundary required><ConflictContent /></HiddenAccessBoundary>; }
+
+function ConflictContent() {
   const { c, t, fs, dark } = useTheme();
   const { toast } = useFeedback();
   const conflicts = useStore(s => s.conflicts);
@@ -24,16 +28,28 @@ export default function SyncConflictScreen() {
   const [busy, setBusy] = useState(false);
 
   const first = conflicts[0];
+  useEffect(() => setChoice('latest'), [first?.entryId]);
   const localEntry = first ? entries.find(e => e.id === first.entryId) : undefined;
 
   const confirmChoice = async () => {
+    if (busy) return;
     setBusy(true);
-    if (conflicts.length > 0) {
-      await actions.resolveConflicts(choice);
+    try {
+      if (conflicts.length > 0) {
+        const result = await actions.resolveConflicts(choice, first?.entryId);
+        if (!result.ok) {
+          toast(result.message || '处理未完成，请稍后重试', { type: 'warning' });
+          return;
+        }
+        if (result.conflicts) { toast('这篇已处理，请继续确认下一篇'); return; }
+      }
+      toast('操作成功', { message: '同步冲突已按所选方式处理完成' });
+      goBack();
+    } catch (error) {
+      toast(error instanceof Error ? error.message : '处理未完成，请稍后重试', { type: 'warning' });
+    } finally {
+      setBusy(false);
     }
-    setBusy(false);
-    toast('操作成功', { message: '同步冲突已按所选方式处理完成' });
-    goBack();
   };
 
   return (
@@ -41,10 +57,23 @@ export default function SyncConflictScreen() {
       <NavBar />
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 22, paddingBottom: 24 }}>
         <View style={{ alignItems: 'center', marginTop: 6, marginBottom: 20 }}>
-          <Image source={IMAGES.syncConflict} style={{ width: 140, height: 140, borderRadius: 24, marginBottom: 12 }} resizeMode="cover" />
+          <View
+            style={{
+              width: 152,
+              height: 152,
+              borderRadius: dark ? 76 : 0,
+              backgroundColor: dark ? 'rgba(236,246,247,0.92)' : 'transparent',
+              padding: dark ? 14 : 0,
+              alignItems: 'center',
+              justifyContent: 'center',
+              marginBottom: 12,
+            }}
+          >
+            <Image source={IMAGES.syncConflict} style={{ width: '100%', height: '100%' }} resizeMode="contain" />
+          </View>
           <Text style={[t.h1, { fontSize: fs(21), textAlign: 'center' }]}>检测到同步冲突</Text>
           <Text style={[t.sub, { textAlign: 'center', marginTop: 8 }]}>
-            {cloudConfigured() ? '云端与本机' : '两个账号'}对同一篇日记有不同的修改，请选择处理方式：
+            {cloudConfigured() ? '云端与本机' : '本机与账号快照'}对同一篇日记有不同的修改，共 {conflicts.length} 篇待处理，请逐篇比较后选择：
           </Text>
         </View>
 
@@ -57,8 +86,12 @@ export default function SyncConflictScreen() {
               本机修改：{fmtDateTime(first.localUpdatedAt)}
             </Text>
             <Text style={{ fontSize: fs(12), color: c.textSub, marginTop: 2 }}>
-              {cloudConfigured() ? '云端' : '另一账号'}修改：{fmtDateTime(first.cloudUpdatedAt)}
+              {cloudConfigured() ? '云端' : '账号快照'}修改：{fmtDateTime(first.cloudUpdatedAt)}
             </Text>
+            <Text style={[t.h3, { marginTop: 14 }]}>本机版本</Text>
+            <Text style={[t.sub, { marginTop: 5 }]}>{localEntry?.body || '（无正文）'}</Text>
+            <Text style={[t.h3, { marginTop: 14 }]}>同步版本</Text>
+            <Text style={[t.sub, { marginTop: 5 }]}>{first.cloudEntry.body || '（无正文）'}</Text>
           </View>
         )}
 
@@ -68,6 +101,11 @@ export default function SyncConflictScreen() {
             return (
               <Pressable
                 key={opt.key}
+                disabled={busy}
+                accessibilityRole="radio"
+                accessibilityState={{ checked: on, disabled: busy }}
+                aria-checked={on}
+                aria-disabled={busy}
                 onPress={() => {
                   haptic('light');
                   setChoice(opt.key);
@@ -99,7 +137,7 @@ export default function SyncConflictScreen() {
       </ScrollView>
 
       <View style={{ paddingHorizontal: 22, paddingBottom: 18, paddingTop: 8 }}>
-        <Button title="确认处理" loading={busy} onPress={() => void confirmChoice()} />
+        <Button title={first ? "确认这篇的保留版本" : "处理完成，返回"} loading={busy} onPress={() => void confirmChoice()} />
       </View>
     </Screen>
   );

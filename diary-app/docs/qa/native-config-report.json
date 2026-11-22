@@ -1,0 +1,17 @@
+{
+  "scope": "Static configuration and asset audit only; no signed builds or physical-device testing.",
+  "sdkVersion": "57.0.0",
+  "expoPublicConfig": "passed (rerun)",
+  "expoIntrospect": "passed (rerun)",
+  "plugins": 11,
+  "assetReferencesChecked": 47,
+  "missingAssets": [],
+  "iosMicrophoneUsageDescription": "用于录制语音日记、视频声音，以及语音听写。",
+  "androidRecordAudio": [
+    {
+      "android:name": "android.permission.RECORD_AUDIO"
+    }
+  ],
+  "dependencyCheck": "passed in offline mode (rerun); not an online dependency advisory audit",
+  "fix": "Removed expo-image-picker microphonePermission:false override which stripped recording permission from both native platforms."
+}

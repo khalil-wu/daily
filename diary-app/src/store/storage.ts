@@ -2,6 +2,8 @@ import type { AppState, Entry, Person } from './types';
 import { DEFAULT_NOTEBOOKS, DEFAULT_TAGS, PERSON_COLORS, RELATIONS } from '../data/constants';
 import { normalizeVideos } from '../utils/video';
 import { normalizeBirthday } from '../utils/people';
+import { uid } from '../utils/text';
+import { createWriteQueue } from './persistence';
 
 const KEY = 'jide-diary:state:v1';
 const mem = new Map<string, string>();
@@ -50,8 +52,8 @@ export function defaultState(): AppState {
     reviews: [],
     appearance: {
       theme: 'light',
-      style: 'warm',
-      accent: 'latte',
+      style: 'companion',
+      accent: 'teal',
       fontScale: 'standard',
       fontFamily: 'serif',
       lineHeight: 'standard',
@@ -82,18 +84,34 @@ export function defaultState(): AppState {
 /** 补全单篇日记的字段：旧版本数据、外部导入的 JSON、云端快照都从这里过一遍 */
 export function normalizeEntry(item: unknown): Entry {
   const e = (item && typeof item === 'object' ? item : {}) as Partial<Entry>;
+  const timestamp = (v: unknown, fallback: number) => typeof v === 'number' && Number.isFinite(v) && v >= 0 ? v : fallback;
+  const strings = (v: unknown): string[] => Array.isArray(v) ? [...new Set(v.filter(x => typeof x === 'string' && x))] : [];
+  const createdAt = timestamp(e.createdAt, Date.now());
   return {
     ...e,
-    tags: Array.isArray(e.tags) ? e.tags : [],
-    people: Array.isArray(e.people) ? e.people.filter(x => typeof x === 'string') : [],
-    photos: Array.isArray(e.photos) ? e.photos : [],
-    audios: Array.isArray(e.audios) ? e.audios : [],
+    id: typeof e.id === 'string' && e.id.trim() ? e.id : uid('e'),
+    title: typeof e.title === 'string' ? e.title : '',
+    body: typeof e.body === 'string' ? e.body : '',
+    createdAt,
+    updatedAt: timestamp(e.updatedAt, createdAt),
+    deletedAt: typeof e.deletedAt === 'number' && Number.isFinite(e.deletedAt) && e.deletedAt > 0 ? e.deletedAt : undefined,
+    purgedAt: typeof e.purgedAt === 'number' && Number.isFinite(e.purgedAt) && e.purgedAt > 0 ? e.purgedAt : undefined,
+    tags: strings(e.tags),
+    people: strings(e.people),
+    photos: strings(e.photos),
+    audios: Array.isArray(e.audios) ? e.audios.filter(a => a && typeof a.id === 'string' && typeof a.uri === 'string').map(a => ({ ...a, duration: timestamp(a.duration, 0), createdAt: timestamp(a.createdAt, createdAt) })) : [],
     videos: normalizeVideos(e.videos),
     favorite: !!e.favorite,
     pinned: !!e.pinned,
     hidden: !!e.hidden,
-    status: e.status ?? 'published',
+    status: e.status === 'draft' ? 'draft' : 'published',
+    place: e.place && typeof e.place.name === 'string' ? e.place : undefined,
   } as Entry;
+}
+
+export function isEntryRecord(value: unknown): value is Partial<Entry> {
+  return !!value && typeof value === 'object' && !Array.isArray(value)
+    && ['id', 'title', 'body'].some(key => typeof (value as Record<string, unknown>)[key] === 'string');
 }
 
 /** 补全身边人字段；没有名字的记录直接丢弃 */
@@ -127,7 +145,12 @@ export function normalizeState(raw: Partial<AppState> | null | undefined): AppSt
   return {
     ...d,
     ...raw,
-    profile: { ...d.profile, ...(raw.profile ?? {}) },
+    profile: {
+      name: typeof raw.profile?.name === 'string' ? raw.profile.name : d.profile.name,
+      signature: typeof raw.profile?.signature === 'string' ? raw.profile.signature : d.profile.signature,
+      avatar: typeof raw.profile?.avatar === 'string' ? raw.profile.avatar : d.profile.avatar,
+      cover: typeof raw.profile?.cover === 'string' ? raw.profile.cover : undefined,
+    },
     appearance: { ...d.appearance, ...(raw.appearance ?? {}) },
     ai: { ...d.ai, ...(raw.ai ?? {}) },
     reviews: Array.isArray(raw.reviews) ? raw.reviews.filter(x => !!x && typeof x === 'object' && typeof x.id === 'string') : [],
@@ -137,16 +160,16 @@ export function normalizeState(raw: Partial<AppState> | null | undefined): AppSt
     sync: { ...d.sync, ...(raw.sync ?? {}) },
     backup: { ...d.backup, ...(raw.backup ?? {}) },
     permissionsAsked: { ...d.permissionsAsked, ...(raw.permissionsAsked ?? {}) },
-    entries: Array.isArray(raw.entries) ? raw.entries.map(normalizeEntry) : [],
-    tags: Array.isArray(raw.tags) && raw.tags.length ? raw.tags : d.tags,
-    notebooks: Array.isArray(raw.notebooks) && raw.notebooks.length ? raw.notebooks : d.notebooks,
+    entries: Array.isArray(raw.entries) ? raw.entries.filter(isEntryRecord).map(normalizeEntry) : [],
+    tags: Array.isArray(raw.tags) && raw.tags.length ? raw.tags.filter(t => t && typeof t.id === 'string' && typeof t.name === 'string').map(t => ({ ...t, icon: typeof t.icon === 'string' ? t.icon : 'Star' })) : d.tags,
+    notebooks: Array.isArray(raw.notebooks) && raw.notebooks.length ? raw.notebooks.filter(n => n && typeof n.id === 'string' && typeof n.name === 'string') : d.notebooks,
     activeNotebook:
-      typeof raw.activeNotebook === 'string' && Array.isArray(raw.notebooks) && raw.notebooks.some(n => n.id === raw.activeNotebook)
+      typeof raw.activeNotebook === 'string' && Array.isArray(raw.notebooks) && raw.notebooks.some(n => n?.id === raw.activeNotebook)
         ? raw.activeNotebook
         : null,
     goals: { ...d.goals, ...(raw.goals ?? {}) },
     accounts: Array.isArray(raw.accounts) ? raw.accounts : [],
-    recentSearches: Array.isArray(raw.recentSearches) ? raw.recentSearches : [],
+    recentSearches: Array.isArray(raw.recentSearches) ? raw.recentSearches.filter(x => typeof x === 'string') : [],
     conflicts: Array.isArray(raw.conflicts)
       ? raw.conflicts.filter(x => !!x && typeof x === 'object').map(x => ({ ...x, cloudEntry: normalizeEntry(x.cloudEntry) }))
       : [],
@@ -158,7 +181,9 @@ export async function loadState(): Promise<AppState> {
   try {
     const txt = await getStorage().getItem(KEY);
     if (!txt) return defaultState();
-    return normalizeState(JSON.parse(txt));
+    const loaded = normalizeState(JSON.parse(txt));
+    persistedSnapshot = loaded;
+    return loaded;
   } catch {
     return defaultState();
   }
@@ -166,29 +191,58 @@ export async function loadState(): Promise<AppState> {
 
 let timer: ReturnType<typeof setTimeout> | null = null;
 let pending: AppState | null = null;
+let persistenceError: string | null = null;
+let persistedSnapshot: AppState | null = null;
+export const getPersistedSnapshot = () => persistedSnapshot;
+const persistenceListeners = new Set<() => void>();
+export const getPersistenceError = () => persistenceError;
+export function subscribePersistenceError(listener: () => void) {
+  persistenceListeners.add(listener);
+  return () => { persistenceListeners.delete(listener); };
+}
+function setPersistenceError(message: string | null) {
+  if (persistenceError === message) return;
+  persistenceError = message;
+  persistenceListeners.forEach(fn => fn());
+}
+const writes = createWriteQueue(async (snapshot: AppState) => {
+  try {
+    await getStorage().setItem(KEY, JSON.stringify(snapshot));
+    persistedSnapshot = snapshot;
+    setPersistenceError(null);
+    persistenceListeners.forEach(fn => fn());
+  } catch {
+    setPersistenceError('日记尚未保存到设备，请释放存储空间后重试');
+    throw new Error(persistenceError!);
+  }
+});
+
+export async function flushPendingState(): Promise<void> {
+  if (timer) clearTimeout(timer);
+  timer = null;
+  const snapshot = pending;
+  pending = null;
+  if (snapshot) await writes.write(snapshot);
+  else await writes.settled();
+}
 
 export function saveState(state: AppState, immediate = false) {
   pending = state;
   if (timer) clearTimeout(timer);
-  const flush = async () => {
-    timer = null;
-    const s = pending;
-    pending = null;
-    if (!s) return;
-    try {
-      await getStorage().setItem(KEY, JSON.stringify(s));
-    } catch (e) {
-      console.warn('保存失败', e);
-    }
-  };
-  if (immediate) return flush();
-  timer = setTimeout(flush, 250);
+  if (immediate) return flushPendingState();
+  timer = setTimeout(() => { void flushPendingState().catch(() => {}); }, 250);
   return Promise.resolve();
 }
 
 export async function clearAllStorage() {
+  if (timer) clearTimeout(timer);
+  timer = null;
+  pending = null;
+  await writes.settled();
   await getStorage().removeItem(KEY);
   await getStorage().removeItem(CLOUD_KEY);
+  persistedSnapshot = null;
+  setPersistenceError(null);
 }
 
 /** —— 模拟云端（无服务端时，用独立存储空间模拟云端快照，便于演示同步/冲突流程） —— */

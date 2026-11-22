@@ -1,29 +1,32 @@
 import React, { useEffect, useRef } from 'react';
 import { Animated, Platform, StyleSheet, View } from 'react-native';
 import { useTheme } from '../theme/ThemeProvider';
+import { useReducedMotion } from './motion';
 
 const USE_NATIVE = Platform.OS !== 'web';
 
 /** 首页加载骨架屏 */
 export function HomeSkeleton() {
   const { c, dark } = useTheme();
+  const reduced = useReducedMotion();
   const pulse = useRef(new Animated.Value(0.5)).current;
 
   useEffect(() => {
+    if (reduced) { pulse.setValue(0.7); return; }
     const loop = Animated.loop(
       Animated.sequence([
-        Animated.timing(pulse, { toValue: 0.92, duration: 750, useNativeDriver: USE_NATIVE }),
-        Animated.timing(pulse, { toValue: 0.45, duration: 750, useNativeDriver: USE_NATIVE }),
+        Animated.timing(pulse, { toValue: 0.92, duration: 750, useNativeDriver: USE_NATIVE, isInteraction: false }),
+        Animated.timing(pulse, { toValue: 0.45, duration: 750, useNativeDriver: USE_NATIVE, isInteraction: false }),
       ]),
     );
     loop.start();
     return () => loop.stop();
-  }, [pulse]);
+  }, [pulse, reduced]);
 
-  const blockBg = dark ? '#312B26' : '#EDE6DE';
+  const blockBg = c.bgDeep;
 
   return (
-    <Animated.View style={{ flex: 1, paddingHorizontal: 20, paddingTop: 14, gap: 12, opacity: pulse }}>
+    <Animated.View accessibilityLabel="正在加载日记" accessibilityState={{ busy: true }} style={{ flex: 1, paddingHorizontal: 20, paddingTop: 14, gap: 12, opacity: pulse }}>
       {/* 灵感骨架卡 */}
       <View
         style={{

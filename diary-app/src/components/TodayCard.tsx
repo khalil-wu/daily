@@ -1,27 +1,26 @@
-import React, { useCallback, useMemo, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Animated, Image, Pressable, View } from 'react-native';
+import { Text } from './text';
 import { router, useFocusEffect } from 'expo-router';
 import { Check, ChevronDown, ChevronRight, ChevronUp, Flame, RefreshCw, Sparkles } from 'lucide-react-native';
 import { useTheme } from '../theme/ThemeProvider';
 import { useStore } from '../store/store';
-import { DAILY_PROMPTS, MOODS } from '../data/constants';
+import { DAILY_PROMPTS, MOODS, moodTint } from '../data/constants';
 import { fmtMonthDay, greetingFor, WEEK_CN } from '../utils/date';
 import { computeDailyGoalProgress, computeTodaySummary } from '../utils/grouping';
 import { fmtNumber } from '../utils/text';
-import { Chip, haptic } from './ui';
+import { haptic } from './ui';
 import { MoodIcon } from './MoodIcon';
-import { FadeIn, PressableScale } from './motion';
+import { FadeIn, ND, PressableScale, SPRING, useReducedMotion } from './motion';
+import { IMAGES } from '../data/assets';
 import { useTourTarget } from './tour';
 
 /**
- * 首页「今日」卡片 —— 把原来分开的「今日灵感」和「写作目标」合成一张，
- * 并补上问候、连续天数和「点一个心情就开始写」的入口。
+ * 首页「今日」卡片 —— 问候 + Diarly 式单排心情快开 + 杂志引文式今日灵感 + 目标进度。
  * 今天写过之后自动收起为一行进度，把屏幕让给日记列表。
- *
- * 视觉来源：卡片 / 进度条沿用原首页两张卡片的样式，心情胶囊即筛选面板里的 Chip + MoodIcon。
  */
 export function TodayCard() {
-  const { c, t, fs, dark, look, r } = useTheme();
+  const { c, t, fs, dark, frameInk, r, ink } = useTheme();
   const entries = useStore(s => s.entries);
   const goals = useStore(s => s.goals);
   const name = useStore(s => s.profile.name);
@@ -47,12 +46,24 @@ export function TodayCard() {
 
   const d = new Date(now);
   const dateText = `${fmtMonthDay(now)} ${WEEK_CN[d.getDay()]}`;
-  // 字数已经在下方的目标进度里，这里只说「写没写」，保证一行放得下
   const statusText = summary.wroteToday
     ? `已记录 ${summary.count} 篇`
     : summary.words > 0
       ? `草稿 ${fmtNumber(summary.words)} 字，还没发布`
       : '今天还没有记录';
+
+  // 陪伴风：小鸟贴纸探出卡片上缘，挂载时轻轻一跳
+  const reduced = useReducedMotion();
+  const hop = useRef(new Animated.Value(reduced ? 1 : 0)).current;
+  useEffect(() => {
+    if (reduced || !ink.on) {
+      hop.setValue(1);
+      return;
+    }
+    const animation = Animated.spring(hop, { toValue: 1, useNativeDriver: ND, ...SPRING.pop });
+    animation.start();
+    return () => animation.stop();
+  }, [hop, reduced, ink.on]);
 
   return (
     <View
@@ -60,74 +71,95 @@ export function TodayCard() {
       collapsable={false}
       style={{
         backgroundColor: c.card,
-        borderRadius: r(16),
-        padding: 14,
+        borderRadius: r(18),
+        padding: 16,
+        marginTop: ink.on ? 30 : 0,
         marginBottom: 14,
-        borderWidth: look.flat ? 1 : dark ? 0 : StyleSheet.hairlineWidth,
-        borderColor: look.flat ? c.border : c.divider,
-        shadowColor: c.shadow,
-        shadowOpacity: dark || look.flat ? 0 : 0.05,
-        shadowRadius: 10,
-        shadowOffset: { width: 0, height: 2 },
-        elevation: dark || look.flat ? 0 : 1,
+        ...frameInk,
       }}
     >
-      {/* 问候 + 今日状态 + 连续天数 */}
+      {ink.on && (
+        <Animated.View
+          accessibilityElementsHidden
+          importantForAccessibility="no-hide-descendants"
+          pointerEvents="none"
+          style={{
+            position: 'absolute',
+            top: -30,
+            right: 14,
+            opacity: hop,
+            transform: [{ translateY: hop.interpolate({ inputRange: [0, 1], outputRange: [-8, 0] }) }],
+          }}
+        >
+          <Image source={IMAGES.companionBird} style={{ width: 72, height: 68 }} resizeMode="contain" />
+        </Animated.View>
+      )}
+      {/* 问候 + 今日状态 + 连续天数：问候可换两行，日期与连续天数整行排布，绝不截断 */}
       <Pressable
         onPress={() => {
           haptic('light');
           setManual(!expanded);
         }}
         accessibilityLabel={expanded ? '收起今日卡片' : '展开今日卡片'}
-        style={{ flexDirection: 'row', alignItems: 'center' }}
+        accessibilityRole="button"
+        accessibilityState={{ expanded }}
+        aria-expanded={expanded}
       >
-        <View style={{ flex: 1, minWidth: 0 }}>
-          <Text numberOfLines={1} style={[t.h3, { fontSize: fs(16) }]}>
-            {greetingFor(d.getHours())}，{name}
-          </Text>
-          <Text numberOfLines={1} style={{ fontSize: fs(12), color: c.textSub, marginTop: 4 }}>
+        <Text style={[t.h2, { fontSize: fs(17), lineHeight: fs(24), paddingRight: ink.on ? 76 : 0 }]}>
+          {greetingFor(d.getHours())}，{name}
+        </Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', marginTop: 4 }}>
+          <Text style={{ fontSize: fs(12), color: c.textSub }}>
             {dateText} · {statusText}
           </Text>
-        </View>
-        {summary.streak > 0 && (
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 3, paddingHorizontal: 8, paddingVertical: 3, borderRadius: 999, backgroundColor: c.primaryFaint, marginLeft: 8 }}>
-            <Flame size={12} color={c.primaryDark} strokeWidth={1.9} />
-            <Text style={{ fontSize: fs(11), color: c.primaryDark, fontWeight: '600', fontVariant: ['tabular-nums'] }}>连续 {summary.streak} 天</Text>
+          {summary.streak > 0 && (
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 3, paddingHorizontal: 8, paddingVertical: 3, borderRadius: r(999), backgroundColor: c.primaryFaint, marginLeft: 8 }}>
+              <Flame size={12} color={c.primaryDark} strokeWidth={1.9} />
+              <Text style={{ fontSize: fs(11), color: c.primaryDark, fontWeight: '600', fontVariant: ['tabular-nums'] }}>连续 {summary.streak} 天</Text>
+            </View>
+          )}
+          <View style={{ flex: 1 }} />
+          <View style={{ marginLeft: 6 }}>
+            {expanded ? <ChevronUp size={16} color={c.textMuted} /> : <ChevronDown size={16} color={c.textMuted} />}
           </View>
-        )}
-        <View style={{ marginLeft: 6 }}>
-          {expanded ? <ChevronUp size={16} color={c.textMuted} /> : <ChevronDown size={16} color={c.textMuted} />}
         </View>
       </Pressable>
 
       {expanded && (
         <FadeIn dy={6} duration={220}>
-          {/* 点一个心情，直接开始写 */}
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            style={{ flexGrow: 0, marginTop: 12, marginHorizontal: -14 }}
-            contentContainerStyle={{ gap: 8, paddingHorizontal: 14 }}
-          >
+          {/* Diarly 式单排 6 表情均布条：点按即开写 */}
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 14, gap: 2 }}>
             {MOODS.map(m => (
-              <Chip
+              <PressableScale
                 key={m.key}
-                label={m.label}
-                icon={<MoodIcon mood={m.key} size={15} />}
+                scaleTo={0.92}
+                accessibilityLabel={`带着${m.label}的心情写日记`}
                 onPress={() => {
                   haptic('light');
                   router.push({ pathname: '/write', params: { mood: m.key } });
                 }}
-              />
+                style={{ flex: 1, minHeight: 54, alignItems: 'center', justifyContent: 'center', gap: 5 }}
+              >
+                <View style={{ width: 34, height: 34, borderRadius: 17, backgroundColor: moodTint(m, dark), alignItems: 'center', justifyContent: 'center' }}>
+                  <MoodIcon mood={m.key} size={24} />
+                </View>
+                <Text numberOfLines={1} style={{ fontSize: fs(11), color: c.textSub }}>{m.label}</Text>
+              </PressableScale>
             ))}
-          </ScrollView>
+          </View>
 
-          {/* 今日灵感 */}
-          <PressableScale
-            scaleTo={0.985}
-            onPress={() => router.push({ pathname: '/write', params: { prompt: prompt.id } })}
-            accessibilityLabel={`用今日灵感写一篇：${prompt.title}`}
-            style={{ marginTop: 10, backgroundColor: dark ? c.cardAlt : c.primaryFaint, borderRadius: 12, paddingHorizontal: 12, paddingVertical: 10 }}
+          {/* 今日灵感（杂志引文风） */}
+          <View
+            style={{
+              marginTop: 12,
+              backgroundColor: dark ? c.cardAlt : c.primaryFaint,
+              borderRadius: r(12),
+              borderLeftWidth: 3,
+              borderLeftColor: c.primary,
+              paddingHorizontal: 13,
+              paddingTop: 4,
+              paddingBottom: 7,
+            }}
           >
             <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
@@ -135,22 +167,28 @@ export function TodayCard() {
                 <Text style={{ fontSize: fs(11.5), color: c.primaryDark, fontWeight: '600' }}>今日灵感 · {prompt.category}</Text>
               </View>
               <Pressable
-                hitSlop={10}
+                accessibilityRole="button"
+                accessibilityLabel="换一个写作灵感"
                 onPress={() => {
                   haptic('light');
                   setPromptIdx(i => (i + 1) % DAILY_PROMPTS.length);
                 }}
-                style={{ flexDirection: 'row', alignItems: 'center', gap: 3 }}
+                style={{ flexDirection: 'row', alignItems: 'center', gap: 3, minHeight: 44, minWidth: 44, paddingLeft: 8, justifyContent: 'flex-end' }}
               >
                 <RefreshCw size={11} color={c.textSub} />
                 <Text style={{ fontSize: fs(11.5), color: c.textSub }}>换一题</Text>
               </Pressable>
             </View>
-            <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 6, gap: 8 }}>
-              <Text numberOfLines={2} style={[t.h3, { fontSize: fs(14), flex: 1, lineHeight: fs(14) * 1.5 }]}>{prompt.title}</Text>
+            <PressableScale
+              scaleTo={0.985}
+              onPress={() => router.push({ pathname: '/write', params: { prompt: prompt.id } })}
+              accessibilityLabel={`用今日灵感写一篇：${prompt.title}`}
+              style={{ flexDirection: 'row', alignItems: 'center', gap: 8, minHeight: 44, marginTop: -2 }}
+            >
+              <Text numberOfLines={2} style={[t.readingTitle, { fontSize: fs(14.5), flex: 1, lineHeight: fs(14.5) * 1.55 }]}>{prompt.title}</Text>
               <ChevronRight size={16} color={c.primaryDark} />
-            </View>
-          </PressableScale>
+            </PressableScale>
+          </View>
         </FadeIn>
       )}
 
@@ -158,12 +196,11 @@ export function TodayCard() {
       {goal && (
         <Pressable
           onPress={() => router.push('/settings/goals')}
-          hitSlop={6}
           accessibilityLabel="写作目标设置"
-          style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 12 }}
+          style={{ flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: 44, marginTop: 2, marginBottom: -8 }}
         >
-          <View style={{ flex: 1, height: 5, borderRadius: 3, backgroundColor: c.bgDeep, overflow: 'hidden' }}>
-            <View style={{ width: `${goal.percent}%`, height: '100%', borderRadius: 3, backgroundColor: goal.achieved ? c.success : c.primary }} />
+          <View style={{ flex: 1, height: 8, borderRadius: 4, backgroundColor: ink.on ? c.inputBg : c.bgDeep, borderWidth: ink.on ? 1 : 0, borderColor: ink.soft, overflow: 'hidden' }}>
+            <View style={{ width: `${goal.percent}%`, height: '100%', borderRadius: 4, backgroundColor: c.primary }} />
           </View>
           {goal.achieved ? (
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 3 }}>

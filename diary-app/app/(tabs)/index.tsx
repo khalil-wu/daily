@@ -1,76 +1,42 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import {
-  Animated, Easing, FlatList, Platform, Pressable, RefreshControl, ScrollView,
-  type StyleProp, StyleSheet, Text, View, type ViewStyle,
-} from 'react-native';
+import { Animated, FlatList, Platform, Pressable, RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
+import { Text } from '../../src/components/text';
 import { router, useNavigation } from 'expo-router';
 import {
-  AudioLines, BookOpen, Camera, ChevronDown, CloudOff, FileText, FolderInput, Heart,
-  Image as ImageIcon, LayoutGrid, LayoutTemplate, List, Lock, Mic, PenLine, Pin,
-  Plus, Search, Trash2, Video,
+  AudioLines, BookOpen, ChevronDown, CloudOff, FileText, FolderInput, Heart,
+  Image as ImageIcon, LayoutGrid, List, Lock, Pin, Plus, Search, Trash2, X,
 } from 'lucide-react-native';
 import { useTheme } from '../../src/theme/ThemeProvider';
 import { actions, inNotebook, openTutorial, useHydrated, useStore } from '../../src/store/store';
-import { Chip, EmptyState, IconButton, Screen, UnderlineTabs, haptic } from '../../src/components/ui';
+import { Chip, EmptyState, IconButton, InkPress, Screen, UnderlineTabs, haptic } from '../../src/components/ui';
 import { EntryGridCard, EntryListCard } from '../../src/components/EntryCard';
 import { SwipeRow, closeOpenSwipeRow, type SwipeAction } from '../../src/components/SwipeRow';
 import { TodayCard } from '../../src/components/TodayCard';
-import { animateNextLayout, BottomSheet, ND, PressableScale, prefersReducedMotion, SPRING } from '../../src/components/motion';
+import { OnThisDay } from '../../src/components/OnThisDay';
+import { animateNextLayout, BottomSheet, FadeIn, ND, PressableScale, useReducedMotion, SPRING } from '../../src/components/motion';
 import { setTourHandler, useTourTarget } from '../../src/components/tour';
 import { HomeSkeleton } from '../../src/components/Skeleton';
 import { MoodIcon } from '../../src/components/MoodIcon';
 import { useFeedback } from '../../src/components/feedback';
-import { IMAGES } from '../../src/data/assets';
-import { MOODS } from '../../src/data/constants';
+import { IMAGES, EDITOR_ICONS } from '../../src/data/assets';
+import { AssetIcon } from '../../src/components/AssetIcon';
+import { DAILY_QUOTES, MOODS } from '../../src/data/constants';
 import { isDictationSupported } from '../../src/utils/dictation';
 import { groupEntriesByDate } from '../../src/utils/grouping';
 import type { Entry, MoodKey } from '../../src/store/types';
 
-type SubTab = 'all' | 'diary' | 'draft' | 'favorite' | 'pinned';
+type SubTab = 'all' | 'draft' | 'favorite' | 'pinned';
 type FlatListRow =
   | { type: 'header'; key: string; title: string; count: number }
   | { type: 'entry'; key: string; entry: Entry; index: number; first: boolean; last: boolean };
 
 const USE_NATIVE = ND;
 
-function AnimatedEntrance({ index, style, children }: { index: number; style?: StyleProp<ViewStyle>; children: React.ReactNode }) {
-  const reduced = prefersReducedMotion();
-  const anim = useRef(new Animated.Value(index < 10 && !reduced ? 0 : 1)).current;
-
-  useEffect(() => {
-    if (index >= 10 || reduced) return;
-    const tmr = setTimeout(() => {
-      Animated.timing(anim, {
-        toValue: 1,
-        duration: 280,
-        easing: Easing.out(Easing.cubic),
-        useNativeDriver: USE_NATIVE,
-      }).start();
-    }, Math.min(index, 9) * 28);
-    return () => clearTimeout(tmr);
-  }, [anim, index, reduced]);
-
-  if (index >= 10 || reduced) return <>{children}</>;
-
-  return (
-    <Animated.View
-      style={[
-        {
-          opacity: anim,
-          transform: [{ translateY: anim.interpolate({ inputRange: [0, 1], outputRange: [10, 0] }) }],
-        },
-        style,
-      ]}
-    >
-      {children}
-    </Animated.View>
-  );
-}
-
 /** 9-11. 首页（列表分组虚拟化 / 左滑撤销 / 日记本切换 / 写作目标 / 快捷入口） */
 export default function HomeScreen() {
-  const { c, t, fs, dark, look, r } = useTheme();
+  const { c, t, fs, dark, look, r, frame, ink } = useTheme();
   const { toast, sheet } = useFeedback();
+  const reducedMotion = useReducedMotion();
   const hydrated = useHydrated();
   const entries = useStore(s => s.entries);
   const tags = useStore(s => s.tags);
@@ -131,6 +97,12 @@ export default function HomeScreen() {
   // 快捷新建菜单：弹簧展开，收起时先播完动画再卸载
   const fabAnim = useRef(new Animated.Value(0)).current;
   useEffect(() => {
+    fabAnim.stopAnimation();
+    if (reducedMotion) {
+      fabAnim.setValue(fabOpen ? 1 : 0);
+      setFabMounted(fabOpen);
+      return;
+    }
     if (fabOpen) {
       setFabMounted(true);
       Animated.spring(fabAnim, { toValue: 1, useNativeDriver: USE_NATIVE, ...SPRING.pop }).start();
@@ -139,7 +111,8 @@ export default function HomeScreen() {
         if (finished) setFabMounted(false);
       });
     }
-  }, [fabOpen, fabAnim]);
+    return () => fabAnim.stopAnimation();
+  }, [fabOpen, fabAnim, reducedMotion]);
 
   const currentNotebook = useMemo(
     () => (activeNotebook ? notebooks.find(n => n.id === activeNotebook) : undefined),
@@ -158,8 +131,7 @@ export default function HomeScreen() {
 
   const filtered = useMemo(() => {
     let list: Entry[] = notebookEntries;
-    if (tab === 'diary') list = list.filter(e => e.status === 'published');
-    else if (tab === 'draft') list = list.filter(e => e.status === 'draft');
+    if (tab === 'draft') list = list.filter(e => e.status === 'draft');
     else if (tab === 'favorite') list = list.filter(e => e.favorite);
     else if (tab === 'pinned') list = list.filter(e => e.pinned);
     else list = list.filter(e => e.status === 'published');
@@ -288,9 +260,10 @@ export default function HomeScreen() {
         else if (res.conflicts > 0) toast(`发现 ${res.conflicts} 条同步冲突`, { type: 'warning', action: { label: '去处理', onPress: () => router.push('/sync-conflict') } });
         else toast('同步完成');
       } else {
-        await new Promise(r => setTimeout(r, 350));
-        toast('已是最新');
+        toast('本机内容已刷新', { message: '登录并开启云同步后，可以同步到其他设备。' });
       }
+    } catch {
+      toast('暂时无法同步，请检查网络后重试', { type: 'warning' });
     } finally {
       setRefreshing(false);
     }
@@ -301,6 +274,11 @@ export default function HomeScreen() {
     toast('已导入示例日记', { message: '你可以自由浏览、编辑或随时删除它们' });
   }, [toast]);
 
+  const moodsUsed = useMemo(
+    () => new Set(notebookEntries.filter(e => e.status === 'published' && e.mood).map(e => e.mood!)),
+    [notebookEntries],
+  );
+
   const activeFilterLabel = useMemo(() => {
     const parts: string[] = [];
     if (filterTag) parts.push(`#${tags.find(x => x.id === filterTag)?.name ?? filterTag}`);
@@ -308,11 +286,43 @@ export default function HomeScreen() {
     return parts.join(' · ');
   }, [filterTag, filterMood, tags]);
 
-  const showToday = (tab === 'all' || tab === 'diary') && !filterTag && !filterMood;
+  const showToday = tab === 'all' && !filterTag && !filterMood;
+
+  // 心情快捷筛选行：问候卡之下、「最近记录」之上；有筛选时问候卡隐藏它仍留在顶部
+  const moodChips = useMemo(() => {
+    if (tab !== 'all' || moodsUsed.size < 2) return null;
+    return (
+      <View style={{ flexShrink: 0, marginBottom: 12 }}>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          style={{ flexGrow: 0, flexShrink: 0, marginHorizontal: -20 }}
+          contentContainerStyle={{ gap: 8, paddingHorizontal: 20 }}
+        >
+          {MOODS.filter(m => moodsUsed.has(m.key)).map(m => (
+            <Chip
+              key={m.key}
+              size="sm"
+              label={m.label}
+              icon={<MoodIcon mood={m.key} size={14} />}
+              selected={filterMood === m.key}
+              onPress={() => {
+                haptic('light');
+                setFilterMood(cur => (cur === m.key ? null : m.key));
+              }}
+            />
+          ))}
+        </ScrollView>
+      </View>
+    );
+  }, [tab, moodsUsed, filterMood]);
+
   const listHeader = useMemo(() => {
     return (
       <View>
         {showToday && <TodayCard />}
+        {showToday && <OnThisDay />}
+        {moodChips}
 
         {homeView === 'card' && (
           <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
@@ -324,7 +334,22 @@ export default function HomeScreen() {
         )}
       </View>
     );
-  }, [showToday, tab, c, fs, homeView, filtered.length]);
+  }, [showToday, tab, c, fs, homeView, filtered.length, moodChips]);
+
+  // 列表底部「每日一句」（Diarly 首页名言卡）：衬线居中排版，按日轮换
+  const listFooter = useMemo(() => {
+    const quote = DAILY_QUOTES[new Date().getDate() % DAILY_QUOTES.length];
+    return (
+      <FadeIn dy={8} style={{ marginTop: 6, marginBottom: 4, alignItems: 'center', paddingHorizontal: 24, paddingVertical: 22 }}>
+        <View style={{ width: 28, height: 1, backgroundColor: c.divider, marginBottom: 14 }} />
+        <Text style={{ fontSize: fs(10.5), color: c.textMuted, letterSpacing: 3 }}>每 日 一 句</Text>
+        <Text textRole="reading" style={{ fontSize: fs(15), color: c.textSub, lineHeight: fs(15) * 1.8, textAlign: 'center', marginTop: 10, fontStyle: 'italic' }}>
+          “{quote.text}”
+        </Text>
+        <Text style={{ fontSize: fs(11), color: c.textMuted, marginTop: 8 }}>—— {quote.from}</Text>
+      </FadeIn>
+    );
+  }, [c.divider, c.textMuted, c.textSub, fs]);
 
   const makeSwipeActions = useCallback(
     (entry: Entry): SwipeAction[] => [
@@ -364,58 +389,56 @@ export default function HomeScreen() {
       if (item.type === 'header') {
         // 设计稿1 #9：分组标题用衬线小标题，与卡片拉开层级
         return (
-          <View style={{ flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between', marginTop: 10, marginBottom: 10, paddingHorizontal: 2 }}>
-            <Text style={[t.h3, { fontSize: fs(15.5) }]}>{item.title}</Text>
+          <View style={{ flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between', marginTop: 16, marginBottom: 10, paddingHorizontal: 2 }}>
+            <Text style={[t.h2, { fontSize: fs(15.5) }]}>{item.title}</Text>
             <Text style={{ fontSize: fs(11.5), color: c.textMuted }}>{item.count} 篇</Text>
           </View>
         );
       }
       // 同一组日记共用一张卡片：只在组首组尾画圆角，外层统一投一层阴影
       return (
-        <AnimatedEntrance index={item.index}>
-          <View
-            style={{
-              marginBottom: item.last ? 18 : 0,
-              backgroundColor: c.card,
-              borderTopLeftRadius: item.first ? r(18) : 0,
-              borderTopRightRadius: item.first ? r(18) : 0,
-              borderBottomLeftRadius: item.last ? r(18) : 0,
-              borderBottomRightRadius: item.last ? r(18) : 0,
-              borderLeftWidth: look.flat ? 1 : dark ? 0 : StyleSheet.hairlineWidth,
-              borderRightWidth: look.flat ? 1 : dark ? 0 : StyleSheet.hairlineWidth,
-              borderTopWidth: look.flat ? (item.first ? 1 : 0) : dark || !item.first ? 0 : StyleSheet.hairlineWidth,
-              borderBottomWidth: look.flat ? (item.last ? 1 : 0) : dark || !item.last ? 0 : StyleSheet.hairlineWidth,
-              borderColor: look.flat ? c.border : c.divider,
-              ...(item.last && !dark && !look.flat
-                ? { shadowColor: c.shadow, shadowOpacity: 0.06, shadowRadius: 14, shadowOffset: { width: 0, height: 6 }, elevation: 1 }
-                : {}),
-            }}
-          >
-            <SwipeRow actions={makeSwipeActions(item.entry)} radius={item.first && item.last ? r(18) : 0}>
-              <EntryListCard
-                entry={item.entry}
-                grouped={{ first: item.first, last: item.last }}
-                onPress={() => openEntry(item.entry)}
-                onLongPress={() => openEntrySheet(item.entry)}
-              />
-            </SwipeRow>
-          </View>
-        </AnimatedEntrance>
+        <View
+          style={{
+            marginBottom: item.last ? 18 : 0,
+            backgroundColor: c.card,
+            borderTopLeftRadius: item.first ? r(18) : 0,
+            borderTopRightRadius: item.first ? r(18) : 0,
+            borderBottomLeftRadius: item.last ? r(18) : 0,
+            borderBottomRightRadius: item.last ? r(18) : 0,
+            borderLeftWidth: look.flat ? 1 : dark ? 0 : StyleSheet.hairlineWidth,
+            borderRightWidth: look.flat ? 1 : dark ? 0 : StyleSheet.hairlineWidth,
+            borderTopWidth: look.flat ? (item.first ? 1 : 0) : dark || !item.first ? 0 : StyleSheet.hairlineWidth,
+            borderBottomWidth: look.flat ? (item.last ? 1 : 0) : dark || !item.last ? 0 : StyleSheet.hairlineWidth,
+            borderColor: look.flat ? c.border : c.divider,
+            ...(item.last && !dark && !look.flat
+              ? { shadowColor: c.shadow, shadowOpacity: 0.045, shadowRadius: 16, shadowOffset: { width: 0, height: 4 }, elevation: 1 }
+              : {}),
+          }}
+        >
+          <SwipeRow actions={makeSwipeActions(item.entry)} radius={item.first && item.last ? r(18) : 0}>
+            <EntryListCard
+              entry={item.entry}
+              grouped={{ first: item.first, last: item.last }}
+              onPress={() => openEntry(item.entry)}
+              onLongPress={() => openEntrySheet(item.entry)}
+            />
+          </SwipeRow>
+        </View>
       );
     },
-    [c.card, c.border, c.divider, c.shadow, c.textMuted, dark, fs, look.flat, r, t.h3, makeSwipeActions, openEntry, openEntrySheet],
+    [c.card, c.border, c.divider, c.shadow, c.textMuted, dark, fs, look.flat, r, t.h2, makeSwipeActions, openEntry, openEntrySheet],
   );
 
   const renderGridItem = useCallback(
-    ({ item, index }: { item: Entry; index: number }) => (
+    ({ item }: { item: Entry }) => (
       <View style={{ width: '48.2%', flexDirection: 'row' }}>
-        <AnimatedEntrance index={index} style={{ flex: 1, minWidth: 0, flexDirection: 'row' }}>
+        <View style={{ flex: 1, minWidth: 0, flexDirection: 'row' }}>
           <EntryGridCard
             entry={item}
             onPress={() => openEntry(item)}
             onLongPress={() => openEntrySheet(item)}
           />
-        </AnimatedEntrance>
+        </View>
       </View>
     ),
     [openEntry, openEntrySheet],
@@ -439,7 +462,7 @@ export default function HomeScreen() {
           {currentNotebook && (
             <View style={{ width: 9, height: 9, borderRadius: 5, backgroundColor: currentNotebook.color }} />
           )}
-          <Text style={[t.h1, { fontSize: fs(22), flexShrink: 1 }]} numberOfLines={1}>
+          <Text style={[t.h1, { fontSize: fs(24), flexShrink: 1 }]} numberOfLines={1}>
             {currentNotebook ? currentNotebook.name : '记得日记'}
           </Text>
           <ChevronDown size={18} color={c.textSub} />
@@ -462,7 +485,6 @@ export default function HomeScreen() {
           onChange={setTab}
           items={[
             { key: 'all', label: '全部' },
-            { key: 'diary', label: '日记' },
             { key: 'draft', label: '草稿', count: draftCount || undefined },
             { key: 'favorite', label: '收藏' },
             { key: 'pinned', label: '置顶' },
@@ -489,11 +511,13 @@ export default function HomeScreen() {
       {!hydrated ? (
         <HomeSkeleton />
       ) : filtered.length === 0 ? (
-        <View style={{ flex: 1, justifyContent: 'center', paddingBottom: 40 }}>
+        <View style={{ flex: 1, paddingTop: 14, paddingHorizontal: 20, paddingBottom: 40 }}>
+          {moodChips}
+          <View style={{ flex: 1, justifyContent: 'center' }}>
           <EmptyState
             image={IMAGES.emptyBook}
             imageSize={185}
-            title={tab === 'all' || tab === 'diary' ? '还没有任何日记' : '这里暂时空空的'}
+            title={tab === 'all' ? '还没有任何日记' : '这里暂时空空的'}
             desc={
               tab === 'draft'
                 ? '写到一半不想丢失的想法，会自动存放在草稿箱里。'
@@ -520,6 +544,7 @@ export default function HomeScreen() {
                   : undefined
             }
           />
+          </View>
         </View>
       ) : homeView === 'list' ? (
         <FlatList
@@ -530,11 +555,13 @@ export default function HomeScreen() {
           keyExtractor={item => item.key}
           renderItem={renderListRow}
           ListHeaderComponent={listHeader}
+          ListFooterComponent={listFooter}
           showsVerticalScrollIndicator={false}
-          contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 14, paddingBottom: 96 }}
-          initialNumToRender={10}
-          maxToRenderPerBatch={10}
-          windowSize={7}
+          contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 14, paddingBottom: 112 }}
+          initialNumToRender={8}
+          maxToRenderPerBatch={6}
+          windowSize={5}
+          updateCellsBatchingPeriod={40}
           removeClippedSubviews={Platform.OS !== 'web'}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => void onRefresh()} tintColor={c.primary} colors={[c.primary]} />}
         />
@@ -547,12 +574,14 @@ export default function HomeScreen() {
           keyExtractor={item => item.id}
           renderItem={renderGridItem}
           ListHeaderComponent={listHeader}
+          ListFooterComponent={listFooter}
           columnWrapperStyle={{ justifyContent: 'space-between', marginBottom: 12 }}
           showsVerticalScrollIndicator={false}
-          contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 14, paddingBottom: 96 }}
-          initialNumToRender={10}
-          maxToRenderPerBatch={10}
-          windowSize={7}
+          contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 14, paddingBottom: 112 }}
+          initialNumToRender={8}
+          maxToRenderPerBatch={6}
+          windowSize={5}
+          updateCellsBatchingPeriod={40}
           removeClippedSubviews={Platform.OS !== 'web'}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => void onRefresh()} tintColor={c.primary} colors={[c.primary]} />}
         />
@@ -563,7 +592,7 @@ export default function HomeScreen() {
         <Animated.View
           style={[
             StyleSheet.absoluteFill,
-            { zIndex: 20, backgroundColor: dark ? 'rgba(0,0,0,0.4)' : 'rgba(47,42,38,0.16)', opacity: fabAnim.interpolate({ inputRange: [0, 1], outputRange: [0, 1], extrapolate: 'clamp' }) },
+            { zIndex: 20, backgroundColor: dark ? 'rgba(0,0,0,0.45)' : 'rgba(24,24,22,0.18)', opacity: fabAnim.interpolate({ inputRange: [0, 1], outputRange: [0, 1], extrapolate: 'clamp' }) },
           ]}
         >
           <Pressable style={{ flex: 1 }} onPress={() => setFabOpen(false)} accessibilityLabel="收起新建菜单" />
@@ -572,17 +601,17 @@ export default function HomeScreen() {
               position: 'absolute',
               right: 20,
               bottom: 86,
-              width: 158,
+              width: 168,
               backgroundColor: c.card,
-              borderRadius: 16,
+              borderRadius: r(16),
               paddingVertical: 6,
-              borderWidth: StyleSheet.hairlineWidth,
-              borderColor: c.divider,
+              borderWidth: look.flat ? 1 : StyleSheet.hairlineWidth,
+              borderColor: look.flat ? c.border : c.divider,
               shadowColor: c.shadow,
-              shadowOpacity: 0.16,
+              shadowOpacity: dark || look.flat ? 0 : 0.14,
               shadowRadius: 18,
               shadowOffset: { width: 0, height: 6 },
-              elevation: 8,
+              elevation: dark || look.flat ? 0 : 8,
               transformOrigin: 'right bottom',
               transform: [
                 { scale: fabAnim.interpolate({ inputRange: [0, 1], outputRange: [0.82, 1] }) },
@@ -591,15 +620,14 @@ export default function HomeScreen() {
             }}
           >
             {[
-              { label: '写日记', icon: PenLine, onPress: () => router.push('/write') },
-              { label: '用模板', icon: LayoutTemplate, onPress: () => router.push('/templates') },
-              { label: '录音记录', icon: Mic, onPress: () => router.push({ pathname: '/write', params: { action: 'audio' } }) },
-              { label: '拍照记录', icon: Camera, onPress: () => router.push({ pathname: '/write', params: { action: 'photo' } }) },
-              { label: '拍视频', icon: Video, onPress: () => router.push({ pathname: '/write', params: { action: 'video' } }) },
+              { label: '写日记', asset: EDITOR_ICONS.write, onPress: () => router.push('/write') },
+              { label: '用模板', asset: EDITOR_ICONS.sticker, onPress: () => router.push('/templates') },
+              { label: '录音记录', asset: EDITOR_ICONS.audio, onPress: () => router.push({ pathname: '/write', params: { action: 'audio' } }) },
+              { label: '拍照记录', asset: EDITOR_ICONS.photo, onPress: () => router.push({ pathname: '/write', params: { action: 'photo' } }) },
+              { label: '拍视频', asset: EDITOR_ICONS.video, onPress: () => router.push({ pathname: '/write', params: { action: 'video' } }) },
               ...(dictationSupported
                 ? [{ label: '语音听写', icon: AudioLines, onPress: () => router.push({ pathname: '/write', params: { action: 'dictate' } }) }]
                 : []),
-              { label: '视频记录', icon: Video, onPress: () => router.push({ pathname: '/write', params: { action: 'video' } }) },
             ].map((item, idx) => (
               <Pressable
                 key={item.label}
@@ -611,15 +639,21 @@ export default function HomeScreen() {
                 style={({ pressed }) => ({
                   flexDirection: 'row',
                   alignItems: 'center',
-                  gap: 12,
-                  paddingHorizontal: 16,
-                  paddingVertical: 12,
+                  gap: 11,
+                  paddingHorizontal: 14,
+                  paddingVertical: 10,
                   borderTopWidth: idx > 0 ? StyleSheet.hairlineWidth : 0,
                   borderTopColor: c.divider,
                   backgroundColor: pressed ? c.cardAlt : 'transparent',
                 })}
               >
-                <item.icon size={17} color={c.primaryDark} strokeWidth={1.7} />
+                <View style={{ width: 32, height: 32, borderRadius: r(10), backgroundColor: c.primaryFaint, alignItems: 'center', justifyContent: 'center' }}>
+                  {'asset' in item && item.asset ? (
+                    <AssetIcon source={item.asset} size={17} color={c.primaryDark} />
+                  ) : (
+                    item.icon && <item.icon size={16} color={c.primaryDark} strokeWidth={1.85} />
+                  )}
+                </View>
                 <Text style={{ fontSize: fs(14), color: c.text }}>{item.label}</Text>
               </Pressable>
             ))}
@@ -628,31 +662,60 @@ export default function HomeScreen() {
       )}
 
       <View ref={fabTarget} collapsable={false} style={{ position: 'absolute', right: 20, bottom: 20, zIndex: 25 }}>
-        <PressableScale
-          scaleTo={0.9}
-          onPress={() => {
-            haptic('medium');
-            setFabOpen(v => !v);
-          }}
-          accessibilityLabel={fabOpen ? '收起新建菜单' : '新建日记'}
-          style={{
-            width: 54,
-            height: 54,
-            borderRadius: 27,
-            backgroundColor: c.primary,
-            alignItems: 'center',
-            justifyContent: 'center',
-            shadowColor: c.primaryDark,
-            shadowOpacity: 0.32,
-            shadowRadius: 12,
-            shadowOffset: { width: 0, height: 5 },
-            elevation: 5,
-          }}
-        >
-          <Animated.View style={{ transform: [{ rotate: fabAnim.interpolate({ inputRange: [0, 1], outputRange: ['0deg', '45deg'] }) }] }}>
-            <Plus size={26} color="#fff" strokeWidth={2.2} />
-          </Animated.View>
-        </PressableScale>
+        {ink.on ? (
+          <InkPress
+            offset={3}
+            radius={29}
+            underlay={dark ? '#000000' : ink.line}
+            onPress={() => {
+              haptic('medium');
+              setFabOpen(v => !v);
+            }}
+            accessibilityLabel={fabOpen ? '收起新建菜单' : '新建日记'}
+            faceStyle={{
+              width: 58,
+              height: 58,
+              borderRadius: 29,
+              backgroundColor: c.primary,
+              borderWidth: 1.5,
+              borderColor: ink.line,
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            {fabOpen ? (
+              <X size={26} color="#182326" strokeWidth={2.3} />
+            ) : (
+              <AssetIcon source={EDITOR_ICONS.write} size={26} color="#182326" />
+            )}
+          </InkPress>
+        ) : (
+          <PressableScale
+            scaleTo={0.9}
+            onPress={() => {
+              haptic('medium');
+              setFabOpen(v => !v);
+            }}
+            accessibilityLabel={fabOpen ? '收起新建菜单' : '新建日记'}
+            style={{
+              width: 56,
+              height: 56,
+              borderRadius: 28,
+              backgroundColor: c.primary,
+              alignItems: 'center',
+              justifyContent: 'center',
+              shadowColor: c.primaryDark,
+              shadowOpacity: dark || look.flat ? 0 : 0.28,
+              shadowRadius: 12,
+              shadowOffset: { width: 0, height: 5 },
+              elevation: dark || look.flat ? 0 : 5,
+            }}
+          >
+            <Animated.View style={{ transform: [{ rotate: fabAnim.interpolate({ inputRange: [0, 1], outputRange: ['0deg', '45deg'] }) }] }}>
+              <Plus size={26} color={c.textOnPrimary} strokeWidth={2.3} />
+            </Animated.View>
+          </PressableScale>
+        )}
       </View>
 
       {/* 顶部标题下拉面板：日记本切换 + 内容空间 + 筛选 */}
@@ -742,9 +805,11 @@ export default function HomeScreen() {
                   setDropOpen(false);
                   router.push(item.path);
                 }}
-                style={{ width: '31%', backgroundColor: c.card, borderRadius: 14, paddingVertical: 12, alignItems: 'center', gap: 6, borderWidth: StyleSheet.hairlineWidth, borderColor: c.divider }}
+                style={{ width: '31%', backgroundColor: c.card, borderRadius: r(14), paddingVertical: 12, alignItems: 'center', gap: 7, ...frame }}
               >
-                <item.icon size={18} color={c.primaryDark} strokeWidth={1.7} />
+                <View style={{ width: 34, height: 34, borderRadius: r(10), backgroundColor: c.primaryFaint, alignItems: 'center', justifyContent: 'center' }}>
+                  <item.icon size={17} color={c.primaryDark} strokeWidth={1.75} />
+                </View>
                 <Text style={{ fontSize: fs(12), color: c.text }}>{item.label}</Text>
               </PressableScale>
             ))}

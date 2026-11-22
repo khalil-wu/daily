@@ -63,7 +63,7 @@ test('身边人：旧版本数据没有 people 字段时自动补全，脏数据
   assert.deepEqual(migrated.people[1].aliases, ['树']);
   assert.deepEqual(normalizeState({}).people, []);
   assert.equal(normalizeState({}).ai.enabled, false);
-  assert.equal(normalizeState({ appearance: { accent: 'rose' } as any }).appearance.style, 'warm');
+  assert.equal(normalizeState({ appearance: { accent: 'rose' } as any }).appearance.style, 'companion');
 });
 
 test('身边人：在正文里按出现顺序识别已有的人，别名也算；常见称呼提示新建', () => {

@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { ScrollView, Text, View } from 'react-native';
+import { ScrollView, View } from 'react-native';
+import { Text } from './text';
 import { useTheme } from '../theme/ThemeProvider';
 import { useStore } from '../store/store';
 import { composeDateTime, daysBetween, fmtMonthDay, fmtTime, startOfDay, WEEK_CN } from '../utils/date';
@@ -61,8 +62,8 @@ export function DateTimeSheet({ visible, value, onClose, onConfirm }: { visible:
 
   return (
     <BottomSheet visible={visible} onClose={onClose} title="记录时间" maxHeight={0.9}>
-      <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled" contentContainerStyle={{ paddingBottom: 6 }}>
-        <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 8, marginTop: 2 }}>
+      <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled" style={{ flexShrink: 1 }} contentContainerStyle={{ paddingBottom: 6 }}>
+        <View style={{ flexDirection: 'row', flexWrap: 'wrap', alignItems: 'baseline', gap: 8, marginTop: 2 }}>
           <Text style={[t.h1, { fontSize: fs(21) }]}>
             {fmtMonthDay(composed)} {WEEK_CN[new Date(composed).getDay()]} {fmtTime(composed)}
           </Text>
@@ -94,7 +95,7 @@ export function DateTimeSheet({ visible, value, onClose, onConfirm }: { visible:
         />
 
         {/* 两种视图共用同一高度，切换时面板不跳动 */}
-        <View style={{ minHeight: 358, justifyContent: mode === 'time' ? 'center' : 'flex-start' }}>
+        <View style={{ minHeight: 280, justifyContent: mode === 'time' ? 'center' : 'flex-start' }}>
         {mode === 'date' ? (
           <CalendarMonth
             year={view.year}

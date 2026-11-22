@@ -1,39 +1,52 @@
 import React, { useEffect, useRef } from 'react';
-import { Animated, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Animated, Easing, Pressable, StyleSheet, View } from 'react-native';
+import { Text } from './text';
 import type { Tabs } from 'expo-router';
-import { BarChart2, BookOpen, Calendar, Clock, User, type LucideIcon } from 'lucide-react-native';
 import { useTheme } from '../theme/ThemeProvider';
+import { NAV_ICONS } from '../data/assets';
+import { AssetIcon } from './AssetIcon';
 import { haptic } from './ui';
-import { ND, SPRING, prefersReducedMotion } from './motion';
+import { ND, SPRING, useReducedMotion } from './motion';
 import { useTourTarget } from './tour';
 
 type TabBarProps = Parameters<NonNullable<React.ComponentProps<typeof Tabs>['tabBar']>>[0];
 
-const TAB_META: Record<string, { label: string; icon: LucideIcon }> = {
-  index: { label: '日记', icon: BookOpen },
-  calendar: { label: '日历', icon: Calendar },
-  review: { label: '回顾', icon: Clock },
-  stats: { label: '统计', icon: BarChart2 },
-  me: { label: '我的', icon: User },
+const TAB_META: Record<string, { label: string }> = {
+  index: { label: '日记' },
+  calendar: { label: '日历' },
+  review: { label: '回顾' },
+  stats: { label: '统计' },
+  me: { label: '我的' },
 };
 
-function TabItem({ name, focused, onPress, onLongPress }: { name: string; focused: boolean; onPress: () => void; onLongPress: () => void }) {
-  const { c, fs } = useTheme();
+const TabItem = React.memo(function TabItem({ name, focused, onPress, onLongPress }: { name: string; focused: boolean; onPress: () => void; onLongPress: () => void }) {
+  const { c, fs, r, ink, dark } = useTheme();
+  const reduced = useReducedMotion();
   const meta = TAB_META[name];
+  const iconSource = NAV_ICONS[name];
   const targetRef = useTourTarget(`tab.${name}`);
   const a = useRef(new Animated.Value(focused ? 1 : 0)).current;
 
   useEffect(() => {
-    if (prefersReducedMotion()) {
+    if (reduced) {
       a.setValue(focused ? 1 : 0);
       return;
     }
-    Animated.spring(a, { toValue: focused ? 1 : 0, useNativeDriver: ND, ...SPRING.pop }).start();
-  }, [a, focused]);
+    const animation = ink.on
+      ? Animated.spring(a, { toValue: focused ? 1 : 0, useNativeDriver: ND, ...SPRING.pop })
+      : Animated.timing(a, {
+          toValue: focused ? 1 : 0,
+          duration: 120,
+          easing: Easing.out(Easing.cubic),
+          useNativeDriver: ND,
+          isInteraction: false,
+        });
+    animation.start();
+    return () => animation.stop();
+  }, [a, focused, reduced, ink.on]);
 
-  if (!meta) return null;
-  const Icon = meta.icon;
-  const color = focused ? c.primaryDark : c.textMuted;
+  if (!meta || !iconSource) return null;
+  const color = focused ? (ink.on ? (dark ? c.primaryDark : ink.line) : c.primaryDark) : c.textMuted;
 
   return (
     <Pressable
@@ -41,41 +54,58 @@ function TabItem({ name, focused, onPress, onLongPress }: { name: string; focuse
       collapsable={false}
       accessibilityRole="tab"
       accessibilityState={{ selected: focused }}
+      aria-selected={focused}
       accessibilityLabel={meta.label}
       onPress={onPress}
       onLongPress={onLongPress}
-      style={{ flex: 1, alignItems: 'center', justifyContent: 'center', paddingTop: 4 }}
+      style={({ pressed }) => ({ flex: 1, alignItems: 'center', justifyContent: 'center', paddingTop: 4, minHeight: 52, opacity: pressed ? 0.78 : 1 })}
     >
-      {/* 选中时图标轻轻弹起，外观与设计稿一致，只多了一点「被按到」的回应 */}
-      <Animated.View
-        style={{
-          transform: [
-            { scale: a.interpolate({ inputRange: [0, 1], outputRange: [1, 1.12] }) },
-            { translateY: a.interpolate({ inputRange: [0, 1], outputRange: [0, -1.5] }) },
-          ],
-        }}
-      >
-        <Icon size={22} color={color} strokeWidth={focused ? 1.9 : 1.7} />
-      </Animated.View>
-      <Text style={{ fontSize: fs(10.5), marginTop: 4, color, fontWeight: focused ? '600' : '400' }}>{meta.label}</Text>
+      {/* 选中指示：52×30 柔和胶囊弹出，图标始终可见 */}
+      <View style={{ width: 52, height: 30, alignItems: 'center', justifyContent: 'center' }}>
+        <Animated.View
+          pointerEvents="none"
+          style={{
+            position: 'absolute',
+            left: 0,
+            right: 0,
+            top: 0,
+            bottom: 0,
+            borderRadius: r(15),
+            backgroundColor: ink.on ? c.primarySoft : c.primaryFaint,
+            opacity: a,
+            transform: [
+              { scale: a.interpolate({ inputRange: [0, 1], outputRange: [0.8, 1] }) },
+              { translateY: a.interpolate({ inputRange: [0, 1], outputRange: [0, reduced ? 0 : -1] }) },
+            ],
+          }}
+        />
+        <Animated.View style={ink.on ? undefined : { transform: [{ translateY: a.interpolate({ inputRange: [0, 1], outputRange: [0, reduced ? 0 : -1] }) }] }}>
+          <AssetIcon source={iconSource} size={21} color={color} />
+        </Animated.View>
+      </View>
+      <Text style={{ fontSize: fs(11), lineHeight: fs(15), marginTop: 2, color, fontWeight: focused ? '600' : '400' }}>{meta.label}</Text>
     </Pressable>
   );
-}
+});
 
-/** 底部标签栏：沿用设计稿的白底 + 细分隔线，高度跟随设备安全区 */
+/** 底部标签栏：白底 + 细分隔线 + 轻弥散顶投影，高度跟随设备安全区 */
 export function JideTabBar({ state, navigation, insets }: TabBarProps) {
-  const { c } = useTheme();
+  const { c, dark, look, ink } = useTheme();
   const bottomPad = Math.max(insets.bottom - 6, 6);
 
   return (
     <View
+      accessibilityRole="tablist"
       style={{
         flexDirection: 'row',
         backgroundColor: c.card,
         borderTopWidth: StyleSheet.hairlineWidth,
         borderTopColor: c.divider,
-        height: 56 + bottomPad,
+        height: 58 + bottomPad,
         paddingBottom: bottomPad,
+        ...(!dark && !look.flat && !ink.on
+          ? { shadowColor: c.shadow, shadowOpacity: 0.04, shadowRadius: 12, shadowOffset: { width: 0, height: -3 }, elevation: 4 }
+          : {}),
       }}
     >
       {state.routes.map((route, index) => {

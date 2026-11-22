@@ -37,25 +37,34 @@ function randomBytes(n: number): Uint8Array {
 const B64 = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
 
 export function toB64(bytes: Uint8Array): string {
+  if (typeof btoa === 'function') {
+    const chunks: string[] = [];
+    for (let i = 0; i < bytes.length; i += 32768) chunks.push(String.fromCharCode(...bytes.subarray(i, i + 32768)));
+    return btoa(chunks.join(''));
+  }
+  const chunks: string[] = [];
   let s = '';
   for (let i = 0; i < bytes.length; i += 3) {
     const a = bytes[i], b = bytes[i + 1], c = bytes[i + 2];
     const n = (a << 16) | ((b ?? 0) << 8) | (c ?? 0);
     s += B64[(n >> 18) & 63] + B64[(n >> 12) & 63] + (b === undefined ? '=' : B64[(n >> 6) & 63]) + (c === undefined ? '=' : B64[n & 63]);
+    if (s.length >= 16384) { chunks.push(s); s = ''; }
   }
-  return s;
+  chunks.push(s);
+  return chunks.join('');
 }
 
 export function fromB64(str: string): Uint8Array {
   const clean = str.replace(/[^A-Za-z0-9+/]/g, '');
-  const out: number[] = [];
+  const out = new Uint8Array(Math.floor(clean.length * 6 / 8));
+  let offset = 0;
   for (let i = 0; i < clean.length; i += 4) {
     const n = (B64.indexOf(clean[i]) << 18) | (B64.indexOf(clean[i + 1]) << 12) | ((B64.indexOf(clean[i + 2] ?? 'A') & 63) << 6) | (B64.indexOf(clean[i + 3] ?? 'A') & 63);
-    out.push((n >> 16) & 255);
-    if (clean[i + 2] !== undefined) out.push((n >> 8) & 255);
-    if (clean[i + 3] !== undefined) out.push(n & 255);
+    out[offset++] = (n >> 16) & 255;
+    if (clean[i + 2] !== undefined) out[offset++] = (n >> 8) & 255;
+    if (clean[i + 3] !== undefined) out[offset++] = n & 255;
   }
-  return new Uint8Array(out);
+  return out;
 }
 
 // Hermes 旧版本没有 TextDecoder：两个方向都留纯 JS 兜底
@@ -125,12 +134,23 @@ export class WrongPasswordError extends Error {
 
 /** 解密备份；密码错误或文件被改动时抛出 WrongPasswordError（GCM 自带完整性校验） */
 export async function decryptBackup<T = unknown>(file: EncryptedBackup, password: string): Promise<T> {
+  if (file?.v !== 1 || file?.kdf?.name !== 'scrypt' || file?.cipher?.name !== 'aes-256-gcm') throw new Error('不支持的备份格式');
   const { N, r, p } = file.kdf;
-  if (![N, r, p].every(n => Number.isInteger(n) && n > 0) || N > 1 << 20) throw new Error('备份文件参数异常');
-  const key = await deriveKey(password, fromB64(file.kdf.salt), { N, r, p });
+  // Imported parameters are untrusted: bound both memory and CPU before scrypt.
+  if (![N, r, p].every(n => Number.isSafeInteger(n) && n > 0) || N < 2 || (N & (N - 1)) !== 0
+    || N > 1 << 18 || r > 32 || p > 8 || 128 * N * r > 64 * 1024 * 1024 || N * r * p > 1 << 22) throw new Error('备份文件参数异常');
+  const decode = (value: unknown) => {
+    if (typeof value !== 'string' || value.length % 4 !== 0 || !/^[A-Za-z0-9+/]*={0,2}$/.test(value)) throw new Error('备份文件数据已损坏');
+    return fromB64(value);
+  };
+  const salt = decode(file.kdf.salt);
+  const iv = decode(file.cipher.iv);
+  const encrypted = decode(file.data);
+  if (salt.length !== 16 || iv.length !== 12 || encrypted.length < 16) throw new Error('备份文件数据已损坏');
+  const key = await deriveKey(password, salt, { N, r, p });
   let plain: Uint8Array;
   try {
-    plain = gcm(key, fromB64(file.cipher.iv)).decrypt(fromB64(file.data));
+    plain = gcm(key, iv).decrypt(encrypted);
   } catch {
     throw new WrongPasswordError();
   }

@@ -1,13 +1,18 @@
 import React, { useMemo, useState } from 'react';
-import { Pressable, Text, View } from 'react-native';
+import { Pressable, View } from 'react-native';
+import { Text } from './text';
 import Svg, { Circle, Defs, LinearGradient, Path, Stop } from 'react-native-svg';
+import { ChevronLeft, ChevronRight } from 'lucide-react-native';
 import type { Entry, Tag } from '../store/types';
 import { useTheme } from '../theme/ThemeProvider';
-import { MOODS, moodMeta } from '../data/constants';
+import { MOODS, moodMeta, moodTint } from '../data/constants';
 import { dayKey, daysInMonth, fmtMonthDay, startOfDay, WEEK_SHORT } from '../utils/date';
 import type { HeatmapCell, LengthBucket, MoodStat, TagMoodCorrelation, TimeSlotStat, TrendPoint } from '../utils/stats';
 import type { KeywordCount } from '../utils/keywords';
 import { MoodIcon } from './MoodIcon';
+import { Photo } from './ui';
+import { entryCover } from '../utils/video';
+import { posterUri } from '../services/videoStore';
 
 /* ============ 1. 心情分布环形图（1:1 复刻设计稿1 #15） ============ */
 
@@ -50,7 +55,7 @@ export function MoodDonutChart({ stats, size = 128 }: { stats: MoodStat[]; size?
           ))}
         </Svg>
         <View style={{ position: 'absolute', alignItems: 'center' }}>
-          <Text style={{ fontSize: fs(17), fontWeight: '600', color: c.text }}>{total}</Text>
+          <Text style={{ fontSize: fs(17), fontWeight: '600', color: c.text, fontVariant: ['tabular-nums'] }}>{total}</Text>
           <Text style={{ fontSize: fs(10), color: c.textMuted }}>条情绪</Text>
         </View>
       </View>
@@ -63,7 +68,8 @@ export function MoodDonutChart({ stats, size = 128 }: { stats: MoodStat[]; size?
             <View key={s.key} style={{ flexDirection: 'row', alignItems: 'center' }}>
               <View style={{ width: 9, height: 9, borderRadius: 4.5, backgroundColor: s.color, marginRight: 8 }} />
               <Text style={{ flex: 1, fontSize: fs(13), color: c.text }}>{s.label}</Text>
-              <Text style={{ fontSize: fs(13), color: c.textSub, fontVariant: ['tabular-nums'] }}>{s.percent}%</Text>
+              <Text style={{ fontSize: fs(12), color: c.textMuted, marginRight: 8, fontVariant: ['tabular-nums'] }}>{s.count} 篇</Text>
+              <Text style={{ fontSize: fs(13), color: c.textSub, fontVariant: ['tabular-nums'], minWidth: 34, textAlign: 'right' }}>{s.percent}%</Text>
             </View>
           ))
         )}
@@ -78,9 +84,9 @@ export function MoodTrendChart({ points, width = 290, height = 136 }: { points: 
   const { c, fs } = useTheme();
   const [boxW, setBoxW] = useState(width);
   const w = Math.max(200, boxW);
-  const padL = 22;
+  const padL = 32;
   const padR = 12;
-  const padT = 14;
+  const padT = 18;
   const padB = 24;
   const plotW = Math.max(120, w - padL - padR);
   const plotH = height - padT - padB;
@@ -90,9 +96,10 @@ export function MoodTrendChart({ points, width = 290, height = 136 }: { points: 
     .filter(p => p.score !== null) as (TrendPoint & { idx: number; score: number })[];
 
   const coords = valid.map(p => {
+    const score = Math.min(5, Math.max(1, p.score));
     const x = padL + (points.length > 1 ? (p.idx / (points.length - 1)) * plotW : plotW / 2);
-    const y = padT + (1 - (p.score - 1) / 4) * plotH;
-    return { x, y, label: p.label, score: p.score };
+    const y = padT + (1 - (score - 1) / 4) * plotH;
+    return { x, y, label: p.label, score };
   });
 
   let linePath = '';
@@ -134,9 +141,9 @@ export function MoodTrendChart({ points, width = 290, height = 136 }: { points: 
       </Svg>
 
       {/* Y 轴刻度和 X 轴日期 */}
-      <View style={{ position: 'absolute', left: 0, top: padT - 6, height: plotH + 6, justifyContent: 'space-between' }}>
-        {['5', '4', '3', '2', '1'].map(n => (
-          <Text key={n} style={{ fontSize: 10, color: c.textMuted, width: 16, textAlign: 'right' }}>{n}</Text>
+      <View style={{ position: 'absolute', left: 0, top: padT - 6, height: plotH + 12, justifyContent: 'space-between' }}>
+        {['愉悦', '4', '平稳', '2', '低落'].map(n => (
+          <Text key={n} style={{ fontSize: 9.5, color: c.textMuted, width: 26, textAlign: 'right' }}>{n}</Text>
         ))}
       </View>
       <View style={{ flexDirection: 'row', justifyContent: 'space-between', paddingLeft: padL, paddingRight: padR, marginTop: -18 }}>
@@ -154,7 +161,7 @@ export function MoodTrendChart({ points, width = 290, height = 136 }: { points: 
 /* ============ 3. 月度写作柱状图 ============ */
 
 export function MonthlyBarChart({ data }: { data: { label: string; count: number }[] }) {
-  const { c, fs } = useTheme();
+  const { c, fs, r } = useTheme();
   const max = Math.max(1, ...data.map(d => d.count));
   const dense = data.length > 8;
   const barW = dense ? 12 : 22;
@@ -165,7 +172,7 @@ export function MonthlyBarChart({ data }: { data: { label: string; count: number
         return (
           <View key={i} style={{ flex: 1, alignItems: 'center' }}>
             <Text style={{ fontSize: fs(dense ? 9.5 : 10.5), color: item.count ? c.textSub : c.textMuted, marginBottom: 4 }}>{item.count}</Text>
-            <View style={{ width: barW, height: h, borderRadius: dense ? 5 : 7, backgroundColor: item.count ? c.primary : c.divider, opacity: item.count ? 0.9 : 0.6 }} />
+            <View style={{ width: barW, height: h, borderRadius: r(dense ? 5 : 7), backgroundColor: item.count ? c.primary : c.divider, opacity: item.count ? 0.9 : 0.6 }} />
             <Text style={{ fontSize: fs(dense ? 10 : 11), color: c.textSub, marginTop: 6 }}>{item.label}</Text>
           </View>
         );
@@ -187,8 +194,8 @@ interface CalProps {
   maxTs?: number;
 }
 
-export function CalendarMonth({ year, month, selectedDay, entries, onSelectDay, onChangeMonth, maxTs }: CalProps) {
-  const { c, t, fs, dark } = useTheme();
+export const CalendarMonth = React.memo(function CalendarMonth({ year, month, selectedDay, entries, onSelectDay, onChangeMonth, maxTs }: CalProps) {
+  const { c, t, fs, dark, r } = useTheme();
   const todayKey = dayKey(Date.now());
   const maxDay = maxTs != null ? startOfDay(maxTs) : null;
   const maxDate = maxTs != null ? new Date(maxTs) : null;
@@ -216,15 +223,19 @@ export function CalendarMonth({ year, month, selectedDay, entries, onSelectDay, 
 
   return (
     <View>
-      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginBottom: 16, gap: 28 }}>
-        <Pressable hitSlop={12} onPress={() => onChangeMonth(-1)} style={{ padding: 6 }}>
-          <Text style={{ fontSize: 18, color: c.textSub }}>‹</Text>
+      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginBottom: 14, gap: 20 }}>
+        <Pressable accessibilityRole="button" accessibilityLabel="上个月" onPress={() => onChangeMonth(-1)} style={{ width: 44, height: 44, alignItems: 'center', justifyContent: 'center' }}>
+          <View style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: c.cardAlt, alignItems: 'center', justifyContent: 'center' }}>
+            <ChevronLeft size={17} color={c.textSub} />
+          </View>
         </Pressable>
         <Text style={[t.h2, { fontSize: fs(17), minWidth: 112, textAlign: 'center' }]}>
           {year}年{month + 1}月
         </Text>
-        <Pressable hitSlop={12} disabled={nextDisabled} onPress={() => onChangeMonth(1)} style={{ padding: 6, opacity: nextDisabled ? 0.3 : 1 }}>
-          <Text style={{ fontSize: 18, color: c.textSub }}>›</Text>
+        <Pressable accessibilityRole="button" accessibilityLabel="下个月" disabled={nextDisabled} onPress={() => onChangeMonth(1)} style={{ width: 44, height: 44, alignItems: 'center', justifyContent: 'center', opacity: nextDisabled ? 0.3 : 1 }}>
+          <View style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: c.cardAlt, alignItems: 'center', justifyContent: 'center' }}>
+            <ChevronRight size={17} color={c.textSub} />
+          </View>
         </Pressable>
       </View>
 
@@ -238,7 +249,7 @@ export function CalendarMonth({ year, month, selectedDay, entries, onSelectDay, 
 
       <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
         {cells.map((day, idx) => {
-          if (!day) return <View key={idx} style={{ width: '14.2857%', height: 46 }} />;
+          if (!day) return <View key={idx} style={{ width: '14.2857%', height: 48 }} />;
           const ts = startOfDay(new Date(year, month, day));
           const k = dayKey(ts);
           const list = entryMap.get(k) ?? [];
@@ -247,13 +258,14 @@ export function CalendarMonth({ year, month, selectedDay, entries, onSelectDay, 
           const isFuture = maxDay != null && ts > maxDay;
           const firstMood = list.find(e => e.mood)?.mood;
           const mMeta = moodMeta(firstMood);
-          const dotColor = mMeta?.color ?? c.primary;
+          // 照片日历格：当天日记有封面照片时照片铺底，没有则心情色底 + 小圆点
+          const coverEntry = list.find(e => !!entryCover(e).uri);
+          const cover = coverEntry ? entryCover(coverEntry) : null;
+          const coverUri = cover?.uri ? (cover.isVideo ? posterUri(cover.uri) ?? cover.uri : cover.uri) : null;
           const moodBg =
-            !isSelected && list.length > 0
+            !isSelected && list.length > 0 && !coverUri
               ? mMeta
-                ? dark
-                  ? `${mMeta.color}33`
-                  : mMeta.soft
+                ? moodTint(mMeta, dark)
                 : c.primaryFaint
               : 'transparent';
 
@@ -262,40 +274,59 @@ export function CalendarMonth({ year, month, selectedDay, entries, onSelectDay, 
               key={idx}
               disabled={isFuture}
               onPress={() => onSelectDay(day)}
+              accessibilityLabel={`${month + 1}月${day}日${list.length ? `，${list.length} 篇日记` : ''}`}
+              accessibilityState={{ selected: isSelected, disabled: isFuture }}
               style={{ width: '14.2857%', height: 48, alignItems: 'center', justifyContent: 'center', opacity: isFuture ? 0.3 : 1 }}
             >
               <View
                 style={{
-                  width: 34,
-                  height: 34,
-                  borderRadius: 17,
+                  width: coverUri && isSelected ? 44 : 40,
+                  height: coverUri && isSelected ? 44 : 40,
+                  borderRadius: r(coverUri && isSelected ? 13 : 11),
+                  padding: coverUri && isSelected ? 2 : 0,
+                  borderWidth: coverUri && isSelected ? 2 : !isSelected && isToday ? 1.5 : 0,
+                  borderColor: c.primary,
                   alignItems: 'center',
                   justifyContent: 'center',
-                  backgroundColor: isSelected ? c.primary : moodBg,
-                  borderWidth: !isSelected && isToday ? 1.5 : 0,
-                  borderColor: c.primary,
                 }}
               >
-                <Text
+                <View
                   style={{
-                    fontSize: fs(13.5),
-                    color: isSelected ? '#fff' : isToday ? c.primaryDark : c.text,
-                    fontWeight: isSelected || isToday || list.length > 0 ? '600' : '400',
-                    fontVariant: ['tabular-nums'],
+                    width: '100%',
+                    height: '100%',
+                    borderRadius: r(coverUri && isSelected ? 9 : 11),
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    overflow: 'hidden',
+                    backgroundColor: isSelected && !coverUri ? c.primary : moodBg,
                   }}
                 >
-                  {day}
-                </Text>
-              </View>
-              <View style={{ height: 10, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 2 }}>
-                {list.length > 0 && (
-                  <>
-                    <View style={{ width: 5, height: 5, borderRadius: 2.5, backgroundColor: isSelected ? c.primaryDark : dotColor }} />
-                    {list.length > 1 && (
-                      <Text style={{ fontSize: 9, color: c.textMuted, fontVariant: ['tabular-nums'] }}>{list.length}</Text>
-                    )}
-                  </>
-                )}
+                  {coverUri && (
+                    <>
+                      <Photo uri={coverUri} style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }} radius={0} />
+                      <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: isSelected ? 'rgba(18,16,14,0.46)' : 'rgba(18,16,14,0.34)' }} />
+                    </>
+                  )}
+                  <Text
+                    style={{
+                      fontSize: fs(13.5),
+                      color: coverUri ? '#FFFFFF' : isSelected ? c.textOnPrimary : isToday ? c.primaryDark : c.text,
+                      fontWeight: isSelected || isToday || list.length > 0 ? '600' : '400',
+                      fontVariant: ['tabular-nums'],
+                      ...(coverUri ? { textShadowColor: 'rgba(18,16,14,0.65)', textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 3 } : {}),
+                    }}
+                  >
+                    {day}
+                  </Text>
+                  {!coverUri && list.length > 0 && (
+                    <View style={{ width: 4, height: 4, borderRadius: 2, marginTop: 2, backgroundColor: isSelected ? c.textOnPrimary : mMeta?.color ?? c.primary }} />
+                  )}
+                  {list.length > 1 && (
+                    <View style={{ position: 'absolute', top: 2, right: 2, minWidth: 13, height: 13, borderRadius: 6.5, paddingHorizontal: 3, backgroundColor: coverUri ? 'rgba(18,16,14,0.6)' : c.card, alignItems: 'center', justifyContent: 'center' }}>
+                      <Text style={{ fontSize: 8.5, lineHeight: 11, color: coverUri ? '#FFFFFF' : c.textSub, fontVariant: ['tabular-nums'] }}>{list.length}</Text>
+                    </View>
+                  )}
+                </View>
               </View>
             </Pressable>
           );
@@ -303,7 +334,7 @@ export function CalendarMonth({ year, month, selectedDay, entries, onSelectDay, 
       </View>
     </View>
   );
-}
+});
 
 /* ============ 5. 近 12 周记录与心情像素热力矩阵（参考 Daylio / GitHub） ============ */
 
@@ -314,7 +345,7 @@ export function ActivityHeatmap({
   cells: HeatmapCell[];
   mode: 'heat' | 'mood';
 }) {
-  const { c, fs, dark } = useTheme();
+  const { c, fs } = useTheme();
   const [picked, setPicked] = useState<HeatmapCell | null>(null);
 
   // 拆分为 12 列（每周一列，每列 7 天：周一..周日）
@@ -328,18 +359,18 @@ export function ActivityHeatmap({
 
   const heatColor = (lvl: 0 | 1 | 2 | 3 | 4, future?: boolean) => {
     if (future) return 'transparent';
-    if (lvl === 0) return dark ? '#2D2722' : '#EFEAE2';
-    if (lvl === 1) return c.primarySoft;
-    if (lvl === 2) return c.primary;
-    if (lvl === 3) return c.primaryDark;
-    return dark ? '#E2C3A6' : '#7C5A41';
+    if (lvl === 0) return c.bgDeep;
+    if (lvl === 1) return c.primaryFaint;
+    if (lvl === 2) return c.primarySoft;
+    if (lvl === 3) return c.primary;
+    return c.primaryDark;
   };
 
   const cellColor = (cell: HeatmapCell) => {
     if (cell.future) return 'transparent';
     if (mode === 'mood') {
       if (cell.mood) return moodMeta(cell.mood)?.color ?? c.primary;
-      return cell.count > 0 ? c.primarySoft : dark ? '#2D2722' : '#EFEAE2';
+      return cell.count > 0 ? c.primarySoft : c.bgDeep;
     }
     return heatColor(cell.level, cell.future);
   };
@@ -463,7 +494,7 @@ export function TagMoodChart({
 /* ============ 7. 写作时段偏好图 ============ */
 
 export function TimeOfDayChart({ slots }: { slots: TimeSlotStat[] }) {
-  const { c, fs } = useTheme();
+  const { c, fs, r } = useTheme();
   const max = Math.max(1, ...slots.map(s => s.count));
   const peak = Math.max(...slots.map(s => s.count));
   return (
@@ -480,7 +511,7 @@ export function TimeOfDayChart({ slots }: { slots: TimeSlotStat[] }) {
               style={{
                 width: 24,
                 height: barH,
-                borderRadius: 8,
+                borderRadius: r(8),
                 backgroundColor: isPeak ? c.primary : slot.count ? c.primarySoft : c.divider,
               }}
             />

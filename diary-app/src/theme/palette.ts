@@ -18,11 +18,17 @@ export interface Palette {
   cardAlt: string;
   divider: string;
   border: string;
+  /** Essential control outline; decorative card borders may remain softer. */
+  controlBorder: string;
+  focusRing: string;
   text: string;
   textSub: string;
   textMuted: string;
   /** 压在强调色上的文字 / 图标颜色 */
   textOnPrimary: string;
+  textOnDanger: string;
+  disabledBg: string;
+  disabledText: string;
   danger: string;
   dangerSoft: string;
   success: string;
@@ -83,11 +89,12 @@ export function ensureContrast(color: string, against: string[], target: number,
 
 /** 强调色（外观里可选）。darkColor：深色模式下换用的颜色（例如墨黑在深色里变成纸白） */
 export const ACCENTS = [
-  { key: 'latte', name: '奶茶', color: '#9D7453' },
-  { key: 'rose', name: '藕粉', color: '#AD686E' },
-  { key: 'lavender', name: '雾紫', color: '#7C74B4' },
-  { key: 'mist', name: '雾蓝', color: '#5280A9' },
-  { key: 'sage', name: '青苔', color: '#56875F' },
+  { key: 'teal', name: '青笺', color: '#5AC4CA', darkColor: '#67D1D7' },
+  { key: 'latte', name: '奶茶', color: '#8C6343', darkColor: '#B88D6B' },
+  { key: 'rose', name: '藕粉', color: '#9F5A61', darkColor: '#C57F86' },
+  { key: 'lavender', name: '雾紫', color: '#6C64A6', darkColor: '#968ECF' },
+  { key: 'mist', name: '雾蓝', color: '#46729A', darkColor: '#6B9AC4' },
+  { key: 'sage', name: '青苔', color: '#497A52', darkColor: '#74A57D' },
   { key: 'steel', name: '钢蓝', color: '#3F6487', darkColor: '#7FA6CC' },
   { key: 'ink', name: '墨黑', color: '#191919', darkColor: '#ECEAE6' },
   { key: 'vermilion', name: '朱砂', color: '#B4472F', darkColor: '#D9705A' },
@@ -114,7 +121,7 @@ interface Neutral {
   shadow: string;
 }
 
-export type StyleKey = 'warm' | 'cool' | 'ink' | 'forest' | 'sakura' | 'kraft';
+export type StyleKey = 'companion' | 'editorial' | 'warm' | 'cool' | 'ink' | 'forest' | 'sakura' | 'kraft';
 
 export interface StylePreset {
   key: StyleKey;
@@ -133,6 +140,28 @@ export interface StylePreset {
 }
 
 export const STYLES: StylePreset[] = [
+  {
+    key: 'companion', name: '线绘陪伴', desc: '手绘墨线、清新青调与小鸟陪伴', accent: 'teal', radius: 0.9, pill: 999, flat: true,
+    light: {
+      bg: '#F7FAFA', bgDeep: '#EAF4F5', card: '#FFFFFF', cardAlt: '#F1FCFD', divider: '#D6E7E9', border: '#C6DADD',
+      text: '#1C2629', textSub: '#526267', textMuted: '#7E8F95', inputBg: '#EFF7F8', overlay: 'rgba(24,34,37,0.46)', shadow: '#1C2629',
+    },
+    dark: {
+      bg: '#101618', bgDeep: '#0B1012', card: '#182124', cardAlt: '#1E292D', divider: '#28363B', border: '#3F565E',
+      text: '#ECF4F5', textSub: '#A1B4BA', textMuted: '#6D8188', inputBg: '#1B2529', overlay: 'rgba(0,0,0,0.64)', shadow: '#000000',
+    },
+  },
+  {
+    key: 'editorial', name: '杂志', desc: '净白底、墨色标题、雾蓝点缀', accent: 'mist', radius: 0.65, pill: 999, flat: false,
+    light: {
+      bg: '#F7F7F5', bgDeep: '#EDEDEB', card: '#FFFFFF', cardAlt: '#FAFAF9', divider: '#E6E6E3', border: '#D6D6D1',
+      text: '#20211F', textSub: '#5B5C58', textMuted: '#8F8F8A', inputBg: '#F1F1EE', overlay: 'rgba(24,26,25,0.46)', shadow: '#3A3D38',
+    },
+    dark: {
+      bg: '#101214', bgDeep: '#0B0D0F', card: '#191C1F', cardAlt: '#1E2125', divider: '#2A2E33', border: '#383D44',
+      text: '#EDEFF0', textSub: '#A3AAB1', textMuted: '#6E767E', inputBg: '#1D2126', overlay: 'rgba(0,0,0,0.62)', shadow: '#000000',
+    },
+  },
   {
     key: 'warm', name: '温润', desc: '米白纸张与暖棕墨色', accent: 'latte', radius: 0.8, pill: 999, flat: false,
     light: {
@@ -213,28 +242,37 @@ export function buildPalette(dark: boolean, accentKey: AccentKey, styleKey: Styl
   const toward = dark ? '#FFFFFF' : '#000000';
   const primarySoft = mixHex(primary, n.card, dark ? 0.66 : 0.72);
   const primaryFaint = mixHex(primary, n.bg, dark ? 0.84 : 0.9);
+  const surfaces = [n.bg, n.bgDeep, n.card, n.cardAlt, n.inputBg, primaryFaint];
+  const dangerSoft = dark ? mixHex('#E07B6F', n.card, 0.8) : '#F8E3DF';
+  const successSoft = dark ? mixHex('#8DB78D', n.card, 0.82) : '#E2EFE2';
+  const warningSoft = dark ? mixHex('#E8B062', n.card, 0.82) : '#FAEBD5';
+  const danger = ensureContrast(dark ? '#E07B6F' : '#C8554A', [...surfaces, dangerSoft], 4.5, toward);
   // 强调色做文字时：浅色底上压深、深色底上提亮，直到在页面、卡片和浅强调底上都读得清（WCAG AA 4.5）
-  const accentText = ensureContrast(mixHex(primary, toward, dark ? 0.3 : 0.2), [n.bg, n.card, primaryFaint], 4.6, toward);
+  const accentText = ensureContrast(mixHex(primary, toward, dark ? 0.3 : 0.2), [...surfaces, primarySoft], 4.6, toward);
   // 压在强调色上的字：白字够清楚就用白字，否则用深色字
   const onWhite = contrastRatio('#FFFFFF', primary);
-  const textOnPrimary = onWhite >= 4 || onWhite >= contrastRatio('#161616', primary) ? '#FFFFFF' : '#161616';
+  const textOnPrimary = onWhite >= 4.5 ? '#FFFFFF' : ensureContrast('#161616', [primary], 4.5, '#000000');
   return {
     primary,
     primaryDark: accentText,
     primarySoft,
     primaryFaint,
     ...n,
-    // 辅助文字至少 3:1，次要文字至少 4.5:1
-    textMuted: ensureContrast(n.textMuted, [n.bg, n.card], 3, toward),
-    textSub: ensureContrast(n.textSub, [n.bg, n.card], 4.5, toward),
+    controlBorder: ensureContrast(n.border, [n.bg, n.card, n.inputBg], 3, toward),
+    focusRing: accentText,
+    // 辅助文字也用于小字号正文和占位符，统一达到 WCAG AA 4.5:1。
+    textMuted: ensureContrast(n.textMuted, surfaces, 4.5, toward),
+    textSub: ensureContrast(n.textSub, surfaces, 4.5, toward),
     textOnPrimary,
-    danger: dark ? '#E07B6F' : '#C8554A',
-    dangerSoft: dark ? mixHex('#E07B6F', n.card, 0.8) : '#F8E3DF',
-    success: dark ? '#8DB78D' : '#5F9468',
-    successSoft: dark ? mixHex('#8DB78D', n.card, 0.82) : '#E2EFE2',
-    warning: dark ? '#E8B062' : '#D4912F',
-    warningSoft: dark ? mixHex('#E8B062', n.card, 0.82) : '#FAEBD5',
-    info: dark ? '#86ABCB' : '#5585B0',
+    textOnDanger: contrastRatio('#FFFFFF', danger) >= 4.5 ? '#FFFFFF' : '#161616',
+    disabledBg: n.inputBg,
+    disabledText: ensureContrast(n.textSub, [n.inputBg], 4.5, toward),
+    danger, dangerSoft,
+    success: ensureContrast(dark ? '#8DB78D' : '#5F9468', [...surfaces, successSoft], 4.5, toward),
+    successSoft,
+    warning: ensureContrast(dark ? '#E8B062' : '#D4912F', [...surfaces, warningSoft], 4.5, toward),
+    warningSoft,
+    info: ensureContrast(dark ? '#86ABCB' : '#5585B0', surfaces, 4.5, toward),
     // 利落的风格不投影：阴影色给成透明，所有 shadowColor: c.shadow 的卡片随之变平
     shadow: st.flat ? 'transparent' : n.shadow,
   };

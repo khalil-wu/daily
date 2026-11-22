@@ -1,18 +1,19 @@
 import React, { useMemo, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Text } from '../src/components/text';
 import { router } from 'expo-router';
 import { BookOpen, Check, Edit3, FolderOpen, MoreHorizontal, Plus, Trash2 } from 'lucide-react-native';
 import { useTheme } from '../src/theme/ThemeProvider';
 import { actions, inNotebook, useStore } from '../src/store/store';
 import type { Notebook } from '../src/store/types';
 import { DEFAULT_NOTEBOOK_ID, NOTEBOOK_COLORS } from '../src/data/constants';
-import { Button, Card, Field, NavBar, Screen, TextAction, haptic } from '../src/components/ui';
+import { Button, Card, Field, NavBar, Screen, TextAction, haptic, webSpaceAction } from '../src/components/ui';
 import { useFeedback } from '../src/components/feedback';
-import { BottomSheet } from '../src/components/motion';
+import { BottomSheet, PressableScale } from '../src/components/motion';
 
 /** 日记本管理页：新建 / 重命名 / 改色 / 切换 / 删除（默认日记本受保护） */
 export default function NotebooksScreen() {
-  const { c, t, fs } = useTheme();
+  const { c, t, fs, r } = useTheme();
   const { toast, confirm, sheet } = useFeedback();
   const notebooks = useStore(s => s.notebooks);
   const activeNotebook = useStore(s => s.activeNotebook);
@@ -21,6 +22,7 @@ export default function NotebooksScreen() {
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState<Notebook | null>(null);
   const [nameInput, setNameInput] = useState('');
+  const [nameError, setNameError] = useState('');
   const [colorInput, setColorInput] = useState<string>(NOTEBOOK_COLORS[0]);
 
   const counts = useMemo(() => {
@@ -33,6 +35,7 @@ export default function NotebooksScreen() {
   }, [entries, notebooks]);
 
   const openCreate = () => {
+    setNameError('');
     setEditing(null);
     setNameInput('');
     setColorInput(NOTEBOOK_COLORS[notebooks.length % NOTEBOOK_COLORS.length]);
@@ -40,6 +43,7 @@ export default function NotebooksScreen() {
   };
 
   const openEdit = (nb: Notebook) => {
+    setNameError('');
     setEditing(nb);
     setNameInput(nb.name);
     setColorInput(nb.color);
@@ -49,7 +53,7 @@ export default function NotebooksScreen() {
   const saveModal = () => {
     const trimmed = nameInput.trim();
     if (!trimmed) {
-      toast('请输入日记本名称', { type: 'warning' });
+      setNameError('请输入日记本名称');
       return;
     }
     if (editing) {
@@ -119,7 +123,7 @@ export default function NotebooksScreen() {
           style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 14 }}
         >
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-            <View style={{ width: 38, height: 38, borderRadius: 12, backgroundColor: c.primaryFaint, alignItems: 'center', justifyContent: 'center' }}>
+            <View style={{ width: 38, height: 38, borderRadius: r(12), backgroundColor: c.primaryFaint, alignItems: 'center', justifyContent: 'center' }}>
               <BookOpen size={18} color={c.primaryDark} />
             </View>
             <View>
@@ -141,20 +145,27 @@ export default function NotebooksScreen() {
           return (
             <Card
               key={nb.id}
-              onPress={() => onNotebookPress(nb)}
+              padded={false}
               style={{
                 flexDirection: 'row',
                 alignItems: 'center',
-                justifyContent: 'space-between',
                 borderColor: selected ? c.primary : c.divider,
               }}
             >
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, flex: 1, minWidth: 0 }}>
+              <PressableScale
+                scaleTo={0.985}
+                onPress={() => {
+                  haptic('light');
+                  actions.setActiveNotebook(nb.id);
+                  router.replace('/(tabs)');
+                }}
+                style={{ flex: 1, flexDirection: 'row', alignItems: 'center', gap: 12, padding: 16, minWidth: 0 }}
+              >
                 <View
                   style={{
                     width: 38,
                     height: 38,
-                    borderRadius: 12,
+                    borderRadius: r(12),
                     backgroundColor: `${nb.color}26`,
                     alignItems: 'center',
                     justifyContent: 'center',
@@ -166,20 +177,27 @@ export default function NotebooksScreen() {
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
                     <Text numberOfLines={1} style={[t.h3, { fontSize: fs(15.5), flexShrink: 1 }]}>{nb.name}</Text>
                     {isDefault && (
-                      <View style={{ paddingHorizontal: 6, paddingVertical: 1.5, borderRadius: 999, backgroundColor: c.bgDeep }}>
+                      <View style={{ paddingHorizontal: 6, paddingVertical: 1.5, borderRadius: r(999), backgroundColor: c.bgDeep }}>
                         <Text style={{ fontSize: fs(10), color: c.textMuted }}>默认</Text>
                       </View>
                     )}
                     {selected && (
-                      <View style={{ paddingHorizontal: 6, paddingVertical: 1.5, borderRadius: 999, backgroundColor: c.primaryFaint }}>
+                      <View style={{ paddingHorizontal: 6, paddingVertical: 1.5, borderRadius: r(999), backgroundColor: c.primaryFaint }}>
                         <Text style={{ fontSize: fs(10), color: c.primaryDark }}>当前查看</Text>
                       </View>
                     )}
                   </View>
                   <Text style={{ fontSize: fs(12), color: c.textSub, marginTop: 3 }}>共 {cnt} 篇日记</Text>
                 </View>
-              </View>
-              <MoreHorizontal size={18} color={c.textMuted} />
+              </PressableScale>
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel={`管理${nb.name}`}
+                onPress={() => onNotebookPress(nb)}
+                style={{ width: 44, height: 44, marginRight: 6, alignItems: 'center', justifyContent: 'center' }}
+              >
+                <MoreHorizontal size={18} color={c.textMuted} />
+              </Pressable>
             </Card>
           );
         })}
@@ -194,35 +212,35 @@ export default function NotebooksScreen() {
       </ScrollView>
 
       {/* 新建 / 编辑日记本弹窗 */}
-      <BottomSheet visible={modalOpen} onClose={() => setModalOpen(false)} keyboard>
-          <View style={{ flexShrink: 1, paddingTop: 6 }}>
-            <Text style={[t.h2, { textAlign: 'center', marginBottom: 18 }]}>
-              {editing ? '编辑日记本' : '新建日记本'}
-            </Text>
+      <BottomSheet visible={modalOpen} onClose={() => setModalOpen(false)} title={editing ? '编辑日记本' : '新建日记本'} keyboard>
+          <ScrollView style={{ flexShrink: 1 }} keyboardShouldPersistTaps="handled">
 
             <Text style={{ fontSize: fs(12.5), color: c.textSub, marginBottom: 6 }}>名称</Text>
             <Field
+              accessibilityLabel="日记本名称" error={nameError}
               value={nameInput}
-              onChangeText={setNameInput}
+              onChangeText={value => { setNameInput(value); setNameError(''); }}
               placeholder="例如：读书摘抄、旅行手记、工作复盘…"
               maxLength={16}
             />
 
             <Text style={{ fontSize: fs(12.5), color: c.textSub, marginTop: 6, marginBottom: 10 }}>主题标识色</Text>
-            <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 22 }}>
-              {NOTEBOOK_COLORS.map(col => {
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginBottom: 22 }}>
+              {NOTEBOOK_COLORS.map((col, index) => {
                 const picked = colorInput === col;
                 return (
                   <Pressable
                     key={col}
+                    {...webSpaceAction(() => { haptic('light'); setColorInput(col); })}
+                    accessibilityRole="radio" accessibilityLabel={`标识色 ${index + 1}`} accessibilityState={{ checked: picked }} aria-checked={picked}
                     onPress={() => {
                       haptic('light');
                       setColorInput(col);
                     }}
                     style={{
-                      width: 34,
-                      height: 34,
-                      borderRadius: 17,
+                      width: 44,
+                      height: 44,
+                      borderRadius: 22,
                       backgroundColor: col,
                       alignItems: 'center',
                       justifyContent: 'center',
@@ -236,8 +254,8 @@ export default function NotebooksScreen() {
               })}
             </View>
 
-            <Button title={editing ? '保存修改' : '创建日记本'} onPress={saveModal} />
-          </View>
+          </ScrollView>
+          <Button title={editing ? '保存修改' : '创建日记本'} onPress={saveModal} style={{ marginTop: 12 }} />
       </BottomSheet>
     </Screen>
   );

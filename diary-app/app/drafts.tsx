@@ -1,12 +1,13 @@
 import React, { useCallback, useMemo, useState } from 'react';
-import { FlatList, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
+import { FlatList, Platform, StyleSheet, View } from 'react-native';
+import { Text } from '../src/components/text';
 import { animateNextLayout } from '../src/components/motion';
 import { router } from 'expo-router';
 import { ChevronRight } from 'lucide-react-native';
 import { useTheme } from '../src/theme/ThemeProvider';
 import { actions, useStore } from '../src/store/store';
 import type { Entry } from '../src/store/types';
-import { Button, Checkbox, EmptyState, NavBar, Photo, Screen, TextAction } from '../src/components/ui';
+import { Button, Card, Checkbox, EmptyState, NavBar, Photo, Screen, TextAction } from '../src/components/ui';
 import { useFeedback } from '../src/components/feedback';
 import { fmtMonthDayTime } from '../src/utils/date';
 import { excerpt } from '../src/utils/text';
@@ -14,14 +15,14 @@ import { IMAGES } from '../src/data/assets';
 
 /** 13. 草稿箱（FlatList 虚拟化 + 批量管理） */
 export default function DraftsScreen() {
-  const { c, t, fs, dark } = useTheme();
+  const { c, t, fs, r } = useTheme();
   const { toast, confirm } = useFeedback();
   const entries = useStore(s => s.entries);
   const [manage, setManage] = useState(false);
   const [selected, setSelected] = useState<string[]>([]);
 
   const drafts = useMemo(
-    () => entries.filter(e => !e.deletedAt && e.status === 'draft').sort((a, b) => b.updatedAt - a.updatedAt),
+    () => entries.filter(e => !e.deletedAt && !e.hidden && e.status === 'draft').sort((a, b) => b.updatedAt - a.updatedAt),
     [entries],
   );
 
@@ -50,27 +51,12 @@ export default function DraftsScreen() {
     ({ item: d }: { item: Entry }) => {
       const checked = selected.includes(d.id);
       return (
-        <Pressable
+        <Card
           onPress={() => {
             if (manage) toggleSelect(d.id);
             else router.push({ pathname: '/write', params: { id: d.id } });
           }}
-          style={({ pressed }) => ({
-            flexDirection: 'row',
-            alignItems: 'center',
-            backgroundColor: c.card,
-            borderRadius: 16,
-            padding: 14,
-            marginBottom: 12,
-            borderWidth: StyleSheet.hairlineWidth,
-            borderColor: c.divider,
-            shadowColor: c.shadow,
-            shadowOpacity: dark ? 0 : 0.05,
-            shadowRadius: 8,
-            shadowOffset: { width: 0, height: 2 },
-            elevation: dark ? 0 : 1,
-            opacity: pressed ? 0.9 : 1,
-          })}
+          style={{ flexDirection: 'row', alignItems: 'center', padding: 14, marginBottom: 12 }}
         >
           {manage && (
             <View style={{ marginRight: 12 }}>
@@ -78,20 +64,20 @@ export default function DraftsScreen() {
             </View>
           )}
           {d.photos[0] && (
-            <Photo uri={d.photos[0]} style={{ width: 56, height: 56, marginRight: 12 }} radius={10} />
+            <Photo uri={d.photos[0]} style={{ width: 56, height: 56, marginRight: 12 }} radius={r(10)} />
           )}
           <View style={{ flex: 1, minWidth: 0 }}>
-            <Text style={[t.h3, { fontSize: fs(15.5) }]} numberOfLines={1}>{d.title || '无题草稿'}</Text>
+            <Text style={[t.readingTitle, { fontSize: fs(15.5), lineHeight: fs(23) }]} numberOfLines={1}>{d.title || '无题草稿'}</Text>
             <Text style={[t.sub, { marginTop: 4 }]} numberOfLines={1}>
               {d.body.trim() ? excerpt(d.body, 40) : '继续写下此刻的想法…'}
             </Text>
             <Text style={{ fontSize: fs(11.5), color: c.textMuted, marginTop: 4 }}>{fmtMonthDayTime(d.updatedAt)}</Text>
           </View>
           {!manage && <ChevronRight size={18} color={c.textMuted} />}
-        </Pressable>
+        </Card>
       );
     },
-    [c.card, c.divider, c.shadow, c.textMuted, dark, fs, manage, selected, t.h3, t.sub, toggleSelect],
+    [c.textMuted, fs, manage, r, selected, t.readingTitle, t.sub, toggleSelect],
   );
 
   return (

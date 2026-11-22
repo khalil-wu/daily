@@ -1,0 +1,591 @@
+{
+  "url": "https://daylio.net/faq/docs/daylio-faq/backup/backup-options/",
+  "title": "Backup Options – Knowledge Base",
+  "text": "Knowledge Base\nDaylio FAQ\nTutorials\nBackup and restore\nMove backup between iOS and Android\nAre my data backed up?\nBackup Options\nSwitch Google accounts for backups\nHow to backup and restore\nWhere is my data when I backup to Google Drive\nBackup File: Manual Import and Export\nPurchases\nIssues\nAbout\nAll Docs\nAll Docs\nDaylio FAQ\nPopular Searches\nWordPress\nFooter\nLorem\nHome\nDaylio FAQ\nBackup and restore\nBackup Options\n Updated on December 20, 2024\nDaylio FAQ\nTutorials\nBackup and restore\nMove backup between iOS and Android\nAre my data backed up?\nBackup Options\nSwitch Google accounts for backups\nHow to backup and restore\nWhere is my data when I backup to Google Drive\nBackup File: Manual Import and Export\nPurchases\nIssues\nAbout\nBackup Options\nEstimated reading: 2 minutes\n 8100 views\nAndroid\n\nWe are using Google Drive since it is the easiest way for our users to backup data. Android is Google platform and they are making it very easy and reliable for developers and users to backup data. Almost every Android system has already connected Google Drive which is ready for use and you do not need to register for or install other solution.\n\nData use special Google Drive folder that can be accessed only by Daylio installed on your phone and logged in the account. Your backups are transferred to the Google Drive via the secure (encrypted) channels. All data stored on the Google Drive are encrypted by Google. You can read more about it here: https://support.google.com/googlecloud/answer/6056693?hl=en\n\nWe also like that data are staying at the Google Drive with our users. Only your Daylio app is able to read your entries. We don’t send your data to our servers so we don’t have the access to your entries. Also, any other third party app can’t read your data.\n\niOS\n\nFor iOS the native, secure and seamless solution is iCloud.\n\nBackup File\n\nThe Backup File contains all your entries, moods, activities, and settings. You can export or import it back to Daylio. Use this file to manually backup Daylio data anywhere you like or transfer your data from Android to iOS and back.\n\nWe still strongly advise using automatic cloud backups in addition to using the backup file. Daylio backups belong only to you and we do not have access to any copy and cannot help you to restore lost backups.\n\nHere you can read how to transfer your data using Backup File\n\nPlease note: Backup File needs to be exported manually via Advanced Options. You cannot use your regular or scheduled backup file.\n\n Still stuck? How can we help?\n\nWas this page helpful? Yes 7 No 8\n\nShare this Doc\nA-\nA\nA+\n CONTENTS\nAndroid\niOS\nBackup File\n\nPowered By EazyDocs\n\n© 2025 All Rights Reserved by Daylio",
+  "links": [
+    {
+      "text": "Knowledge Base",
+      "href": "https://daylio.net/faq/"
+    },
+    {
+      "text": "Knowledge Base",
+      "href": "https://daylio.net/faq/"
+    },
+    {
+      "text": "Tutorials",
+      "href": "https://daylio.net/faq/docs/daylio-faq/tutorials/"
+    },
+    {
+      "text": "Create and manage moods",
+      "href": "https://daylio.net/faq/docs/daylio-faq/tutorials/create-and-manage-moods/"
+    },
+    {
+      "text": "Add note to entry",
+      "href": "https://daylio.net/faq/docs/daylio-faq/tutorials/add-note-to-entry/"
+    },
+    {
+      "text": "Add and manage photos",
+      "href": "https://daylio.net/faq/docs/daylio-faq/tutorials/adding-and-managing-photos/"
+    },
+    {
+      "text": "Set up and track goals in Daylio",
+      "href": "https://daylio.net/faq/docs/daylio-faq/tutorials/setting-up-goals/"
+    },
+    {
+      "text": "Change font size and contrast",
+      "href": "https://daylio.net/faq/docs/daylio-faq/tutorials/how-to-change-font-size-and-contrast/"
+    },
+    {
+      "text": "Change language, the start of the week, or time format",
+      "href": "https://daylio.net/faq/docs/daylio-faq/tutorials/how-to-change-language-the-start-of-the-week-or-time-format/"
+    },
+    {
+      "text": "Clear all data",
+      "href": "https://daylio.net/faq/docs/daylio-faq/tutorials/clearing-all-data/"
+    },
+    {
+      "text": "Delete account",
+      "href": "https://daylio.net/faq/docs/daylio-faq/tutorials/delete-account/"
+    },
+    {
+      "text": "Move Daylio to new phone",
+      "href": "https://daylio.net/faq/docs/daylio-faq/tutorials/moving-daylio-to-new-phone/"
+    },
+    {
+      "text": "Export PDF",
+      "href": "https://daylio.net/faq/docs/daylio-faq/tutorials/pdf-export/"
+    },
+    {
+      "text": "Writing entries on computer",
+      "href": "https://daylio.net/faq/docs/daylio-faq/tutorials/writing-entries-on-computer/"
+    },
+    {
+      "text": "Use multiple devices",
+      "href": "https://daylio.net/faq/docs/daylio-faq/tutorials/using-multiple-devices/"
+    },
+    {
+      "text": "Backup and restore",
+      "href": "https://daylio.net/faq/docs/daylio-faq/backup/"
+    },
+    {
+      "text": "Move backup between iOS and Android",
+      "href": "https://daylio.net/faq/docs/daylio-faq/backup/move-backup-between-ios-and-android/"
+    },
+    {
+      "text": "Are my data backed up?",
+      "href": "https://daylio.net/faq/docs/daylio-faq/backup/are-my-data-backed-up/"
+    },
+    {
+      "text": "Backup Options",
+      "href": "https://daylio.net/faq/docs/daylio-faq/backup/backup-options/"
+    },
+    {
+      "text": "Switch Google accounts for backups",
+      "href": "https://daylio.net/faq/docs/daylio-faq/backup/switch-google-accounts-for-backups/"
+    },
+    {
+      "text": "How to backup and restore",
+      "href": "https://daylio.net/faq/docs/daylio-faq/backup/how-to-backup-and-restore/"
+    },
+    {
+      "text": "Where is my data when I backup to Google Drive",
+      "href": "https://daylio.net/faq/docs/daylio-faq/backup/where-is-my-data-when-i-backup-to-google-drive/"
+    },
+    {
+      "text": "Backup File: Manual Import and Export",
+      "href": "https://daylio.net/faq/docs/daylio-faq/backup/backup-file-manual-import-and-export/"
+    },
+    {
+      "text": "Purchases",
+      "href": "https://daylio.net/faq/docs/daylio-faq/billing/"
+    },
+    {
+      "text": "Purchase unavailable",
+      "href": "https://daylio.net/faq/docs/daylio-faq/billing/purchase-unavailable/"
+    },
+    {
+      "text": "Restore purchases",
+      "href": "https://daylio.net/faq/docs/daylio-faq/billing/restore-the-purchases/"
+    },
+    {
+      "text": "Change, cancel or refund purchase or subscription",
+      "href": "https://daylio.net/faq/docs/daylio-faq/billing/how-to-change-cancel-or-refund-purchase-or-subscription/"
+    },
+    {
+      "text": "Issues",
+      "href": "https://daylio.net/faq/docs/daylio-faq/issues/"
+    },
+    {
+      "text": "iCloud cannot connect",
+      "href": "https://daylio.net/faq/docs/daylio-faq/issues/icloud-cannot-connect/"
+    },
+    {
+      "text": "Daylio Premium Expired Unexpectedly on Android",
+      "href": "https://daylio.net/faq/docs/daylio-faq/issues/why-has-my-daylio-premium-expired-unexpectedly-on-android/"
+    },
+    {
+      "text": "Forgotten PIN code",
+      "href": "https://daylio.net/faq/docs/daylio-faq/issues/forgotten-pin-code/"
+    },
+    {
+      "text": "Missing Files",
+      "href": "https://daylio.net/faq/docs/daylio-faq/issues/missing-files/"
+    },
+    {
+      "text": "Photos – File format is not supported",
+      "href": "https://daylio.net/faq/docs/daylio-faq/issues/photos-file-format-is-not-supported/"
+    },
+    {
+      "text": "Apple Health Troubleshooting",
+      "href": "https://daylio.net/faq/docs/daylio-faq/issues/apple-health-troubleshooting/"
+    },
+    {
+      "text": "Missing entries",
+      "href": "https://daylio.net/faq/docs/daylio-faq/issues/missing-entries/"
+    },
+    {
+      "text": "Android notifications are not working",
+      "href": "https://daylio.net/faq/docs/daylio-faq/issues/android-notifications-are-not-working/"
+    },
+    {
+      "text": "About",
+      "href": "https://daylio.net/faq/docs/daylio-faq/about/"
+    },
+    {
+      "text": "Daylio Family Sharing on iOS",
+      "href": "https://daylio.net/faq/docs/daylio-faq/about/daylio-family-sharing-on-ios/"
+    },
+    {
+      "text": "Activity and Mood Statistics",
+      "href": "https://daylio.net/faq/docs/daylio-faq/about/activity-and-mood-statistics/"
+    },
+    {
+      "text": "Data security",
+      "href": "https://daylio.net/faq/docs/daylio-faq/about/how-secure-is-my-data/"
+    },
+    {
+      "text": "Daylio Premium Features",
+      "href": "https://daylio.net/faq/docs/daylio-faq/about/daylio-premium-features/"
+    },
+    {
+      "text": "WordPress",
+      "href": "https://daylio.net/faq/docs/daylio-faq/backup/backup-options/#"
+    },
+    {
+      "text": "Footer",
+      "href": "https://daylio.net/faq/docs/daylio-faq/backup/backup-options/#"
+    },
+    {
+      "text": "Lorem",
+      "href": "https://daylio.net/faq/docs/daylio-faq/backup/backup-options/#"
+    },
+    {
+      "text": "Home",
+      "href": "https://daylio.net/faq/"
+    },
+    {
+      "text": "Daylio FAQ",
+      "href": "https://daylio.net/faq/docs/daylio-faq/"
+    },
+    {
+      "text": "Backup and restore",
+      "href": "https://daylio.net/faq/docs/daylio-faq/backup/"
+    },
+    {
+      "text": "Tutorials",
+      "href": "https://daylio.net/faq/docs/daylio-faq/tutorials/"
+    },
+    {
+      "text": "Create and manage moods",
+      "href": "https://daylio.net/faq/docs/daylio-faq/tutorials/create-and-manage-moods/"
+    },
+    {
+      "text": "Add note to entry",
+      "href": "https://daylio.net/faq/docs/daylio-faq/tutorials/add-note-to-entry/"
+    },
+    {
+      "text": "Add and manage photos",
+      "href": "https://daylio.net/faq/docs/daylio-faq/tutorials/adding-and-managing-photos/"
+    },
+    {
+      "text": "Set up and track goals in Daylio",
+      "href": "https://daylio.net/faq/docs/daylio-faq/tutorials/setting-up-goals/"
+    },
+    {
+      "text": "Change font size and contrast",
+      "href": "https://daylio.net/faq/docs/daylio-faq/tutorials/how-to-change-font-size-and-contrast/"
+    },
+    {
+      "text": "Change language, the start of the week, or time format",
+      "href": "https://daylio.net/faq/docs/daylio-faq/tutorials/how-to-change-language-the-start-of-the-week-or-time-format/"
+    },
+    {
+      "text": "Clear all data",
+      "href": "https://daylio.net/faq/docs/daylio-faq/tutorials/clearing-all-data/"
+    },
+    {
+      "text": "Delete account",
+      "href": "https://daylio.net/faq/docs/daylio-faq/tutorials/delete-account/"
+    },
+    {
+      "text": "Move Daylio to new phone",
+      "href": "https://daylio.net/faq/docs/daylio-faq/tutorials/moving-daylio-to-new-phone/"
+    },
+    {
+      "text": "Export PDF",
+      "href": "https://daylio.net/faq/docs/daylio-faq/tutorials/pdf-export/"
+    },
+    {
+      "text": "Writing entries on computer",
+      "href": "https://daylio.net/faq/docs/daylio-faq/tutorials/writing-entries-on-computer/"
+    },
+    {
+      "text": "Use multiple devices",
+      "href": "https://daylio.net/faq/docs/daylio-faq/tutorials/using-multiple-devices/"
+    },
+    {
+      "text": "Backup and restore",
+      "href": "https://daylio.net/faq/docs/daylio-faq/backup/"
+    },
+    {
+      "text": "Move backup between iOS and Android",
+      "href": "https://daylio.net/faq/docs/daylio-faq/backup/move-backup-between-ios-and-android/"
+    },
+    {
+      "text": "Are my data backed up?",
+      "href": "https://daylio.net/faq/docs/daylio-faq/backup/are-my-data-backed-up/"
+    },
+    {
+      "text": "Backup Options",
+      "href": "https://daylio.net/faq/docs/daylio-faq/backup/backup-options/"
+    },
+    {
+      "text": "Switch Google accounts for backups",
+      "href": "https://daylio.net/faq/docs/daylio-faq/backup/switch-google-accounts-for-backups/"
+    },
+    {
+      "text": "How to backup and restore",
+      "href": "https://daylio.net/faq/docs/daylio-faq/backup/how-to-backup-and-restore/"
+    },
+    {
+      "text": "Where is my data when I backup to Google Drive",
+      "href": "https://daylio.net/faq/docs/daylio-faq/backup/where-is-my-data-when-i-backup-to-google-drive/"
+    },
+    {
+      "text": "Backup File: Manual Import and Export",
+      "href": "https://daylio.net/faq/docs/daylio-faq/backup/backup-file-manual-import-and-export/"
+    },
+    {
+      "text": "Purchases",
+      "href": "https://daylio.net/faq/docs/daylio-faq/billing/"
+    },
+    {
+      "text": "Purchase unavailable",
+      "href": "https://daylio.net/faq/docs/daylio-faq/billing/purchase-unavailable/"
+    },
+    {
+      "text": "Restore purchases",
+      "href": "https://daylio.net/faq/docs/daylio-faq/billing/restore-the-purchases/"
+    },
+    {
+      "text": "Change, cancel or refund purchase or subscription",
+      "href": "https://daylio.net/faq/docs/daylio-faq/billing/how-to-change-cancel-or-refund-purchase-or-subscription/"
+    },
+    {
+      "text": "Issues",
+      "href": "https://daylio.net/faq/docs/daylio-faq/issues/"
+    },
+    {
+      "text": "iCloud cannot connect",
+      "href": "https://daylio.net/faq/docs/daylio-faq/issues/icloud-cannot-connect/"
+    },
+    {
+      "text": "Daylio Premium Expired Unexpectedly on Android",
+      "href": "https://daylio.net/faq/docs/daylio-faq/issues/why-has-my-daylio-premium-expired-unexpectedly-on-android/"
+    },
+    {
+      "text": "Forgotten PIN code",
+      "href": "https://daylio.net/faq/docs/daylio-faq/issues/forgotten-pin-code/"
+    },
+    {
+      "text": "Missing Files",
+      "href": "https://daylio.net/faq/docs/daylio-faq/issues/missing-files/"
+    },
+    {
+      "text": "Photos – File format is not supported",
+      "href": "https://daylio.net/faq/docs/daylio-faq/issues/photos-file-format-is-not-supported/"
+    },
+    {
+      "text": "Apple Health Troubleshooting",
+      "href": "https://daylio.net/faq/docs/daylio-faq/issues/apple-health-troubleshooting/"
+    },
+    {
+      "text": "Missing entries",
+      "href": "https://daylio.net/faq/docs/daylio-faq/issues/missing-entries/"
+    },
+    {
+      "text": "Android notifications are not working",
+      "href": "https://daylio.net/faq/docs/daylio-faq/issues/android-notifications-are-not-working/"
+    },
+    {
+      "text": "About",
+      "href": "https://daylio.net/faq/docs/daylio-faq/about/"
+    },
+    {
+      "text": "Daylio Family Sharing on iOS",
+      "href": "https://daylio.net/faq/docs/daylio-faq/about/daylio-family-sharing-on-ios/"
+    },
+    {
+      "text": "Activity and Mood Statistics",
+      "href": "https://daylio.net/faq/docs/daylio-faq/about/activity-and-mood-statistics/"
+    },
+    {
+      "text": "Data security",
+      "href": "https://daylio.net/faq/docs/daylio-faq/about/how-secure-is-my-data/"
+    },
+    {
+      "text": "Daylio Premium Features",
+      "href": "https://daylio.net/faq/docs/daylio-faq/about/daylio-premium-features/"
+    },
+    {
+      "text": "",
+      "href": "https://daylio.net/faq/docs/daylio-faq/backup/backup-options/#android"
+    },
+    {
+      "text": "https://support.google.com/googlecloud/answer/6056693?hl=en",
+      "href": "https://support.google.com/googlecloud/answer/6056693?hl=en"
+    },
+    {
+      "text": "",
+      "href": "https://daylio.net/faq/docs/daylio-faq/backup/backup-options/#ios"
+    },
+    {
+      "text": "",
+      "href": "https://daylio.net/faq/docs/daylio-faq/backup/backup-options/#backup-file"
+    },
+    {
+      "text": "Here you can read how to transfer your data using Backup File",
+      "href": "https://daylio.net/faq/docs/daylio-faq/backup/backup-file-manual-import-and-export/"
+    },
+    {
+      "text": "How can we help?",
+      "href": "https://daylio.net/faq/docs/daylio-faq/backup/backup-options/#"
+    },
+    {
+      "text": "Yes                                             7",
+      "href": "https://daylio.net/faq/docs/daylio-faq/backup/backup-options/#"
+    },
+    {
+      "text": "No                                            8",
+      "href": "https://daylio.net/faq/docs/daylio-faq/backup/backup-options/#"
+    },
+    {
+      "text": "Share this Doc",
+      "href": "https://daylio.net/faq/docs/daylio-faq/backup/backup-options/#"
+    },
+    {
+      "text": "",
+      "href": "mailto:?subject=Backup%20Options&body=%20Check%20out%20this%20dochttps://daylio.net/faq/docs/daylio-faq/backup/backup-options/"
+    },
+    {
+      "text": "",
+      "href": "https://www.facebook.com/share.php?u=https://daylio.net/faq/docs/daylio-faq/backup/backup-options/"
+    },
+    {
+      "text": "",
+      "href": "https://www.linkedin.com/shareArticle?mini=true&url=https://daylio.net/faq/docs/daylio-faq/backup/backup-options/"
+    },
+    {
+      "text": "",
+      "href": "https://twitter.com/share?url=https://daylio.net/faq/docs/daylio-faq/backup/backup-options/&text=Backup%20Options%20&hashtags=https://daylio.net/faq"
+    },
+    {
+      "text": "",
+      "href": "https://daylio.net/faq/docs/daylio-faq/backup/backup-options/#"
+    },
+    {
+      "text": "Android",
+      "href": "https://daylio.net/faq/docs/daylio-faq/backup/backup-options/#android"
+    },
+    {
+      "text": "iOS",
+      "href": "https://daylio.net/faq/docs/daylio-faq/backup/backup-options/#ios"
+    },
+    {
+      "text": "Backup File",
+      "href": "https://daylio.net/faq/docs/daylio-faq/backup/backup-options/#backup-file"
+    },
+    {
+      "text": "EazyDocs",
+      "href": "https://wordpress.org/plugins/eazydocs/"
+    },
+    {
+      "text": "",
+      "href": "https://www.facebook.com/hellodaylio/"
+    },
+    {
+      "text": "",
+      "href": "https://x.com/hellodaylio"
+    },
+    {
+      "text": "",
+      "href": "https://www.instagram.com/hellodaylio/"
+    },
+    {
+      "text": "",
+      "href": "https://daylio.net/faq/docs/daylio-faq/backup/backup-options/#"
+    }
+  ],
+  "images": [
+    {
+      "alt": "folder icon closed",
+      "src": "https://daylio.net/faq/wp-content/themes/docly/assets/img/folder-closed.png",
+      "width": 20,
+      "height": 20
+    },
+    {
+      "alt": "folder icon",
+      "src": "https://daylio.net/faq/wp-content/themes/docly/assets/img/folder-open.png",
+      "width": 20,
+      "height": 20
+    },
+    {
+      "alt": "folder icon closed",
+      "src": "https://daylio.net/faq/wp-content/themes/docly/assets/img/folder-closed.png",
+      "width": 20,
+      "height": 20
+    },
+    {
+      "alt": "folder icon",
+      "src": "https://daylio.net/faq/wp-content/themes/docly/assets/img/folder-open.png",
+      "width": 20,
+      "height": 20
+    },
+    {
+      "alt": "folder icon closed",
+      "src": "https://daylio.net/faq/wp-content/themes/docly/assets/img/folder-closed.png",
+      "width": 20,
+      "height": 20
+    },
+    {
+      "alt": "folder icon",
+      "src": "https://daylio.net/faq/wp-content/themes/docly/assets/img/folder-open.png",
+      "width": 20,
+      "height": 20
+    },
+    {
+      "alt": "folder icon closed",
+      "src": "https://daylio.net/faq/wp-content/themes/docly/assets/img/folder-closed.png",
+      "width": 20,
+      "height": 20
+    },
+    {
+      "alt": "folder icon",
+      "src": "https://daylio.net/faq/wp-content/themes/docly/assets/img/folder-open.png",
+      "width": 20,
+      "height": 20
+    },
+    {
+      "alt": "folder icon closed",
+      "src": "https://daylio.net/faq/wp-content/themes/docly/assets/img/folder-closed.png",
+      "width": 20,
+      "height": 20
+    },
+    {
+      "alt": "folder icon",
+      "src": "https://daylio.net/faq/wp-content/themes/docly/assets/img/folder-open.png",
+      "width": 20,
+      "height": 20
+    },
+    {
+      "alt": "leaf",
+      "src": "https://wordpress-theme.spider-themes.net/docly/wp-content/themes/docly/assets/img/v.svg",
+      "width": 0,
+      "height": 0
+    },
+    {
+      "alt": "leaf",
+      "src": "https://wordpress-theme.spider-themes.net/docly/wp-content/themes/docly/assets/img/home_one/b_leaf.svg",
+      "width": 0,
+      "height": 0
+    },
+    {
+      "alt": "leaf",
+      "src": "https://wordpress-theme.spider-themes.net/docly/wp-content/themes/docly/assets/img/home_one/banner_bg.png",
+      "width": 0,
+      "height": 0
+    },
+    {
+      "alt": "Folder icon closed",
+      "src": "https://daylio.net/faq/wp-content/plugins/eazydocs/assets/images/icon/folder-closed.png",
+      "width": 512,
+      "height": 512
+    },
+    {
+      "alt": "Folder open icon",
+      "src": "https://daylio.net/faq/wp-content/plugins/eazydocs/assets/images/icon/folder-open.png",
+      "width": 512,
+      "height": 512
+    },
+    {
+      "alt": "Folder icon closed",
+      "src": "https://daylio.net/faq/wp-content/plugins/eazydocs/assets/images/icon/folder-closed.png",
+      "width": 512,
+      "height": 512
+    },
+    {
+      "alt": "Folder open icon",
+      "src": "https://daylio.net/faq/wp-content/plugins/eazydocs/assets/images/icon/folder-open.png",
+      "width": 512,
+      "height": 512
+    },
+    {
+      "alt": "Folder icon closed",
+      "src": "https://daylio.net/faq/wp-content/plugins/eazydocs/assets/images/icon/folder-closed.png",
+      "width": 512,
+      "height": 512
+    },
+    {
+      "alt": "Folder open icon",
+      "src": "https://daylio.net/faq/wp-content/plugins/eazydocs/assets/images/icon/folder-open.png",
+      "width": 512,
+      "height": 512
+    },
+    {
+      "alt": "Folder icon closed",
+      "src": "https://daylio.net/faq/wp-content/plugins/eazydocs/assets/images/icon/folder-closed.png",
+      "width": 512,
+      "height": 512
+    },
+    {
+      "alt": "Folder open icon",
+      "src": "https://daylio.net/faq/wp-content/plugins/eazydocs/assets/images/icon/folder-open.png",
+      "width": 512,
+      "height": 512
+    },
+    {
+      "alt": "Folder icon closed",
+      "src": "https://daylio.net/faq/wp-content/plugins/eazydocs/assets/images/icon/folder-closed.png",
+      "width": 512,
+      "height": 512
+    },
+    {
+      "alt": "Folder open icon",
+      "src": "https://daylio.net/faq/wp-content/plugins/eazydocs/assets/images/icon/folder-open.png",
+      "width": 512,
+      "height": 512
+    },
+    {
+      "alt": "Clipboard Icon",
+      "src": "https://daylio.net/faq/wp-content/plugins/eazydocs/assets/images/clone.svg",
+      "width": 24,
+      "height": 24
+    },
+    {
+      "alt": "Leaf Illustration",
+      "src": "https://wordpress-theme.spider-themes.net/docly/wp-content/themes/docly/assets/img/footer/leaf_footter.png",
+      "width": 0,
+      "height": 0
+    }
+  ]
+}

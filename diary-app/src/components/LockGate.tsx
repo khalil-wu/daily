@@ -1,9 +1,11 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { Animated, Modal, Platform, Pressable, Text, View } from 'react-native';
+import { Animated, Image, Modal, Platform, Pressable, View } from 'react-native';
+import { Text } from './text';
 import * as LocalAuthentication from 'expo-local-authentication';
-import { Delete, Lock, ScanFace, X } from 'lucide-react-native';
+import { Delete, ScanFace, X } from 'lucide-react-native';
 import { useTheme } from '../theme/ThemeProvider';
 import { actions } from '../store/store';
+import { IMAGES } from '../data/assets';
 import { haptic } from './ui';
 
 const KEYS = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '', '0', 'del'] as const;
@@ -20,7 +22,7 @@ interface PinPadProps {
 
 /** 数字密码键盘面板（1:1 复刻设计稿3 #9） */
 export function PinPadView({ title, subtitle, length = 4, allowBiometric, onComplete, onBiometricSuccess, onClose }: PinPadProps) {
-  const { c, t, fs } = useTheme();
+  const { c, t, fs, dark } = useTheme();
   const [code, setCode] = useState('');
   const [error, setError] = useState('');
   const shake = useRef(new Animated.Value(0)).current;
@@ -84,8 +86,19 @@ export function PinPadView({ title, subtitle, length = 4, allowBiometric, onComp
         </Pressable>
       )}
 
-      <View style={{ width: 52, height: 52, borderRadius: 16, backgroundColor: c.primaryFaint, alignItems: 'center', justifyContent: 'center', marginBottom: 16 }}>
-        <Lock size={24} color={c.primaryDark} strokeWidth={1.7} />
+      <View
+        style={{
+          width: 96,
+          height: 96,
+          borderRadius: dark ? 48 : 0,
+          backgroundColor: dark ? 'rgba(236,246,247,0.92)' : 'transparent',
+          padding: dark ? 10 : 0,
+          alignItems: 'center',
+          justifyContent: 'center',
+          marginBottom: 14,
+        }}
+      >
+        <Image source={IMAGES.privacyLock} style={{ width: '100%', height: '100%' }} resizeMode="contain" />
       </View>
       <Text style={[t.h1, { fontSize: fs(20), textAlign: 'center' }]}>{title}</Text>
       {!!subtitle && <Text style={[t.sub, { textAlign: 'center', marginTop: 6 }]}>{subtitle}</Text>}

@@ -1,11 +1,14 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Animated, Easing, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Animated, AppState, Easing, Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Text, TextInput } from '../src/components/text';
 import { router, useLocalSearchParams } from 'expo-router';
+import { LinearGradient } from 'expo-linear-gradient';
 import {
-  AudioLines, Bold, BookOpen, Calendar, Check, CheckSquare, Cloud, Eye, EyeOff, Heading1, Image as ImageIcon, Italic, Type,
-  LayoutTemplate, List, ListOrdered, MapPin, Mic, Minus, Quote, Redo2, RefreshCw, Smile, Sparkles,
-  Square, Tag as TagIcon, Underline, Undo2, Users, Video,
+  AudioLines, BookOpen, Check, ChevronDown, Cloud, Eye, EyeOff,
+  MapPin, Minus, RefreshCw, Smile, Sparkles, Square, Tag as TagIcon, Users,
 } from 'lucide-react-native';
+import { EDITOR_ICONS } from '../src/data/assets';
+import { AssetIcon } from '../src/components/AssetIcon';
 import { useTheme } from '../src/theme/ThemeProvider';
 import { actions, openTutorial, useStore } from '../src/store/store';
 import type { Entry, MoodKey, PhotoLayout } from '../src/store/types';
@@ -13,7 +16,7 @@ import {
   getEditorDraft, markAutoSaved, startEditorSession, updateEditorDraft, useEditorDraft,
   removeEditorAudio, removeEditorPhoto, removeEditorVideo, clearEditorSession,
 } from '../src/store/editorSession';
-import { DAILY_PROMPTS, DEFAULT_NOTEBOOK_ID, MOODS, TEMPLATES, moodMeta, weatherMeta } from '../src/data/constants';
+import { DAILY_PROMPTS, DEFAULT_NOTEBOOK_ID, MOODS, MOOD_ORDER, TEMPLATES, WEATHERS, moodMeta, moodTint, weatherMeta } from '../src/data/constants';
 import { Chip, NavBar, PillAction, Screen, TextAction, goBack, haptic } from '../src/components/ui';
 import { MoodIcon, WeatherIcon } from '../src/components/MoodIcon';
 import { AudioClipCard } from '../src/components/AudioPlayer';
@@ -24,18 +27,26 @@ import { RichBody } from '../src/components/RichBody';
 import { RememberPanel } from '../src/components/RememberPanel';
 import { useFeedback } from '../src/components/feedback';
 import { DateTimeSheet } from '../src/components/DateTimeSheet';
-import { PopDialog, PressableScale } from '../src/components/motion';
+import { HiddenAccessBoundary } from '../src/components/HiddenAccessBoundary';
+import { FadeIn, PopDialog, PressableScale, useReducedMotion } from '../src/components/motion';
 import { setTourHandler, useTourTarget } from '../src/components/tour';
 import { fmtAgo, fmtMonthDayTime, WEEK_CN } from '../src/utils/date';
 import { wordCount } from '../src/utils/text';
 import { continueListOnEnter, toggleTodoAtLine } from '../src/utils/richtext';
 import { TextHistory } from '../src/utils/history';
+import { entryForSave, hasEntryContent, insertDictation } from '../src/utils/editor';
+import { flushPendingState, getPersistenceError } from '../src/store/storage';
 import { createDictationSession, isDictationSupported, type DictationSession } from '../src/utils/dictation';
 
 /** 2, 3, 8, 12. 新建/编辑日记页 */
 export default function WriteScreen() {
-  const params = useLocalSearchParams<{ id?: string; template?: string; date?: string; action?: string; prompt?: string; mood?: string }>();
-  const { c, t, fs, lineHeight, contentWidth } = useTheme();
+  const { id } = useLocalSearchParams<{ id?: string }>();
+  return <HiddenAccessBoundary entryId={id}><WriteEditor /></HiddenAccessBoundary>;
+}
+
+function WriteEditor() {
+  const params = useLocalSearchParams<{ id?: string; template?: string; date?: string; action?: string; prompt?: string; mood?: string; tour?: string }>();
+  const { c, t, fs, lineHeight, contentWidth, dark, r } = useTheme();
   const { toast } = useFeedback();
   const tags = useStore(s => s.tags);
   const people = useStore(s => s.people);
@@ -48,11 +59,18 @@ export default function WriteScreen() {
   const draft = useEditorDraft();
   const [previewMode, setPreviewMode] = useState(false);
   const [exitModal, setExitModal] = useState(false);
+  const [exitError, setExitError] = useState('');
   const [dateModal, setDateModal] = useState(false);
   const [nbModal, setNbModal] = useState(false);
   const [viewerIdx, setViewerIdx] = useState<number | null>(null);
   const [promptTipIdx, setPromptTipIdx] = useState(0);
   const [selection, setSelection] = useState({ start: 0, end: 0 });
+  const selectionRef = useRef(selection);
+  const [saving, setSaving] = useState(false);
+  const savingRef = useRef(false);
+  const finishedRef = useRef(false);
+  const lastSavedEntryRef = useRef<Entry | null>(null);
+  const reducedMotion = useReducedMotion();
   const [dictating, setDictating] = useState(false);
   const [interimText, setInterimText] = useState('');
   const dictationSupported = useMemo(() => isDictationSupported(), []);
@@ -60,21 +78,25 @@ export default function WriteScreen() {
   const toggleDictationRef = useRef<() => void>(() => undefined);
   // 格式工具默认收起，只露一行附件图标（设计稿2 #3：键盘上方一条细工具栏）
   const [formatOpen, setFormatOpen] = useState(false);
+  // 心情 / 天气在元信息胶囊下就地展开快选行（Daylio 式点按即得，不再跳转选择页）
+  const [metaRow, setMetaRow] = useState<'mood' | 'weather' | null>(null);
   const formatAnim = useRef(new Animated.Value(0)).current;
   useEffect(() => {
-    Animated.timing(formatAnim, {
+    const animation = Animated.timing(formatAnim, {
       toValue: formatOpen ? 1 : 0,
-      duration: 220,
+      duration: reducedMotion ? 0 : 180,
       easing: Easing.out(Easing.cubic),
       useNativeDriver: false,
-    }).start();
-  }, [formatOpen, formatAnim]);
+    });
+    animation.start();
+    return () => animation.stop();
+  }, [formatOpen, formatAnim, reducedMotion]);
   // 写作导览讲到「排版」那一步之前，先把格式工具展开
   useEffect(() => {
     setTourHandler('editor.prepare', () => setFormatOpen(true));
     return () => setTourHandler('editor.prepare', null);
   }, []);
-  const bodyRef = useRef<TextInput>(null);
+  const bodyRef = useRef<React.ComponentRef<typeof TextInput>>(null);
   const initActionRan = useRef(false);
   // 进入编辑时这篇日记原本的样子（新建则为 null），选择「不保存」时据此还原
   const originalRef = useRef<Entry | null>(null);
@@ -90,8 +112,28 @@ export default function WriteScreen() {
   const attachTarget = useTourTarget('write.attach');
   const publishTarget = useTourTarget('write.publish');
 
+  const persistCurrentDraft = useCallback(async () => {
+    const current = getEditorDraft();
+    if (finishedRef.current || savingRef.current || !current?.dirty || current.entry === lastSavedEntryRef.current) return;
+    if (!hasEntryContent(current.entry) && !originalRef.current) {
+      if (actions.snapshot().entries.some(item => item.id === current.entry.id)) {
+        actions.destroyEntry(current.entry.id);
+        await flushPendingState().catch(() => {});
+      }
+      return;
+    }
+    await actions.upsertEntry(entryForSave(current.entry), true);
+    if (!getPersistenceError() && getEditorDraft()?.entry === current.entry) {
+      lastSavedEntryRef.current = current.entry;
+      markAutoSaved();
+    }
+  }, []);
+
   // 初始化编辑会话
   useEffect(() => {
+    finishedRef.current = false;
+    lastSavedEntryRef.current = null;
+    initActionRan.current = false;
     const tpl = params.template ? TEMPLATES.find(x => x.id === params.template) : undefined;
     const promptItem = params.prompt ? DAILY_PROMPTS.find(p => p.id === params.prompt) : undefined;
     const createdAt = params.date ? Number(params.date) : undefined;
@@ -114,25 +156,26 @@ export default function WriteScreen() {
     return () => {
       dictationRef.current?.stop();
       dictationRef.current = null;
+      // 系统返回、手势退出也保留最后一次输入，不依赖防抖计时器是否已触发。
+      void persistCurrentDraft();
       clearEditorSession();
     };
-  }, [params.id, params.template, params.date, params.prompt, params.mood]);
+  }, [params.id, params.template, params.date, params.prompt, params.mood, persistCurrentDraft]);
 
-  // 快捷入口直达录音/拍照/拍视频
+  // 快捷入口直达录音/拍照/拍视频；离开写作页时取消尚未触发的导航。
+  const sessionId = draft?.entry.id;
   useEffect(() => {
-    if (!draft || initActionRan.current) return;
-    initActionRan.current = true;
-    if (params.action === 'audio') {
-      setTimeout(() => router.push('/picker/audio'), 220);
-    } else if (params.action === 'photo') {
-      setTimeout(() => router.push('/picker/photos'), 220);
-    } else if (params.action === 'video') {
-      setTimeout(() => router.push('/picker/video'), 220);
-    } else if (params.action === 'dictate') {
-      // 首页 FAB「语音听写」直达：进编辑页后自动开始听
-      if (isDictationSupported()) setTimeout(() => toggleDictationRef.current(), 500);
-    }
-  }, [draft, params.action]);
+    if (!sessionId || initActionRan.current) return;
+    const launch = () => {
+      initActionRan.current = true;
+      if (params.action === 'audio') router.push('/picker/audio');
+      else if (params.action === 'photo') router.push('/picker/photos');
+      else if (params.action === 'video') router.push('/picker/video');
+      else if (params.action === 'dictate' && isDictationSupported()) toggleDictationRef.current();
+    };
+    const timer = setTimeout(launch, params.action === 'dictate' ? 500 : 220);
+    return () => clearTimeout(timer);
+  }, [sessionId, params.action]);
 
   const entry = draft?.entry;
 
@@ -147,6 +190,7 @@ export default function WriteScreen() {
 
   const forceSelection = useCallback((start: number, end = start) => {
     setForcedSel({ start, end });
+    selectionRef.current = { start, end };
     setSelection({ start, end });
     setTimeout(() => setForcedSel(undefined), 80);
   }, []);
@@ -180,86 +224,122 @@ export default function WriteScreen() {
   // 第一次进入写作页：等页面升起后开始写作导览（快捷录音 / 拍照入口除外）
   const draftReady = !!entry;
   useEffect(() => {
-    if (!draftReady || editorTourSeen !== false || params.action) return;
-    const timer = setTimeout(() => openTutorial('editor'), 700);
+    if (!draftReady || (editorTourSeen !== false && params.tour !== '1') || params.action) return;
+    const timer = setTimeout(() => { openTutorial('editor'); if (params.tour === '1') router.setParams({ tour: undefined }); }, 700);
     return () => clearTimeout(timer);
-  }, [draftReady, editorTourSeen, params.action]);
+  }, [draftReady, editorTourSeen, params.action, params.tour]);
 
-  const hasContent = !!(
-    entry &&
-    (entry.title.trim() || entry.body.trim() || entry.photos.length > 0 || entry.audios.length > 0 || entry.videos.length > 0)
-  );
+  const hasContent = hasEntryContent(entry);
 
-  // 自动保存草稿
+  // 一次依赖完整日记对象，日期、人物、同数量标签替换等修改也能自动保存。
   useEffect(() => {
-    if (!draft?.dirty || !hasContent || !entry) return;
-    const timer = setTimeout(() => {
-      const cur = getEditorDraft()?.entry;
-      if (!cur) return;
-      actions.upsertEntry({ ...cur, status: cur.status === 'published' ? 'published' : 'draft', updatedAt: Date.now() });
-      markAutoSaved();
-    }, 5000);
+    if (!draft?.dirty) return;
+    const timer = setTimeout(() => void persistCurrentDraft(), 1200);
     return () => clearTimeout(timer);
-  }, [
-    draft?.dirty,
-    hasContent,
-    entry?.title,
-    entry?.body,
-    entry?.photos.length,
-    entry?.audios.length,
-    entry?.videos.length,
-    entry?.mood,
-    entry?.tags.length,
-    entry?.weather,
-    entry?.place?.name,
-    entry?.notebookId,
-    entry?.photoLayout,
-  ]);
+  }, [draft?.dirty, entry, persistCurrentDraft]);
+
+  useEffect(() => {
+    const subscription = AppState.addEventListener('change', state => {
+      if (state !== 'active') void persistCurrentDraft();
+    });
+    const onPageHide = () => void persistCurrentDraft();
+    const onVisibilityChange = () => {
+      if (document.visibilityState === 'hidden') onPageHide();
+    };
+    if (Platform.OS === 'web') {
+      window.addEventListener('pagehide', onPageHide);
+      document.addEventListener('visibilitychange', onVisibilityChange);
+    }
+    return () => {
+      subscription.remove();
+      if (Platform.OS === 'web') {
+        window.removeEventListener('pagehide', onPageHide);
+        document.removeEventListener('visibilitychange', onVisibilityChange);
+      }
+    };
+  }, [persistCurrentDraft]);
 
   const handleCancel = useCallback(() => {
+    if (savingRef.current) return;
     dictationRef.current?.stop();
-    if (draft?.dirty && hasContent) {
-      setExitModal(true);
-    } else {
-      goBack();
-    }
+    if (draft?.dirty && (hasContent || originalRef.current)) { setExitError(''); setExitModal(true); }
+    else goBack();
   }, [draft?.dirty, hasContent]);
 
-  const saveAsDraftAndExit = () => {
+  const saveAndExit = async () => {
+    if (savingRef.current) return;
     const cur = getEditorDraft()?.entry;
-    if (cur) {
-      actions.upsertEntry({ ...cur, status: 'draft', updatedAt: Date.now() }, true);
-      toast('已保存为草稿');
+    if (!cur) return;
+    savingRef.current = true;
+    setSaving(true);
+    setExitError('');
+    try {
+      await actions.upsertEntry(entryForSave(cur), true);
+      const error = getPersistenceError();
+      if (error) { setExitError(error); return; }
+      finishedRef.current = true;
+      toast(cur.status === 'published' ? '已保存修改' : '已保存为草稿');
+      setExitModal(false);
+      goBack();
+    } catch {
+      setExitError(getPersistenceError() || '保存未完成，请重试');
+    } finally {
+      savingRef.current = false;
+      setSaving(false);
     }
-    setExitModal(false);
-    goBack();
   };
 
-  // 「不保存」要说到做到：撤掉这次编辑期间自动存下的内容
-  const discardAndExit = () => {
+  // 撤销本次编辑期间的自动保存，确认写入成功后再离开。
+  const discardAndExit = async () => {
+    if (savingRef.current) return;
     const cur = getEditorDraft()?.entry;
-    if (cur) {
-      if (originalRef.current) actions.upsertEntry(originalRef.current, true);
-      else actions.destroyEntry(cur.id);
+    savingRef.current = true;
+    setSaving(true);
+    setExitError('');
+    try {
+      if (cur) {
+        if (originalRef.current) await actions.upsertEntry(entryForSave(originalRef.current), true);
+        else actions.destroyEntry(cur.id);
+      }
+      await flushPendingState();
+      const error = getPersistenceError();
+      if (error) { setExitError(error); return; }
+      finishedRef.current = true;
+      setExitModal(false);
+      goBack();
+    } catch {
+      setExitError(getPersistenceError() || '保存未完成，请重试');
+    } finally {
+      savingRef.current = false;
+      setSaving(false);
     }
-    setExitModal(false);
-    goBack();
   };
 
   const publish = async () => {
+    if (savingRef.current) return;
     dictationRef.current?.stop();
     const cur = getEditorDraft()?.entry;
     if (!cur) return;
-    if (!cur.title.trim() && !cur.body.trim() && cur.photos.length === 0 && cur.audios.length === 0 && cur.videos.length === 0) {
-      toast('写点内容再发布吧', { type: 'warning' });
+    if (!hasEntryContent(cur)) {
+      toast('写点内容再保存吧', { type: 'warning' });
       return;
     }
-    haptic('success');
-    actions.publishEntry(cur);
-    if (syncCloud && account) {
-      void actions.syncNow();
+    savingRef.current = true;
+    setSaving(true);
+    try {
+      await actions.publishEntry(cur);
+      const error = getPersistenceError();
+      if (error) { toast(error, { type: 'warning' }); return; }
+      finishedRef.current = true;
+      haptic('success');
+      if (syncCloud && account) void actions.syncNow();
+      router.replace({ pathname: '/saved', params: { id: cur.id, revision: String(actions.snapshot().entries.find(item => item.id === cur.id)?.updatedAt ?? cur.updatedAt) } });
+    } catch {
+      toast(getPersistenceError() || '保存未完成，请重试', { type: 'warning' });
+    } finally {
+      savingRef.current = false;
+      setSaving(false);
     }
-    router.replace({ pathname: '/saved', params: { id: cur.id } });
   };
 
   const toggleDictation = () => {
@@ -277,12 +357,8 @@ export default function WriteScreen() {
       onFinal: txt => {
         const cur = getEditorDraft()?.entry;
         if (!cur || !txt) return;
-        const pos = Math.min(selection.end, cur.body.length);
-        const before = cur.body.slice(0, pos);
-        const after = cur.body.slice(pos);
-        const next = `${before}${txt}${after}`;
-        const nextPos = pos + txt.length;
-        setBody(next, { step: true, select: [nextPos, nextPos] });
+        const next = insertDictation(cur.body, txt, selectionRef.current);
+        setBody(next.body, { step: true, select: [next.cursor, next.cursor] });
       },
       onError: msg => {
         toast(msg, { type: 'warning' });
@@ -362,7 +438,7 @@ export default function WriteScreen() {
   };
 
   const readingPadH = Math.round(26 - contentWidth * 12);
-  const words = useMemo(() => (entry ? wordCount(entry.title) + wordCount(entry.body) : 0), [entry]);
+  const words = useMemo(() => (entry ? wordCount(entry.title) + wordCount(entry.body) : 0), [entry?.title, entry?.body]);
   const goalPct = goals.enabled ? Math.min(100, Math.round((words / Math.max(1, goals.dailyWords)) * 100)) : 0;
 
   if (!entry) return <Screen edges={['top']}><View /></Screen>;
@@ -375,7 +451,9 @@ export default function WriteScreen() {
   const activeNb = notebooks.find(n => n.id === activeNbId) ?? notebooks[0];
   const photoLayout: PhotoLayout = entry.photoLayout ?? 'grid';
 
-  const subtitleText = draft?.lastAutoSavedAt
+  const subtitleText = draft?.dirty && entry !== lastSavedEntryRef.current
+    ? `正在保存…${goals.enabled ? ` · ${words}/${goals.dailyWords}字` : ''}`
+    : draft?.lastAutoSavedAt
     ? `已自动保存 · ${fmtAgo(draft.lastAutoSavedAt)}${goals.enabled ? ` · ${words}/${goals.dailyWords}字` : ''}`
     : goals.enabled
       ? `${words} / ${goals.dailyWords} 字`
@@ -391,7 +469,7 @@ export default function WriteScreen() {
         left={<TextAction label="取消" onPress={handleCancel} />}
         right={
           <View ref={publishTarget} collapsable={false}>
-            <PillAction label="发布" onPress={() => void publish()} />
+            <PillAction label={saving ? "保存中…" : entry.status === "published" ? "保存" : "完成"} disabled={saving || !hasContent} onPress={() => void publish()} />
           </View>
         }
       />
@@ -411,120 +489,275 @@ export default function WriteScreen() {
 
       <ScrollView
         keyboardShouldPersistTaps="handled"
+        automaticallyAdjustKeyboardInsets
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ paddingHorizontal: readingPadH, paddingTop: 10, paddingBottom: 32 }}
+        contentContainerStyle={{ paddingHorizontal: readingPadH, paddingTop: 12, paddingBottom: 48 }}
       >
-        {/* 顶部元信息胶囊栏：日记本、日期、心情、地点天气、模板 */}
-        <View ref={metaTarget} collapsable={false} style={{ marginBottom: 14 }}>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8 }} style={{ flexGrow: 0 }}>
-          {activeNb && (
-            <Chip
-              icon={<View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: activeNb.color }} />}
-              label={activeNb.name}
-              selected={activeNb.id !== DEFAULT_NOTEBOOK_ID}
-              onPress={() => setNbModal(true)}
-            />
-          )}
-          <Chip
-            icon={Calendar}
-            label={dateLabel}
+        {/* 顶部杂志大日期头 + 日记本胶囊 */}
+        <View style={{ flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between', gap: 12 }}>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={`日期：${dateLabel}，轻点修改`}
             onPress={() => setDateModal(true)}
-          />
-          <Chip
-            icon={mood ? <MoodIcon mood={mood.key} size={15} /> : Smile}
-            label={mood ? mood.label : '心情'}
-            selected={!!mood}
-            onPress={() => router.push('/picker/mood')}
-          />
-          <Chip
-            icon={weather ? <WeatherIcon weather={weather.key} size={14} /> : entry.place ? MapPin : Cloud}
-            label={
-              [
-                entry.place?.name?.split('·').pop()?.trim(),
-                weather ? `${weather.label}${entry.temperature != null ? ` ${entry.temperature}°` : ''}` : null,
-              ]
-                .filter(Boolean)
-                .join(' · ') || '天气与地点'
-            }
-            selected={!!(weather || entry.place)}
-            onPress={() => router.push('/picker/location')}
-          />
-          <Chip
-            icon={TagIcon}
-            label={entry.tags.length ? `${entry.tags.length} 个标签` : '标签'}
-            selected={entry.tags.length > 0}
-            onPress={() => router.push('/picker/tags')}
-          />
-          <Chip
-            icon={Users}
-            label={
-              entry.people.length === 0
-                ? '和谁'
-                : entry.people.length <= 2
-                  ? entry.people.map(id => people.find(p => p.id === id)?.name).filter(Boolean).join('、')
-                  : `${entry.people.length} 个人`
-            }
-            selected={entry.people.length > 0}
-            onPress={() => router.push('/picker/people')}
-          />
-          <Chip
-            icon={LayoutTemplate}
-            label="模板"
-            onPress={() => router.push('/templates')}
-          />
-        </ScrollView>
+            style={{ flexDirection: 'row', alignItems: 'flex-end', gap: 10, flex: 1, minWidth: 0, minHeight: 44 }}
+          >
+            <Text style={[t.h1, { fontSize: fs(36), lineHeight: fs(44), fontVariant: ['tabular-nums'] }]}>{d.getDate()}</Text>
+            <View style={{ paddingBottom: 4, flex: 1, minWidth: 0 }}>
+              <Text style={{ fontSize: fs(11.5), color: c.textMuted }}>{d.getFullYear()}年</Text>
+              <Text numberOfLines={1} style={{ fontSize: fs(12.5), color: c.textSub, fontWeight: '500', marginTop: 2 }}>{dateLabel}</Text>
+            </View>
+          </Pressable>
+          {activeNb && (
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={`日记本：${activeNb.name}，轻点切换`}
+              onPress={() => setNbModal(true)}
+              style={{ minHeight: 44, justifyContent: 'center' }}
+            >
+              <View
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  gap: 6,
+                  height: 30,
+                  paddingHorizontal: 11,
+                  borderRadius: r(999),
+                  backgroundColor: activeNb.id !== DEFAULT_NOTEBOOK_ID ? c.primaryFaint : c.card,
+                  borderWidth: 1,
+                  borderColor: activeNb.id !== DEFAULT_NOTEBOOK_ID ? c.primary : c.divider,
+                }}
+              >
+                <View style={{ width: 7, height: 7, borderRadius: 3.5, backgroundColor: activeNb.color }} />
+                <Text numberOfLines={1} style={{ fontSize: fs(12), color: activeNb.id !== DEFAULT_NOTEBOOK_ID ? c.primaryDark : c.textSub, fontWeight: '500', maxWidth: 100 }}>
+                  {activeNb.name}
+                </Text>
+                <ChevronDown size={13} color={activeNb.id !== DEFAULT_NOTEBOOK_ID ? c.primaryDark : c.textMuted} />
+              </View>
+            </Pressable>
+          )}
         </View>
 
-        {/* 「记得」面板：追问 / 整理 / 理顺，折叠时只占一行 */}
-        <RememberPanel entry={entry} applyBody={(next, step) => setBody(next, { step })} />
+        <View style={{ height: StyleSheet.hairlineWidth, backgroundColor: c.divider, marginTop: 10, marginBottom: 4 }} />
 
-        {/* 已选标签与身边人展示 */}
-        {(entry.tags.length > 0 || entry.people.length > 0) && (
-          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginBottom: 12 }}>
-            {entry.people.map(pid => {
-              const p = people.find(x => x.id === pid);
-              if (!p) return null;
-              return (
-                <Chip
-                  key={pid}
-                  size="sm"
-                  selected
-                  label={p.name}
-                  onRemove={() => updateEditorDraft({ people: entry.people.filter(x => x !== pid) })}
-                />
-              );
-            })}
-            {entry.tags.map(tid => {
-              const tg = tags.find(x => x.id === tid);
-              if (!tg) return null;
-              return (
-                <Chip
-                  key={tid}
-                  size="sm"
-                  selected
-                  label={`#${tg.name}`}
-                  onRemove={() => updateEditorDraft({ tags: entry.tags.filter(x => x !== tid) })}
-                />
-              );
-            })}
+        {/* 纤巧元信息行：心情、天气、地点、标签、和谁、模板 */}
+        <View ref={metaTarget} collapsable={false} style={{ marginBottom: 8 }}>
+          <View style={{ position: 'relative' }}>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 6, paddingRight: 28 }} style={{ flexGrow: 0, flexShrink: 0 }}>
+              <Chip
+                tone={mood ? 'soft' : undefined}
+                size="sm"
+                icon={mood ? <MoodIcon mood={mood.key} size={14} /> : Smile}
+                label={mood ? mood.label : '心情'}
+                selected={!!mood || metaRow === 'mood'}
+                onPress={() => {
+                  haptic('light');
+                  setMetaRow(v => (v === 'mood' ? null : 'mood'));
+                }}
+              />
+              <Chip
+                tone={weather ? 'soft' : undefined}
+                size="sm"
+                icon={weather ? <WeatherIcon weather={weather.key} size={13} /> : Cloud}
+                label={weather ? `${weather.label}${entry.temperature != null ? ` ${entry.temperature}°` : ''}` : '天气'}
+                selected={!!weather || metaRow === 'weather'}
+                onPress={() => {
+                  haptic('light');
+                  setMetaRow(v => (v === 'weather' ? null : 'weather'));
+                }}
+              />
+              <Chip
+                tone={entry.place ? 'soft' : undefined}
+                size="sm"
+                icon={MapPin}
+                label={entry.place?.name?.split('·').pop()?.trim() || '地点'}
+                selected={!!entry.place}
+                onPress={() => router.push('/picker/location')}
+              />
+              <Chip
+                tone={entry.tags.length ? 'soft' : undefined}
+                size="sm"
+                icon={TagIcon}
+                label={entry.tags.length ? `${entry.tags.length} 个标签` : '标签'}
+                selected={entry.tags.length > 0}
+                onPress={() => router.push('/picker/tags')}
+              />
+              <Chip
+                tone={entry.people.length ? 'soft' : undefined}
+                size="sm"
+                icon={Users}
+                label={
+                  entry.people.length === 0
+                    ? '和谁'
+                    : entry.people.length <= 2
+                      ? entry.people.map(id => people.find(p => p.id === id)?.name).filter(Boolean).join('、')
+                      : `${entry.people.length} 个人`
+                }
+                selected={entry.people.length > 0}
+                onPress={() => router.push('/picker/people')}
+              />
+              <Chip
+                size="sm"
+                icon={<AssetIcon source={EDITOR_ICONS.sticker} size={14} color={c.textSub} />}
+                label="模板"
+                onPress={() => router.push('/templates')}
+              />
+            </ScrollView>
+            <LinearGradient
+              pointerEvents="none"
+              colors={['transparent', c.bg]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+              style={{ position: 'absolute', right: 0, top: 0, bottom: 0, width: 26 }}
+            />
           </View>
-        )}
+
+          {/* 内联快选行：心情 / 天气，一行点完即收起；末尾保留完整选择页入口 */}
+          {metaRow === 'mood' && (
+            <FadeIn dy={6} duration={220}>
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                style={{ flexGrow: 0, flexShrink: 0, marginTop: 4 }}
+                contentContainerStyle={{ gap: 6 }}
+                keyboardShouldPersistTaps="handled"
+              >
+                {MOOD_ORDER.map(key => {
+                  const m = moodMeta(key)!;
+                  const on = entry.mood === key;
+                  return (
+                    <Pressable
+                      key={key}
+                      accessibilityRole="button"
+                      accessibilityLabel={`心情：${m.label}`}
+                      onPress={() => {
+                        haptic('light');
+                        updateEditorDraft({ mood: on ? undefined : key });
+                        setMetaRow(null);
+                      }}
+                      style={{ minHeight: 44, minWidth: 44, justifyContent: 'center' }}
+                    >
+                      <View
+                        style={{
+                          flexDirection: 'row',
+                          alignItems: 'center',
+                          gap: 6,
+                          paddingHorizontal: 12,
+                          height: 34,
+                          borderRadius: r(999),
+                          backgroundColor: on ? moodTint(m, dark) : c.cardAlt,
+                          borderWidth: on ? 1.2 : StyleSheet.hairlineWidth,
+                          borderColor: on ? c.primary : c.divider,
+                        }}
+                      >
+                        <MoodIcon mood={key} size={18} />
+                        <Text style={{ fontSize: fs(12.5), color: on ? c.text : c.textSub, fontWeight: on ? '600' : '400' }}>{m.label}</Text>
+                      </View>
+                    </Pressable>
+                  );
+                })}
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel="打开完整心情选择页"
+                  onPress={() => {
+                    setMetaRow(null);
+                    router.push('/picker/mood');
+                  }}
+                  style={{ minHeight: 44, minWidth: 44, justifyContent: 'center' }}
+                >
+                  <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 12, height: 34, borderRadius: r(999), borderWidth: StyleSheet.hairlineWidth, borderColor: c.divider }}>
+                    <Text style={{ fontSize: fs(12.5), color: c.primaryDark }}>更多 ›</Text>
+                  </View>
+                </Pressable>
+              </ScrollView>
+            </FadeIn>
+          )}
+
+          {metaRow === 'weather' && (
+            <FadeIn dy={6} duration={220}>
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                style={{ flexGrow: 0, flexShrink: 0, marginTop: 4 }}
+                contentContainerStyle={{ gap: 6 }}
+                keyboardShouldPersistTaps="handled"
+              >
+                {WEATHERS.map(w => {
+                  const on = entry.weather === w.key;
+                  return (
+                    <Pressable
+                      key={w.key}
+                      accessibilityRole="button"
+                      accessibilityLabel={`天气：${w.label}`}
+                      onPress={() => {
+                        haptic('light');
+                        updateEditorDraft({ weather: on ? undefined : w.key });
+                        setMetaRow(null);
+                      }}
+                      style={{ minHeight: 44, minWidth: 44, justifyContent: 'center' }}
+                    >
+                      <View
+                        style={{
+                          flexDirection: 'row',
+                          alignItems: 'center',
+                          gap: 5,
+                          paddingHorizontal: 11,
+                          height: 34,
+                          borderRadius: r(999),
+                          backgroundColor: on ? c.primaryFaint : c.cardAlt,
+                          borderWidth: on ? 1.2 : StyleSheet.hairlineWidth,
+                          borderColor: on ? c.primary : c.divider,
+                        }}
+                      >
+                        <WeatherIcon weather={w.key} size={15} />
+                        <Text style={{ fontSize: fs(12.5), color: on ? c.primaryDark : c.textSub, fontWeight: on ? '600' : '400' }}>{w.label}</Text>
+                      </View>
+                    </Pressable>
+                  );
+                })}
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel="打开地点与温度选择页"
+                  onPress={() => {
+                    setMetaRow(null);
+                    router.push('/picker/location');
+                  }}
+                  style={{ minHeight: 44, minWidth: 44, justifyContent: 'center' }}
+                >
+                  <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 12, height: 34, borderRadius: r(999), borderWidth: StyleSheet.hairlineWidth, borderColor: c.divider }}>
+                    <Text style={{ fontSize: fs(12.5), color: c.primaryDark }}>地点 ›</Text>
+                  </View>
+                </Pressable>
+              </ScrollView>
+            </FadeIn>
+          )}
+        </View>
 
         {/* 标题输入 */}
         <TextInput
+          accessibilityLabel="日记标题"
+          editable={!saving}
           value={entry.title}
-          onChangeText={title => updateEditorDraft({ title })}
+          onChangeText={title => updateEditorDraft({ title: title.replace(/[\r\n]+/g, '') })}
           placeholder="标题（可选）"
           placeholderTextColor={c.textMuted}
+          multiline
+          scrollEnabled={false}
+          submitBehavior="blurAndSubmit"
+          returnKeyType="next"
+          onSubmitEditing={() => bodyRef.current?.focus()}
+          textAlignVertical="top"
           style={[
-            t.h1,
+            t.readingTitle,
             {
-              fontSize: fs(21),
+              fontSize: fs(22),
+              lineHeight: fs(32),
+              minHeight: fs(44),
               color: c.text,
-              paddingVertical: 8,
-              borderBottomWidth: StyleSheet.hairlineWidth,
-              borderBottomColor: c.divider,
-              marginBottom: 12,
+              ...(Platform.OS === 'android' ? { includeFontPadding: false } : {}),
+              paddingTop: 8,
+              paddingBottom: 8,
+              paddingHorizontal: 0,
+              marginBottom: 8,
               outlineStyle: 'none',
             } as any,
           ]}
@@ -546,6 +779,8 @@ export default function WriteScreen() {
           ) : (
             <TextInput
               ref={bodyRef}
+              accessibilityLabel="日记正文"
+              editable={!saving}
               value={entry.body}
               selection={forcedSel}
               onChangeText={body => {
@@ -555,7 +790,7 @@ export default function WriteScreen() {
                 if (cont) setBody(cont.text, { step: true, select: [cont.cursor, cont.cursor] });
                 else setBody(body);
               }}
-              onSelectionChange={e => setSelection(e.nativeEvent.selection)}
+              onSelectionChange={e => { selectionRef.current = e.nativeEvent.selection; setSelection(e.nativeEvent.selection); }}
               placeholder="写下此刻的想法…"
               placeholderTextColor={c.textMuted}
               multiline
@@ -565,7 +800,7 @@ export default function WriteScreen() {
                 fontSize: fs(16),
                 lineHeight: fs(16) * lineHeight,
                 color: c.text,
-                minHeight: 180,
+                minHeight: 160,
                 paddingVertical: 4,
                 outlineStyle: 'none',
               } as any}
@@ -575,7 +810,7 @@ export default function WriteScreen() {
 
         {/* 空白写作灵感引导条 */}
         {!entry.title && !entry.body && !previewMode && (
-          <View style={{ marginTop: 10, backgroundColor: c.cardAlt, borderRadius: 14, padding: 12, borderWidth: StyleSheet.hairlineWidth, borderColor: c.divider, gap: 8 }}>
+          <View style={{ marginTop: 12, backgroundColor: dark ? c.cardAlt : c.primaryFaint, borderRadius: r(14), borderLeftWidth: 3, borderLeftColor: c.primary, padding: 13, gap: 8 }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
                 <Sparkles size={13} color={c.primaryDark} />
@@ -599,11 +834,48 @@ export default function WriteScreen() {
           </View>
         )}
 
+        {/* 已选标签与身边人展示（置于正文后，不打断开篇视线） */}
+        {(entry.tags.length > 0 || entry.people.length > 0) && (
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 14 }}>
+            {entry.people.map(pid => {
+              const p = people.find(x => x.id === pid);
+              if (!p) return null;
+              return (
+                <Chip
+                  tone="soft"
+                  key={pid}
+                  size="sm"
+                  selected
+                  label={p.name}
+                  onRemove={() => updateEditorDraft({ people: entry.people.filter(x => x !== pid) })}
+                />
+              );
+            })}
+            {entry.tags.map(tid => {
+              const tg = tags.find(x => x.id === tid);
+              if (!tg) return null;
+              return (
+                <Chip
+                  tone="soft"
+                  key={tid}
+                  size="sm"
+                  selected
+                  label={`#${tg.name}`}
+                  onRemove={() => updateEditorDraft({ tags: entry.tags.filter(x => x !== tid) })}
+                />
+              );
+            })}
+          </View>
+        )}
+
+        {/* 「记得」面板：追问 / 整理 / 理顺，放在正文下方不遮挡思考 */}
+        <RememberPanel entry={entry} applyBody={(next, step) => setBody(next, { step })} />
+
         {/* 多图排版切换器 + 照片预览 */}
         {entry.photos.length >= 2 && (
           <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 18, marginBottom: -8 }}>
             <Text style={{ fontSize: fs(12), color: c.textSub }}>图片排版 ({entry.photos.length} 张)</Text>
-            <View style={{ flexDirection: 'row', backgroundColor: c.bgDeep, borderRadius: 999, padding: 2 }}>
+            <View style={{ flexDirection: 'row', backgroundColor: c.bgDeep, borderRadius: r(999), padding: 2 }}>
               {[
                 { key: 'grid' as const, label: '网格' },
                 { key: 'large' as const, label: '大图' },
@@ -620,7 +892,7 @@ export default function WriteScreen() {
                     style={{
                       paddingHorizontal: 10,
                       paddingVertical: 3,
-                      borderRadius: 999,
+                      borderRadius: r(999),
                       backgroundColor: on ? c.card : 'transparent',
                     }}
                   >
@@ -704,45 +976,50 @@ export default function WriteScreen() {
           ref={formatTarget}
           collapsable={false}
           style={{
-            height: formatAnim.interpolate({ inputRange: [0, 1], outputRange: [0, 46] }),
+            height: formatAnim.interpolate({ inputRange: [0, 1], outputRange: [0, 52] }),
             opacity: formatAnim,
             overflow: 'hidden',
             borderBottomWidth: formatOpen ? StyleSheet.hairlineWidth : 0,
             borderBottomColor: c.divider,
           }}
         >
-          <View style={{ height: 46, flexDirection: 'row', alignItems: 'center', paddingHorizontal: 10 }}>
+          <View style={{ height: 52, flexDirection: 'row', alignItems: 'center', paddingHorizontal: 10 }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', paddingRight: 6, marginRight: 4, borderRightWidth: StyleSheet.hairlineWidth, borderRightColor: c.divider }}>
               {[
-                { icon: Undo2, label: '撤销', on: history.canUndo, onPress: undo },
-                { icon: Redo2, label: '重做', on: history.canRedo, onPress: redo },
+                { asset: EDITOR_ICONS.undo, label: '撤销', on: history.canUndo, onPress: undo },
+                { asset: EDITOR_ICONS.redo, label: '重做', on: history.canRedo, onPress: redo },
               ].map(tool => (
                 <Pressable
                   key={tool.label}
+                  accessibilityRole="button"
                   accessibilityLabel={tool.label}
                   disabled={!tool.on}
                   onPress={tool.onPress}
                   hitSlop={4}
-                  style={({ pressed }) => ({ width: 34, height: 34, borderRadius: 9, alignItems: 'center', justifyContent: 'center', opacity: tool.on ? 1 : 0.3, backgroundColor: pressed ? c.bgDeep : 'transparent' })}
+                  style={({ pressed }) => ({ width: 44, height: 44, borderRadius: r(10), alignItems: 'center', justifyContent: 'center', opacity: tool.on ? 1 : 0.3, backgroundColor: pressed ? c.bgDeep : 'transparent' })}
                 >
-                  <tool.icon size={17} color={c.text} strokeWidth={1.8} />
+                  <AssetIcon source={tool.asset} size={20} color={c.text} />
                 </Pressable>
               ))}
             </View>
             <ScrollView horizontal showsHorizontalScrollIndicator={false} keyboardShouldPersistTaps="always" contentContainerStyle={{ flexDirection: 'row', alignItems: 'center', paddingRight: 6 }} style={{ flex: 1 }}>
               {[
-                { icon: Heading1, label: '小标题', onPress: () => applyFormat('h') },
-                { icon: Bold, label: '加粗', onPress: () => applyFormat('b') },
-                { icon: Italic, label: '斜体', onPress: () => applyFormat('i') },
-                { icon: Underline, label: '下划线', onPress: () => applyFormat('u') },
-                { icon: Quote, label: '引用', onPress: () => applyFormat('quote') },
-                { icon: CheckSquare, label: '待办', onPress: () => applyFormat('todo') },
-                { icon: List, label: '无序列表', onPress: () => applyFormat('ul') },
-                { icon: ListOrdered, label: '有序列表', onPress: () => applyFormat('ol') },
+                { asset: EDITOR_ICONS.heading, label: '小标题', onPress: () => applyFormat('h') },
+                { asset: EDITOR_ICONS.bold, label: '加粗', onPress: () => applyFormat('b') },
+                { asset: EDITOR_ICONS.italic, label: '斜体', onPress: () => applyFormat('i') },
+                { asset: EDITOR_ICONS.underline, label: '下划线', onPress: () => applyFormat('u') },
+                { asset: EDITOR_ICONS.quote, label: '引用', onPress: () => applyFormat('quote') },
+                { asset: EDITOR_ICONS.checklist, label: '待办', onPress: () => applyFormat('todo') },
+                { asset: EDITOR_ICONS.bullets, label: '无序列表', onPress: () => applyFormat('ul') },
+                { asset: EDITOR_ICONS.numbered, label: '有序列表', onPress: () => applyFormat('ol') },
                 { icon: Minus, label: '分割线', onPress: () => applyFormat('hr') },
               ].map(tool => (
-                <Pressable key={tool.label} accessibilityLabel={tool.label} onPress={tool.onPress} hitSlop={4} style={({ pressed }) => ({ width: 36, height: 34, borderRadius: 9, alignItems: 'center', justifyContent: 'center', backgroundColor: pressed ? c.bgDeep : 'transparent' })}>
-                  <tool.icon size={17} color={c.text} strokeWidth={1.8} />
+                <Pressable key={tool.label} accessibilityRole="button" accessibilityLabel={tool.label} onPress={tool.onPress} hitSlop={4} style={({ pressed }) => ({ width: 44, height: 44, borderRadius: r(10), alignItems: 'center', justifyContent: 'center', backgroundColor: pressed ? c.bgDeep : 'transparent' })}>
+                  {'asset' in tool && tool.asset ? (
+                    <AssetIcon source={tool.asset} size={20} color={c.text} />
+                  ) : (
+                    tool.icon && <tool.icon size={19} color={c.text} strokeWidth={2} />
+                  )}
                 </Pressable>
               ))}
             </ScrollView>
@@ -758,64 +1035,69 @@ export default function WriteScreen() {
               setFormatOpen(v => !v);
             }}
             accessibilityLabel={formatOpen ? '收起格式工具' : '展开格式工具'}
-            style={{ width: 40, height: 36, borderRadius: 10, alignItems: 'center', justifyContent: 'center', backgroundColor: formatOpen ? c.primaryFaint : 'transparent' }}
+            aria-expanded={formatOpen}
+            style={{ width: 44, height: 44, borderRadius: r(10), alignItems: 'center', justifyContent: 'center', backgroundColor: formatOpen ? c.primaryFaint : 'transparent' }}
           >
-            <Type size={19} color={formatOpen ? c.primaryDark : c.text} strokeWidth={1.8} />
+            <AssetIcon source={EDITOR_ICONS.font} size={20} color={formatOpen ? c.primaryDark : c.text} />
           </PressableScale>
-          <View style={{ width: StyleSheet.hairlineWidth, height: 22, backgroundColor: c.divider, marginHorizontal: 4 }} />
+          <View style={{ width: StyleSheet.hairlineWidth, height: 18, backgroundColor: c.divider, marginHorizontal: 4 }} />
 
+          {/* 心情、地点天气、标签已经在顶部胶囊栏里，这里只留顶部没有的媒体入口 */}
           <View ref={attachTarget} collapsable={false} style={{ flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-around' }}>
             {[
-              { icon: ImageIcon, label: '图片', active: false, onPress: () => router.push('/picker/photos') },
-              { icon: Video, label: '视频', active: false, onPress: () => router.push('/picker/video') },
-              { icon: Mic, label: '录音', active: false, onPress: () => router.push('/picker/audio') },
+              { asset: EDITOR_ICONS.photo, label: '图片', active: false, onPress: () => router.push('/picker/photos') },
+              { asset: EDITOR_ICONS.video, label: '视频', active: false, onPress: () => router.push('/picker/video') },
+              { asset: EDITOR_ICONS.audio, label: '录音', active: false, onPress: () => router.push('/picker/audio') },
               ...(dictationSupported
                 ? [{ icon: AudioLines, label: dictating ? '停止听写' : '听写', active: dictating, onPress: toggleDictation }]
                 : []),
-              { icon: MapPin, label: '地点天气', active: false, onPress: () => router.push('/picker/location') },
-              { icon: TagIcon, label: '标签', active: false, onPress: () => router.push('/picker/tags') },
-              { icon: Smile, label: '心情', active: false, onPress: () => router.push('/picker/mood') },
             ].map(att => (
               <PressableScale
                 key={att.label}
                 scaleTo={0.86}
                 onPress={att.onPress}
                 accessibilityLabel={att.label}
-                style={{ width: 38, height: 36, borderRadius: 10, alignItems: 'center', justifyContent: 'center', backgroundColor: att.active ? c.dangerSoft : 'transparent' }}
+                style={{ width: 44, height: 44, borderRadius: r(10), alignItems: 'center', justifyContent: 'center', backgroundColor: att.active ? c.dangerSoft : 'transparent' }}
               >
-                <att.icon size={19} color={att.active ? c.danger : c.primaryDark} strokeWidth={1.7} />
+                {'asset' in att && att.asset ? (
+                  <AssetIcon source={att.asset} size={21} color={att.active ? c.danger : c.primaryDark} />
+                ) : (
+                  att.icon && <att.icon size={20} color={att.active ? c.danger : c.primaryDark} strokeWidth={1.85} />
+                )}
               </PressableScale>
             ))}
           </View>
 
-          <View style={{ width: StyleSheet.hairlineWidth, height: 22, backgroundColor: c.divider, marginHorizontal: 4 }} />
+          <View style={{ width: StyleSheet.hairlineWidth, height: 18, backgroundColor: c.divider, marginHorizontal: 4 }} />
           <PressableScale
             scaleTo={0.9}
             onPress={() => setPreviewMode(v => !v)}
             accessibilityLabel={previewMode ? '返回编辑' : '预览排版'}
-            style={{ width: 40, height: 36, borderRadius: 10, alignItems: 'center', justifyContent: 'center', backgroundColor: previewMode ? c.primaryFaint : 'transparent' }}
+            aria-pressed={previewMode}
+            style={{ width: 44, height: 44, borderRadius: r(10), alignItems: 'center', justifyContent: 'center', backgroundColor: previewMode ? c.primaryFaint : 'transparent' }}
           >
-            {previewMode ? <EyeOff size={18} color={c.primaryDark} strokeWidth={1.8} /> : <Eye size={18} color={c.text} strokeWidth={1.8} />}
+            {previewMode ? <EyeOff size={17} color={c.primaryDark} strokeWidth={1.8} /> : <Eye size={17} color={c.text} strokeWidth={1.8} />}
           </PressableScale>
         </View>
       </View>
 
       {/* 退出保护弹窗（设计稿2 #12） */}
-      <PopDialog visible={exitModal} onClose={() => setExitModal(false)} maxWidth={330} style={{ padding: 24 }}>
-        <Text style={[t.h2, { textAlign: 'center', fontSize: fs(18) }]}>是否保存为草稿？</Text>
-        <Text style={[t.sub, { textAlign: 'center', marginTop: 10 }]}>当前内容尚未发布，退出前是否保存为草稿？</Text>
-        <View style={{ flexDirection: 'row', gap: 12, marginTop: 22 }}>
-          <PressableScale onPress={discardAndExit} style={{ flex: 1, height: 42, borderRadius: 21, borderWidth: 1, borderColor: c.border, alignItems: 'center', justifyContent: 'center' }}>
+      <PopDialog accessibilityLabel="保存日记" visible={exitModal} onClose={() => { if (!saving) setExitModal(false); }} maxWidth={330} style={{ padding: 24 }}>
+        <Text style={[t.h2, { textAlign: 'center', fontSize: fs(18) }]}>{entry.status === "published" ? "保存这次修改？" : "保存这篇草稿？"}</Text>
+        <Text style={[t.sub, { textAlign: 'center', marginTop: 10 }]}>{entry.status === "published" ? "保存后将更新这篇日记。选择不保存，会还原本次编辑前的内容。" : "保存后可以在草稿箱继续写。选择不保存，会放弃这次编辑。"}</Text>
+        {!!exitError && <Text accessibilityRole="alert" style={[t.sub, { color: c.danger, marginTop: 12 }]}>{exitError}</Text>}
+        <View style={{ gap: 10, marginTop: 22 }}>
+          <PressableScale disabled={saving} onPress={() => void discardAndExit()} style={{ minHeight: 44, paddingVertical: 10, borderRadius: r(999), borderWidth: 1, borderColor: c.border, alignItems: 'center', justifyContent: 'center' }}>
             <Text style={{ fontSize: fs(14), color: c.textSub }}>不保存</Text>
           </PressableScale>
-          <PressableScale onPress={saveAsDraftAndExit} style={{ flex: 1, height: 42, borderRadius: 21, backgroundColor: c.primary, alignItems: 'center', justifyContent: 'center' }}>
-            <Text style={{ fontSize: fs(14), color: c.textOnPrimary, fontWeight: '600' }}>保存草稿</Text>
+          <PressableScale disabled={saving} onPress={() => void saveAndExit()} style={{ minHeight: 44, paddingVertical: 10, borderRadius: r(999), backgroundColor: c.primary, alignItems: 'center', justifyContent: 'center' }}>
+            <Text style={{ fontSize: fs(14), color: c.textOnPrimary, fontWeight: '600' }}>{saving ? "保存中…" : entry.status === "published" ? "保存修改" : "保存草稿"}</Text>
           </PressableScale>
         </View>
       </PopDialog>
 
       {/* 日记本选择弹窗 */}
-      <PopDialog visible={nbModal} onClose={() => setNbModal(false)} maxWidth={330} style={{ padding: 20 }}>
+      <PopDialog accessibilityLabel="选择日记本" visible={nbModal} onClose={() => setNbModal(false)} maxWidth={330} style={{ padding: 20 }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
             <BookOpen size={17} color={c.primaryDark} />
@@ -849,7 +1131,7 @@ export default function WriteScreen() {
                   justifyContent: 'space-between',
                   paddingHorizontal: 14,
                   height: 44,
-                  borderRadius: 12,
+                  borderRadius: r(12),
                   backgroundColor: selected ? c.primaryFaint : c.bgDeep,
                 }}
               >

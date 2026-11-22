@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { extractKeywords } from '../src/utils/keywords';
 import { computeAnnualReport, getAvailableYears } from '../src/utils/annual';
-import { computeStats } from '../src/utils/stats';
+import { computeStats, findThrowbacks } from '../src/utils/stats';
 import type { Entry, MoodKey } from '../src/store/types';
 
 function makeEntry(id: string, createdAt: number, overrides: Partial<Entry> = {}): Entry {
@@ -24,6 +24,17 @@ function makeEntry(id: string, createdAt: number, overrides: Partial<Entry> = {}
     ...overrides,
   };
 }
+
+test('记忆胶囊按时间与排除标签筛选，隐藏、草稿、已删和未来内容均不回顾', () => {
+  const now = new Date(2026, 10, 21, 12).getTime();
+  const recent = new Date(2026, 9, 21, 12).getTime();
+  const older = new Date(2024, 10, 21, 12).getTime();
+  const entries = [makeEntry('recent', recent), makeEntry('older', older), makeEntry('excluded', recent, { tags: ['work'] }), makeEntry('hidden', recent, { hidden: true }), makeEntry('draft', recent, { status: 'draft' }), makeEntry('deleted', recent, { deletedAt: now }), makeEntry('future', now + 86400000)];
+  assert.deepEqual(findThrowbacks(entries, now, { range: 'past-year', excludedTags: ['work'] }).map(item => item.entry.id), ['recent']);
+  assert.deepEqual(findThrowbacks(entries, now, { range: 'earlier' }).map(item => item.entry.id), ['older']);
+  assert.deepEqual(new Set(findThrowbacks(entries, now).map(item => item.entry.id)), new Set(['recent', 'older', 'excluded']));
+  assert.ok(findThrowbacks(Array.from({ length: 5000 }, (_, i) => makeEntry(String(i), older)), now).length <= 4);
+});
 
 test('关键词提取：停用词过滤、频率排序与无 Segmenter 二元组回退', () => {
   const texts = [

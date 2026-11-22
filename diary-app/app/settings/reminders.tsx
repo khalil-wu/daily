@@ -1,5 +1,6 @@
-import React from 'react';
-import { Platform, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import React, { useState } from 'react';
+import { Platform, ScrollView, StyleSheet, View } from 'react-native';
+import { Text, TextInput } from '../../src/components/text';
 import { router } from 'expo-router';
 import * as Notifications from 'expo-notifications';
 import { useTheme } from '../../src/theme/ThemeProvider';
@@ -21,20 +22,24 @@ export default function RemindersScreen() {
   const { c, fs } = useTheme();
   const { toast } = useFeedback();
   const rem = useStore(s => s.reminders);
+  const [scheduling, setScheduling] = useState(false);
 
-  const toggleDaily = (v: boolean) => {
-    const next = { ...rem, daily: v };
-    actions.setReminders({ daily: v });
-    void rescheduleDailyReminder(next).then(status => {
-      if (status === 'denied') toast('未开启通知权限，提醒可能无法送达', { type: 'warning' });
-    });
-    toast(v ? `已开启每日 ${pad2(rem.hour)}:${pad2(rem.minute)} 提醒` : '已关闭每日提醒');
+  const updateReminder = async (patch: Partial<typeof rem>) => {
+    if (scheduling) return;
+    const next = { ...rem, ...patch };
+    actions.setReminders(patch);
+    setScheduling(true);
+    const status = await rescheduleDailyReminder(next);
+    setScheduling(false);
+    if (status === 'web') toast('偏好已保存；网页不支持后台定时提醒', { type: 'info' });
+    else if (status === 'denied') toast('未获得通知权限，提醒尚未生效', { type: 'warning' });
+    else if (status === 'error') toast('提醒设置已保留，但系统未完成安排，请重试', { type: 'error' });
+    else toast(next.daily ? `提醒已按${REPEAT_LABEL[next.repeat]} ${pad2(next.hour)}:${pad2(next.minute)} 安排` : '已关闭每日提醒');
   };
 
   const chooseMethod = () => {
     const next = rem.method === 'notify_sound' ? 'notify' : 'notify_sound';
-    actions.setReminders({ method: next });
-    toast(next === 'notify_sound' ? '提醒方式已设为：通知 + 声音' : '提醒方式已设为：仅通知');
+    void updateReminder({ method: next });
   };
 
   const testNotify = async () => {
@@ -53,7 +58,7 @@ export default function RemindersScreen() {
         trigger: null,
       });
     } catch {
-      toast('提醒预览', { type: 'info', message: rem.text });
+      toast('系统未能发送提醒，请检查通知权限后重试', { type: 'error' });
     }
   };
 
@@ -61,11 +66,12 @@ export default function RemindersScreen() {
     <Screen edges={['top', 'bottom']}>
       <NavBar variant="large" title="提醒设置" />
       <ScrollView keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 36 }}>
+        {Platform.OS === 'web' && <Text style={{ fontSize: fs(13), color: c.textSub, lineHeight: fs(20), marginBottom: 16 }}>当前网页不支持后台定时通知。这里保存 App 的提醒偏好，预览仅在页面内显示。</Text>}
         <Group>
           <Row
-            title="每日提醒"
-            subtitle="培养记录习惯，别忘了写日记"
-            right={<Switch value={rem.daily} onChange={toggleDaily} />}
+            title={Platform.OS === 'web' ? 'App 每日提醒' : '每日提醒'}
+            subtitle="按所选时间和重复规则提醒"
+            right={<Switch value={rem.daily} disabled={scheduling} onChange={value => void updateReminder({ daily: value })} />}
           />
           <Row
             title="提醒时间"
@@ -79,6 +85,8 @@ export default function RemindersScreen() {
           <TextInput
             value={rem.text}
             onChangeText={text => actions.setReminders({ text })}
+            onBlur={() => void updateReminder({ text: actions.snapshot().reminders.text })}
+            accessibilityLabel="提醒文案"
             multiline
             placeholder="输入你想看到的每日提醒语…"
             placeholderTextColor={c.textMuted}
@@ -98,15 +106,16 @@ export default function RemindersScreen() {
         </Card>
 
         <Group>
-          <Row
-            title="重要事项提醒"
-            subtitle="为标记的重要事项提供提醒"
-            right={<Switch value={rem.important} onChange={v => actions.setReminders({ important: v })} />}
-          />
+          {Platform.OS === 'android' && <Row
+            title="优先提醒"
+            subtitle="提高 Android 通知优先级，实际呈现由系统设置决定"
+            right={<Switch value={rem.important} disabled={scheduling} onChange={value => void updateReminder({ important: value })} />}
+          />}
           <Row
             title="提醒方式"
             value={rem.method === 'notify_sound' ? '通知 + 声音' : '仅通知'}
             onPress={chooseMethod}
+            disabled={scheduling}
           />
         </Group>
 

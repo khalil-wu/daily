@@ -1,0 +1,8 @@
+curl: (7) Failed to connect to 127.0.0.1 port 18971 after 0 ms: Connection refused
+{"status": "ok", "service": "jide-feedback"}nginx: the configuration file /etc/nginx/nginx.conf syntax is ok
+nginx: configuration file /etc/nginx/nginx.conf test is successful
+{"status":"ok","service":"jide-diary"}{"status": "ok", "service": "jide-feedback"}Created symlink /etc/systemd/system/multi-user.target.wants/jide-feedback.service → /etc/systemd/system/jide-feedback.service.
+
+Release: /var/www/diary-releases/20261121T152011Z
+Previous: /var/www/diary
+Config backup: /var/backups/jide/20261121T152011Z/nginx.conf

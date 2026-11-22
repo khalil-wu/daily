@@ -25,7 +25,8 @@ export async function exportTextFile(filename: string, content: string, mime = '
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
-      URL.revokeObjectURL(url);
+      // Safari may start the download after the click task finishes.
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
       return { ok: true, path: filename };
     }
     const file = new File(Paths.cache, filename);
@@ -64,17 +65,25 @@ export async function exportPdf(entries: Entry[], tags: Tag[]): Promise<{ ok: bo
   }
 }
 
-export async function pickAndReadTextFile(types: string[] = ['*/*']): Promise<{ name: string; content: string } | null> {
+export async function pickAndReadTextFile(types: string[] = ['*/*'], maxBytes = Infinity): Promise<{ name: string; content: string } | null> {
   const res = await DocumentPicker.getDocumentAsync({ type: types, copyToCacheDirectory: true });
   if (res.canceled || !res.assets?.length) return null;
   const asset = res.assets[0];
+  const assertSize = (size?: number) => {
+    if (typeof size === 'number' && size > maxBytes) throw new Error(`备份文件不能超过 ${Math.floor(maxBytes / 1024 / 1024)} MB`);
+  };
+  assertSize(asset.size);
   if (Platform.OS === 'web') {
     const file = (asset as any).file as File | undefined;
-    if (file) return { name: asset.name, content: await file.text() };
+    if (file) { assertSize(file.size); return { name: asset.name, content: await file.text() }; }
     const r = await fetch(asset.uri);
-    return { name: asset.name, content: await r.text() };
+    assertSize(Number(r.headers.get('content-length')));
+    const blob = await r.blob();
+    assertSize(blob.size);
+    return { name: asset.name, content: await blob.text() };
   }
   const file = new File(asset.uri);
+  assertSize(file.size);
   const content = await file.text();
   return { name: asset.name, content };
 }

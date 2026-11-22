@@ -1,0 +1,29 @@
+[Unit]
+Description=Jide diary feedback intake
+After=network.target
+
+[Service]
+Type=simple
+DynamicUser=yes
+StateDirectory=jide-feedback
+StateDirectoryMode=0700
+UMask=0077
+ExecStart=/usr/bin/python3 /opt/jide-feedback/current/feedback.py
+Environment=JIDE_FEEDBACK_DB=/var/lib/jide-feedback/feedback.sqlite3
+Environment=JIDE_FEEDBACK_PORT=18971
+Environment=JIDE_FEEDBACK_ORIGINS=http://39.105.19.77
+Restart=on-failure
+RestartSec=3
+NoNewPrivileges=yes
+ProtectSystem=strict
+ProtectHome=yes
+PrivateTmp=yes
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectControlGroups=yes
+RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX
+MemoryMax=128M
+TasksMax=32
+
+[Install]
+WantedBy=multi-user.target

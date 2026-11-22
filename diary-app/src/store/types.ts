@@ -81,6 +81,8 @@ export interface Entry {
   hidden: boolean;
   status: EntryStatus;
   deletedAt?: number;
+  /** 云端永久删除标记；不包含正文，不进入本机日记列表。 */
+  purgedAt?: number;
   template?: string;
   /** 所属日记本；为空表示默认日记本 */
   notebookId?: string;
@@ -140,7 +142,26 @@ export interface SyncSettings {
   syncTags: boolean;
   syncSettings: boolean;
   lastSyncAt?: number;
+  /** 永久删除的 ID 与时间，避免其他设备把旧版本重新同步回来。 */
+  deletedEntries?: Record<string, number>;
+  /** 已确认上传的逐篇版本，避免其他日记的未来时间影响冲突判断。 */
+  entryRevisions?: Record<string, number>;
+  /** 完整内容指纹；仅在这一版本的全部附件也被云端确认后记录。 */
+  entryHashes?: Record<string, string>;
+  mediaCache?: Record<string, string>;
+  metadataBaseline?: SyncMetadata;
 }
+
+export interface SyncMetadata {
+  tags?: Tag[];
+  people?: Person[];
+  notebooks?: Notebook[];
+  appearance?: AppearanceSettings;
+  goals?: GoalSettings;
+  reminders?: ReminderSettings;
+}
+
+export type AccountSpace = Pick<AppState, 'entries' | 'tags' | 'people' | 'notebooks' | 'reviews' | 'profile' | 'sync' | 'conflicts' | 'recentSearches' | 'activeNotebook' | 'backup'>;
 
 export interface BackupSettings {
   auto: boolean;
@@ -199,12 +220,15 @@ export interface Account {
   identifier: string; // 手机号或邮箱
   nickname: string;
   createdAt: number;
-  /** true = 云端账号（LeanCloud）；未标记的是本机模拟账号 */
+  /** true = CloudBase 云端账号；未标记的是本机模拟账号 */
   remote?: boolean;
 }
 
 export interface StoredAccount extends Account {
-  passwordHash: string;
+  /** 本机账号的密码散列；云端账号无此字段 */
+  passwordHash?: string;
+  /** 云端账号在本机的会话快照（storage key → value），切换账号时免密恢复 */
+  remoteSession?: Record<string, string>;
 }
 
 export interface Profile {
@@ -222,6 +246,8 @@ export interface SyncConflict {
 }
 
 export interface AppState {
+  /** 非当前账号的数据空间，仅本机保存，不进入备份或云端负载。 */
+  accountSpaces?: Record<string, AccountSpace>;
   version: 1;
   onboarded: boolean;
   tutorialSeen?: boolean;

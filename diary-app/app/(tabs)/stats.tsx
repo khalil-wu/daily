@@ -1,11 +1,12 @@
 import React, { useMemo, useState } from 'react';
-import { Pressable, ScrollView, Text, useWindowDimensions, View } from 'react-native';
+import { Pressable, ScrollView, View } from 'react-native';
+import { Text } from '../../src/components/text';
 import { router } from 'expo-router';
-import { Flame, MapPin, Search, Sparkles } from 'lucide-react-native';
+import { Check, ChevronRight, Flame, MapPin, Search, Sparkles } from 'lucide-react-native';
 import { useTheme } from '../../src/theme/ThemeProvider';
 import { useStore } from '../../src/store/store';
 import { Card, IconButton, Screen, Segmented } from '../../src/components/ui';
-import { FadeIn } from '../../src/components/motion';
+import { useCountUp } from '../../src/components/motion';
 import { MoodIcon, WeatherIcon } from '../../src/components/MoodIcon';
 import {
   ActivityHeatmap,
@@ -26,8 +27,8 @@ type StatsTab = 'overview' | 'mood' | 'writing';
 
 /** 15. 统计页（概览 / 情绪 / 写作 - 对标 Daylio / Stoic / Day One 数据中台） */
 export default function StatsScreen() {
-  const { c, t, fs } = useTheme();
-  const { width } = useWindowDimensions();
+  const { c, t, fs, r } = useTheme();
+  const [chartWidth, setChartWidth] = useState(240);
   const entries = useStore(s => s.entries);
   const tags = useStore(s => s.tags);
   const [sub, setSub] = useState<StatsTab>('overview');
@@ -38,14 +39,13 @@ export default function StatsScreen() {
   const stats = useMemo(() => computeStats(visibleEntries, sub === 'mood' ? range || undefined : 30), [visibleEntries, sub, range]);
   const topKeywords = useMemo(
     () =>
-      extractKeywords(
+      sub === 'writing' ? extractKeywords(
         visibleEntries.filter(e => !e.deletedAt && e.status === 'published').map(e => `${e.title} ${e.body}`),
         20,
-      ),
-    [visibleEntries],
+      ) : [],
+    [visibleEntries, sub],
   );
   const currentYear = new Date().getFullYear();
-  const chartWidth = Math.min(width, 420) - 72;
   const weekLabels = ['一', '二', '三', '四', '五', '六', '日'];
   const domMood = moodMeta(stats.dominantMood);
   const topTagMood = stats.tagMoods[0];
@@ -71,7 +71,7 @@ export default function StatsScreen() {
       </View>
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 36 }}>
-        <FadeIn key={sub} dy={10} duration={300} style={{ gap: 14 }}>
+        <View style={{ gap: 14 }}>
         {sub === 'overview' && (
           <>
             {/* 年度回顾入口卡 */}
@@ -88,11 +88,14 @@ export default function StatsScreen() {
                     {currentYear} 年度回顾报告
                   </Text>
                   <Text style={{ fontSize: fs(11.5), color: c.textSub, marginTop: 2 }} numberOfLines={1}>
-                    365 天情绪像素、年度词云与高光时刻
+                    情绪像素、年度词云与高光时刻
                   </Text>
                 </View>
               </View>
-              <Text style={{ fontSize: fs(12.5), color: c.primaryDark, fontWeight: '600', marginLeft: 8 }}>查看 ›</Text>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 2, marginLeft: 8 }}>
+                <Text style={{ fontSize: fs(12.5), color: c.primaryDark, fontWeight: '600' }}>查看</Text>
+                <ChevronRight size={15} color={c.primaryDark} />
+              </View>
             </Card>
 
             {/* 写作坚持卡片 */}
@@ -102,7 +105,7 @@ export default function StatsScreen() {
                   <Text style={{ fontSize: fs(13), color: c.textSub }}>写作坚持</Text>
                   <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 6, marginTop: 6 }}>
                     <Text style={{ fontSize: fs(14), color: c.text }}>连续记录</Text>
-                    <Text style={{ fontSize: fs(26), color: c.text, fontWeight: '600', fontVariant: ['tabular-nums'] }}>{stats.currentStreak}</Text>
+                    <Text style={{ fontSize: fs(26), color: c.text, fontWeight: '600', fontVariant: ['tabular-nums'] }}><CountText to={stats.currentStreak} /></Text>
                     <Text style={{ fontSize: fs(14), color: c.text }}>天</Text>
                   </View>
                   <Text style={{ fontSize: fs(12), color: c.textMuted, marginTop: 4 }}>最长连续 {stats.longestStreak} 天</Text>
@@ -119,7 +122,7 @@ export default function StatsScreen() {
                     <View key={lbl} style={{ alignItems: 'center', gap: 6 }}>
                       <Text style={{ fontSize: fs(11), color: c.textMuted }}>{lbl}</Text>
                       <View style={{ width: 22, height: 22, borderRadius: 11, backgroundColor: on ? c.primary : c.bgDeep, alignItems: 'center', justifyContent: 'center' }}>
-                        {on && <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: c.textOnPrimary }} />}
+                        {on && <Check size={12} color={c.textOnPrimary} strokeWidth={2.8} />}
                       </View>
                     </View>
                   );
@@ -131,7 +134,7 @@ export default function StatsScreen() {
             <Card>
               <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
                 <Text style={[t.h3, { fontSize: fs(15) }]}>近 12 周记录像素</Text>
-                <View style={{ flexDirection: 'row', backgroundColor: c.bgDeep, borderRadius: 999, padding: 2 }}>
+                <View style={{ flexDirection: 'row', backgroundColor: c.bgDeep, borderRadius: r(999), padding: 2 }}>
                   {[
                     { k: 'heat' as const, label: '热度' },
                     { k: 'mood' as const, label: '心情' },
@@ -141,7 +144,7 @@ export default function StatsScreen() {
                       <Pressable
                         key={item.k}
                         onPress={() => setHeatMode(item.k)}
-                        style={{ paddingHorizontal: 10, paddingVertical: 4, borderRadius: 999, backgroundColor: on ? c.card : 'transparent' }}
+                        style={{ paddingHorizontal: 10, paddingVertical: 4, borderRadius: r(999), backgroundColor: on ? c.card : 'transparent' }}
                       >
                         <Text style={{ fontSize: fs(11.5), color: on ? c.primaryDark : c.textMuted, fontWeight: on ? '600' : '400' }}>{item.label}</Text>
                       </Pressable>
@@ -157,7 +160,7 @@ export default function StatsScreen() {
               <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
                 <Text style={[t.h3, { fontSize: fs(15) }]}>心情分布（近30天）</Text>
                 {stats.moodTotal > 0 && (
-                  <View style={{ paddingHorizontal: 9, paddingVertical: 3, borderRadius: 999, backgroundColor: c.primaryFaint }}>
+                  <View style={{ paddingHorizontal: 9, paddingVertical: 3, borderRadius: r(999), backgroundColor: c.primaryFaint }}>
                     <Text style={{ fontSize: fs(11.5), color: c.primaryDark }}>能量指数 {stats.moodScore}</Text>
                   </View>
                 )}
@@ -168,7 +171,9 @@ export default function StatsScreen() {
             {/* 情绪趋势 (近30天) */}
             <Card>
               <Text style={[t.h3, { fontSize: fs(15), marginBottom: 12 }]}>情绪趋势（近30天）</Text>
-              <MoodTrendChart points={stats.trend30} width={Math.max(240, chartWidth)} />
+              <View onLayout={event => setChartWidth(Math.max(1, event.nativeEvent.layout.width))}>
+                <MoodTrendChart points={stats.trend30} width={chartWidth} />
+              </View>
             </Card>
           </>
         )}
@@ -180,15 +185,15 @@ export default function StatsScreen() {
                 { key: 7 as const, label: '近7天' },
                 { key: 30 as const, label: '近30天' },
                 { key: 0 as const, label: '全部' },
-              ].map(r => {
-                const on = range === r.key;
+              ].map(opt => {
+                const on = range === opt.key;
                 return (
                   <Pressable
-                    key={r.label}
-                    onPress={() => setRange(r.key)}
-                    style={{ paddingHorizontal: 14, paddingVertical: 7, borderRadius: 999, backgroundColor: on ? c.primary : c.card, borderWidth: 0.5, borderColor: on ? c.primary : c.divider }}
+                    key={opt.label}
+                    onPress={() => setRange(opt.key)}
+                    style={{ minHeight: 44, justifyContent: 'center', paddingHorizontal: 16, borderRadius: r(999), backgroundColor: on ? c.primary : c.card, borderWidth: 0.5, borderColor: on ? c.primary : c.divider }}
                   >
-                    <Text style={{ fontSize: fs(13), color: on ? c.textOnPrimary : c.textSub }}>{r.label}</Text>
+                    <Text style={{ fontSize: fs(13), color: on ? c.textOnPrimary : c.textSub }}>{opt.label}</Text>
                   </Pressable>
                 );
               })}
@@ -239,7 +244,7 @@ export default function StatsScreen() {
                 <Text style={[t.h3, { fontSize: fs(15), marginBottom: 12 }]}>天气与心情关系</Text>
                 <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', rowGap: 10 }}>
                   {stats.weatherMoods.slice(0, 4).map(wm => (
-                    <View key={wm.weather} style={{ width: '48.2%', backgroundColor: c.bgDeep, borderRadius: 12, padding: 10, flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                    <View key={wm.weather} style={{ width: '48.2%', backgroundColor: c.bgDeep, borderRadius: r(12), padding: 10, flexDirection: 'row', alignItems: 'center', gap: 8 }}>
                       <WeatherIcon weather={wm.weather} size={20} />
                       <View style={{ flex: 1, minWidth: 0 }}>
                         <Text numberOfLines={1} style={{ fontSize: fs(12.5), color: c.text, fontWeight: '500' }}>{wm.label} · {wm.count}次</Text>
@@ -281,15 +286,17 @@ export default function StatsScreen() {
           <>
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', rowGap: 10 }}>
               {[
-                { label: '日记总篇数', val: String(stats.totalEntries), unit: '篇' },
-                { label: '累计记录字数', val: fmtNumber(stats.totalWords), unit: '字' },
-                { label: '平均每篇字数', val: String(stats.avgWords), unit: '字' },
+                { label: '日记总篇数', num: stats.totalEntries, unit: '篇' },
+                { label: '累计记录字数', num: stats.totalWords, unit: '字' },
+                { label: '平均每篇字数', num: stats.avgWords, unit: '字' },
                 { label: '照片与语音', val: `${stats.totalPhotos} / ${stats.totalAudios}`, unit: '条' },
               ].map(box => (
                 <Card key={box.label} style={{ width: '48.2%' }}>
                   <Text numberOfLines={1} style={{ fontSize: fs(12), color: c.textSub }}>{box.label}</Text>
                   <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 4, marginTop: 8 }}>
-                    <Text numberOfLines={1} style={{ fontSize: fs(21), color: c.text, fontWeight: '600', fontVariant: ['tabular-nums'] }}>{box.val}</Text>
+                    <Text numberOfLines={1} style={{ fontSize: fs(21), color: c.text, fontWeight: '600', fontVariant: ['tabular-nums'] }}>
+                      {box.num !== undefined ? <CountText to={box.num} /> : box.val}
+                    </Text>
                     <Text style={{ fontSize: fs(12), color: c.textMuted }}>{box.unit}</Text>
                   </View>
                 </Card>
@@ -300,7 +307,7 @@ export default function StatsScreen() {
             <Card>
               <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
                 <Text style={[t.h3, { fontSize: fs(15) }]}>写作时段偏好</Text>
-                <View style={{ paddingHorizontal: 9, paddingVertical: 3, borderRadius: 999, backgroundColor: c.primaryFaint }}>
+                <View style={{ paddingHorizontal: 9, paddingVertical: 3, borderRadius: r(999), backgroundColor: c.primaryFaint }}>
                   <Text style={{ fontSize: fs(11.5), color: c.primaryDark }}>{stats.writerPersona.title}</Text>
                 </View>
               </View>
@@ -343,7 +350,7 @@ export default function StatsScreen() {
                     <Pressable
                       key={pl.name}
                       onPress={() => router.push({ pathname: '/search', params: { q: pl.name.split('·')[0].trim() } })}
-                      style={{ flexDirection: 'row', alignItems: 'center', gap: 5, paddingHorizontal: 11, paddingVertical: 7, borderRadius: 999, backgroundColor: c.bgDeep }}
+                      style={{ flexDirection: 'row', alignItems: 'center', gap: 5, paddingHorizontal: 11, paddingVertical: 7, borderRadius: r(999), backgroundColor: c.bgDeep }}
                     >
                       <MapPin size={12} color={c.primaryDark} />
                       <Text style={{ fontSize: fs(12.5), color: c.text }}>{pl.name}</Text>
@@ -380,8 +387,14 @@ export default function StatsScreen() {
             </Card>
           </>
         )}
-        </FadeIn>
+        </View>
       </ScrollView>
     </Screen>
   );
+}
+
+/** 统计大数字：挂载/数值变化时滚动到位（减弱动态时直接显示） */
+function CountText({ to }: { to: number }) {
+  const v = useCountUp(to);
+  return <>{fmtNumber(v)}</>;
 }

@@ -1,0 +1,1122 @@
+[
+  {
+    "source": "app/(tabs)/calendar.tsx",
+    "route": "/calendar",
+    "slug": "tabs-calendar",
+    "actualURL": "http://127.0.0.1:8765/calendar",
+    "screenshot": "screenshots/tabs-calendar.png",
+    "errors": [],
+    "text": "日历\n‹\n2026年11月\n›\n一\n二\n三\n四\n五\n六\n日\n1\n2\n3\n4\n5\n6\n7\n8\n9\n10\n11\n12\n13\n14\n15\n16\n17\n18\n19\n20\n21\n22\n23\n24\n25\n26\n27\n28\n29\n30\n11月小结\n主导 · 平静\n15 篇\n记录篇数\n15 天\n记录天数\n791 字\n本月字数\n11月21日 · 周六\n写这一天\n在山间的一个下午\n今天去了城郊的山林，空气非常清新。沿着小路慢慢走，太阳透过树叶洒下斑驳的光影，整个人都放松了很多。 原来，生活的…\n11月21日\n开心\n#旅行\n2\n日记\n日历\n回顾\n统计\n我的",
+    "fontSizes": [
+      "22px",
+      "18px",
+      "17px",
+      "12px",
+      "13.5px",
+      "12.5px",
+      "11px",
+      "14px",
+      "15px",
+      "13px",
+      "14.5px",
+      "10.5px",
+      "10px"
+    ],
+    "families": [
+      "-apple-system, \"system-ui\", \"PingFang SC\", \"Microsoft YaHei\", \"Segoe UI\", sans-serif",
+      "NotoSerifSC-SemiBold, NotoSerifSC, \"Songti SC\", \"Noto Serif CJK SC\", STSong, Georgia, serif",
+      "NotoSerifSC, \"Songti SC\", \"Noto Serif CJK SC\", STSong, Georgia, serif"
+    ],
+    "overflows": [],
+    "bodyWidth": 390
+  },
+  {
+    "source": "app/(tabs)/index.tsx",
+    "route": "/",
+    "slug": "tabs-index",
+    "actualURL": "http://127.0.0.1:8765/",
+    "screenshot": "screenshots/tabs-index.png",
+    "errors": [],
+    "text": "记得日记\n全部\n草稿 2\n收藏\n置顶\n夜深了，记得自己\n11月21日 周六 · 已记录 1 篇\n连续 13 天\n131 / 200 字\n置顶\n1 篇\n取消置顶\n收藏\n删除\n11月\n15\n周日\n关于成长的一点思考\n好像越长大越明白，很多事情急不来。慢慢来，比较快。 接受自己的不完美，也是成长的一部分。允许自己有低落的时候，也…\n感恩\n#成长\n今天\n1 篇\n置顶\n取消收藏\n删除\n11月\n21\n周六\n在山间的一个下午\n今天去了城郊的山林，空气非常清新。沿着小路慢慢走，太阳透过树叶洒下斑驳的光影，整个人都放松了很多。 原来，生活的…\n开心\n#旅行\n2\n昨天\n1 篇\n置顶\n取消收藏\n删除\n11月\n20\n周五\n阅读笔记：《被讨厌的勇气》\n“所谓的自由，就是被别人讨厌。” 读到这里停了很久。很多时候我们太在意别人的评价，反而忘了自己真正想要什么。 今…\n平静\n#阅读\n本周\n4 篇\n置顶\n收藏\n删除\n11月\n19\n周四\n一个安静的周末\n今天在家读了很久的书，窗外阳光正好，泡了一壶茶，听着喜欢的音乐。心情也跟着平静下来。 有时候什么都不做，也是一种…\n平静\n#生活\n置顶\n收藏\n删除\n11月\n18\n周三\n微雨的傍晚\n晚饭后下了一点小雨，站在阳台听雨滴打在树叶上的声音。写了几行随想，内心慢慢安稳下来。\n平静\n#生活\n置顶\n收藏\n删除\n11月\n17\n周二\n工作之外的松弛\n下班路过公园，看到夕阳把整片天空染成橘色。停下来拍了几张照片，感觉一天的疲惫都被抚平了。 要记得在忙碌里给自己留…\n疲惫\n#工作\n置顶\n收藏\n删除\n11月\n16\n周一\n读完一章好书\n晚上泡了一杯热牛奶，把书桌收拾干净，专心读完了两章。生活还是需要一点仪式感。\n开心\n#阅读\n本月\n8 篇\n置顶\n收藏\n删除\n11月\n14\n周六\n街角的梧桐树\n路过老街，午后的阳光斜斜洒下来，地面都是斑驳的树影。随手拍了一张。\n平静\n#生活\n置顶\n收藏\n删除\n11月\n13\n周五\n整理桌面与心境\n把书桌上的杂物归类放好，突然觉得思路也跟着清晰了很多。\n开心\n#成长\n置顶\n收藏\n删除\n11月\n12\n周四\n和朋友的见面\n很久没见的朋友，聊了很多过去的事。时间过得真快，但有些感情一直都在。 约好了春天一起去看海。\n开心\n#生活\n置顶\n收藏\n删除\n11月\n11\n周三\n夜跑之后的清爽\n沿着河边跑了四公里，微风吹过特别舒服。出完汗感觉一整天的压力都散去了。\n平静\n#运动\n置顶\n收藏\n删除\n11月\n10\n周二\n给自己的小礼物\n买了一束白色小雏菊插在窗台花瓶里，心情瞬间亮起来。\n感恩\n#生活\n置顶\n取消收藏\n删除\n11月\n9\n周一\n旅行记录 · 云南\n清晨的洱海边，雾气还没散去。远处的苍山若隐若现，像一幅水墨画。 印象最深的瞬间 骑车沿着环海路，风吹过耳边，觉得…\n开心\n#旅行\n3\n置顶\n收藏\n删除\n11月\n6\n周五\n有点焦虑的夜晚\n项目临近交付，脑子里一直在转。写下来之后好了一些。 先把最重要的一件事做完 剩下的明天再说 早点睡觉\n焦虑\n#工作\n置顶\n收藏\n删除\n11月\n1\n周日\n晨跑五公里\n坚持晨跑的第十二天。今天跑得很轻松，河边的风有点冷，但很清醒。\n平静\n#运动\n2026年10月\n2 篇\n置顶\n收藏\n删除\n10月\n25\n周日\n新年的小目标\n新的一年 每周至少写三篇日记 读完 24 本书 学会做饭 去一次没去过的城市 慢慢来，一件一件完成。\n感恩\n#成长\n置顶\n收藏\n删除\n10月\n7\n周三\n生活要有节奏\n开始尝试规律的作息，工作也变得更高效了。晚上留一小时给自己，读书或者写字。\n平静\n#生活\n2026年9月\n1 篇\n置顶\n取消收藏\n删除\n9月\n2\n周三\n海边的日落\n第一次一个人去看海。日落的时候，天空从橙色变成粉色，再慢慢变成深蓝。那一刻觉得一切都很好。\n开心\n#旅行\n日记\n日历\n回顾\n统计\n我的",
+    "fontSizes": [
+      "22px",
+      "14px",
+      "16px",
+      "12px",
+      "11px",
+      "15.5px",
+      "11.5px",
+      "10.5px",
+      "20px",
+      "10px",
+      "14.5px",
+      "13px"
+    ],
+    "families": [
+      "-apple-system, \"system-ui\", \"PingFang SC\", \"Microsoft YaHei\", \"Segoe UI\", sans-serif",
+      "NotoSerifSC-SemiBold, NotoSerifSC, \"Songti SC\", \"Noto Serif CJK SC\", STSong, Georgia, serif",
+      "NotoSerifSC, \"Songti SC\", \"Noto Serif CJK SC\", STSong, Georgia, serif"
+    ],
+    "overflows": [],
+    "bodyWidth": 390
+  },
+  {
+    "source": "app/(tabs)/me.tsx",
+    "route": "/me",
+    "slug": "tabs-me",
+    "actualURL": "http://127.0.0.1:8765/me",
+    "screenshot": "screenshots/tabs-me.png",
+    "errors": [],
+    "text": "记得自己\n记下生活，记得自己 · 第 401 天\n共 20 篇日记 · 1,002 字\n20\n记录天数\n20\n日记篇数\n13\n连续记录\n我的空间\n日记本\n1\n身边人\n1\n年度回顾\n草稿箱\n2\n收藏置顶\n4\n影像记忆\n21\n足迹地图\n7\n写作目标\n200字\n最近删除\n1\n账号与同步\n本地使用\n备份与恢复\n导入与导出\n外观与写作排版\n提醒与通知\n隐私与安全\n新手导览\n跟着光圈重新认识首页的每个入口\n帮助与教程\n技巧 · 常见问题\n关于记得日记\nv1.0.0\n日记\n日历\n回顾\n统计\n我的",
+    "fontSizes": [
+      "20px",
+      "12.5px",
+      "11.5px",
+      "21px",
+      "12px",
+      "13px",
+      "10.5px",
+      "15px",
+      "11px"
+    ],
+    "families": [
+      "-apple-system, \"system-ui\", \"PingFang SC\", \"Microsoft YaHei\", \"Segoe UI\", sans-serif"
+    ],
+    "overflows": [],
+    "bodyWidth": 390
+  },
+  {
+    "source": "app/(tabs)/review.tsx",
+    "route": "/review",
+    "slug": "tabs-review",
+    "actualURL": "http://127.0.0.1:8765/review",
+    "screenshot": "screenshots/tabs-review.png",
+    "errors": [],
+    "text": "回顾\n周记\n时间线\n年度\n里程碑\n本周\n上周\n本月\n上月\n本周\n11月16日 – 11月22日\n6\n篇日记\n6\n记录天数\n401\n写下字数\n心情\n×3\n×2\n×1\n写到\n小林 ×1\n记得的回看\n本周写了 6 篇日记。开启「记得」后，它会读完这段时间的日记，写一份回看——这段时间在经历什么、反复出现的主题、一句摘录，和一个留给下一段的问题。 去开启 ›\n日记\n日历\n回顾\n统计\n我的",
+    "fontSizes": [
+      "22px",
+      "13px",
+      "15px",
+      "11.5px",
+      "20px",
+      "12px",
+      "12.5px",
+      "11px"
+    ],
+    "families": [
+      "-apple-system, \"system-ui\", \"PingFang SC\", \"Microsoft YaHei\", \"Segoe UI\", sans-serif"
+    ],
+    "overflows": [],
+    "bodyWidth": 390
+  },
+  {
+    "source": "app/(tabs)/stats.tsx",
+    "route": "/stats",
+    "slug": "tabs-stats",
+    "actualURL": "http://127.0.0.1:8765/stats",
+    "screenshot": "screenshots/tabs-stats.png",
+    "errors": [],
+    "text": "统计\n概览\n情绪\n写作\n2026 年度回顾报告\n365 天情绪像素、年度词云与高光时刻\n查看 ›\n写作坚持\n连续记录\n13\n天\n最长连续 13 天\n一\n二\n三\n四\n五\n六\n日\n近 12 周记录像素\n热度\n心情\n一\n二\n三\n四\n五\n六\n日\n点击方块查看当日字数\n少\n多\n心情分布（近30天）\n能量指数 85\n16\n条情绪\n开心\n31%\n平静\n38%\n疲惫\n6%\n焦虑\n6%\n感恩\n19%\n情绪趋势（近30天）\n5\n4\n3\n2\n1\n10/23\n10/30\n11/6\n11/13\n11/20\n日记\n日历\n回顾\n统计\n我的",
+    "fontSizes": [
+      "22px",
+      "13px",
+      "14.5px",
+      "11.5px",
+      "12.5px",
+      "14px",
+      "26px",
+      "12px",
+      "11px",
+      "15px",
+      "9.5px",
+      "10px",
+      "17px",
+      "10.5px"
+    ],
+    "families": [
+      "-apple-system, \"system-ui\", \"PingFang SC\", \"Microsoft YaHei\", \"Segoe UI\", sans-serif"
+    ],
+    "overflows": [],
+    "bodyWidth": 390
+  },
+  {
+    "source": "app/annual-report.tsx",
+    "route": "/annual-report",
+    "slug": "annual-report",
+    "actualURL": "http://127.0.0.1:8765/annual-report",
+    "screenshot": "screenshots/annual-report.png",
+    "errors": [],
+    "text": "年度回顾\n‹\n2026 年\n›\n2026 时光年鉴\n夜晚沉淀者\n习惯在忙碌结束后安顿思绪，把一天的故事好好收拢\n写下日记\n18\n篇\n累计文字\n921\n字\n记录天数\n18\n天\n最长连续\n13\n天\n情绪年历 · Year in Pixels\n点选日期查看原文；日期列表提供更大的操作区域。\n像素图\n日期列表\n1\n2\n3\n4\n5\n6\n7\n8\n9\n10\n11\n12\n1\n10\n20\n30\n开心\n平静\n感恩\n疲惫\n低落\n焦虑\n月度写作分布\n11月最勤快 (15篇)\n0\n1\n0\n2\n0\n3\n0\n4\n0\n5\n0\n6\n0\n7\n0\n8\n1\n9\n2\n10\n15\n11\n0\n12\n年度情绪光谱\n最常记录 · 平静\n18\n条情绪\n开心\n33%\n平静\n39%\n疲惫\n6%\n焦虑\n6%\n感恩\n17%\n年度高频词云\n点击词语搜索\n很久\n生活\n下来\n沿着\n安静\n斑驳\n变成\n成长\n跟着\n工作\n公里\n海边\n好了\n很好\n看海\n课题\n路过\n朋友\n散去\n树叶\n瞬间\n讨厌\n天空\n小时\n心情\n阳光\n也是\n一件\n自由\n安稳\n年度关心话题\n#生活 · 6\n#成长 · 5\n#情绪 · 4\n#旅行 · 3\n#阅读 · 2\n#工作 · 2\n#运动 · 2\n#健康 · 2\n常去记录地点\n杭州市 · 西湖区\n4\n杭州市 · 上城区\n2\n杭州市 · 运河边\n2\n杭州市 · 拱墅区\n1\n杭州市 · 滨江区\n1\n大理市 · 洱海\n1\n年度之最\n年度第一篇\n2026年9月2日\n海边的日落\n写得最认真\n107 字\n在山间的一个下午\n最晚的陪伴\n2026年11月6日 23:40\n有点焦虑的夜晚\n感谢每一个真诚记录的瞬间\n2026 年，你共定格了 20 张影像，在 18 个日子里与真实的自己相遇。",
+    "fontSizes": [
+      "17px",
+      "20px",
+      "18px",
+      "15px",
+      "11px",
+      "12px",
+      "11.5px",
+      "13px",
+      "9.5px",
+      "10px",
+      "15.5px",
+      "14.5px",
+      "12.5px",
+      "14px"
+    ],
+    "families": [
+      "-apple-system, \"system-ui\", \"PingFang SC\", \"Microsoft YaHei\", \"Segoe UI\", sans-serif"
+    ],
+    "overflows": [],
+    "bodyWidth": 390
+  },
+  {
+    "source": "app/auth/choose.tsx",
+    "route": "/auth/choose",
+    "slug": "auth-choose",
+    "actualURL": "http://127.0.0.1:8765/auth/choose",
+    "screenshot": "screenshots/auth-choose.png",
+    "errors": [],
+    "text": "选择使用方式\n两种方式，随心开始。\n先本地使用\n不登录也能直接用，数据仅存当前设备中。\n登录账号\n登录云端账号，多设备同步日记。",
+    "fontSizes": [
+      "26px",
+      "14px",
+      "17px",
+      "13px"
+    ],
+    "families": [
+      "-apple-system, \"system-ui\", \"PingFang SC\", \"Microsoft YaHei\", \"Segoe UI\", sans-serif"
+    ],
+    "overflows": [],
+    "bodyWidth": 390
+  },
+  {
+    "source": "app/auth/forgot.tsx",
+    "route": "/auth/forgot",
+    "slug": "auth-forgot",
+    "actualURL": "http://127.0.0.1:8765/auth/forgot",
+    "screenshot": "screenshots/auth-forgot.png",
+    "errors": [],
+    "text": "找回密码\n通过手机号或邮箱验证，重置你的密码。\n获取验证码\n重置密码\n返回登录",
+    "fontSizes": [
+      "26px",
+      "13.5px",
+      "13px",
+      "15px"
+    ],
+    "families": [
+      "-apple-system, \"system-ui\", \"PingFang SC\", \"Microsoft YaHei\", \"Segoe UI\", sans-serif"
+    ],
+    "overflows": [],
+    "bodyWidth": 390
+  },
+  {
+    "source": "app/auth/login.tsx",
+    "route": "/auth/login",
+    "slug": "auth-login",
+    "actualURL": "http://127.0.0.1:8765/auth/login",
+    "screenshot": "screenshots/auth-login.png",
+    "errors": [],
+    "text": "登录记得日记\n登录后，日记可在多台设备间安全同步。\n验证码登录\n忘记密码?\n登录\n还没有账号? 立即注册",
+    "fontSizes": [
+      "26px",
+      "13.5px",
+      "13px",
+      "15px"
+    ],
+    "families": [
+      "-apple-system, \"system-ui\", \"PingFang SC\", \"Microsoft YaHei\", \"Segoe UI\", sans-serif"
+    ],
+    "overflows": [],
+    "bodyWidth": 390
+  },
+  {
+    "source": "app/auth/register.tsx",
+    "route": "/auth/register",
+    "slug": "auth-register",
+    "actualURL": "http://127.0.0.1:8765/auth/register",
+    "screenshot": "screenshots/auth-register.png",
+    "errors": [],
+    "text": "注册记得日记\n创建账号，开启你的日记之旅。\n获取验证码\n我已阅读并同意 《用户协议》 和 《隐私政策》\n注册\n已有账号? 去登录",
+    "fontSizes": [
+      "26px",
+      "13.5px",
+      "13px",
+      "12px",
+      "15px"
+    ],
+    "families": [
+      "-apple-system, \"system-ui\", \"PingFang SC\", \"Microsoft YaHei\", \"Segoe UI\", sans-serif"
+    ],
+    "overflows": [],
+    "bodyWidth": 390
+  },
+  {
+    "source": "app/drafts.tsx",
+    "route": "/drafts",
+    "slug": "drafts",
+    "actualURL": "http://127.0.0.1:8765/drafts",
+    "screenshot": "screenshots/drafts.png",
+    "errors": [],
+    "text": "草稿箱\n管理\n未完成的日记（2）\n一次临时起意的旅行\n继续写：想要记录那条路上遇到的人…\n11月21日 16:30\n新年的小目标\n继续写：具体的行动计划还没想好…\n11月20日 16:00",
+    "fontSizes": [
+      "17px",
+      "15px",
+      "13px",
+      "15.5px",
+      "11.5px"
+    ],
+    "families": [
+      "-apple-system, \"system-ui\", \"PingFang SC\", \"Microsoft YaHei\", \"Segoe UI\", sans-serif"
+    ],
+    "overflows": [],
+    "bodyWidth": 390
+  },
+  {
+    "source": "app/favorites.tsx",
+    "route": "/favorites",
+    "slug": "favorites",
+    "actualURL": "http://127.0.0.1:8765/favorites",
+    "screenshot": "screenshots/favorites.png",
+    "errors": [],
+    "text": "我的收藏\n管理\n收藏日记\n置顶日记\n在山间的一个下午\n11月21日 15:24\n阅读笔记：《被讨厌的勇气》\n11月20日 21:10\n旅行记录 · 云南\n11月9日 09:30\n海边的日落\n9月2日 17:30",
+    "fontSizes": [
+      "17px",
+      "15px",
+      "13px",
+      "15.5px",
+      "12px"
+    ],
+    "families": [
+      "-apple-system, \"system-ui\", \"PingFang SC\", \"Microsoft YaHei\", \"Segoe UI\", sans-serif"
+    ],
+    "overflows": [],
+    "bodyWidth": 390
+  },
+  {
+    "source": "app/hidden.tsx",
+    "route": "/hidden",
+    "slug": "hidden",
+    "actualURL": "http://127.0.0.1:8765/hidden",
+    "screenshot": "screenshots/hidden.png",
+    "errors": [],
+    "text": "隐藏日记\n11月\n21\n周六\n隐藏日记示例\n今天去了城郊的山林，空气非常清新。沿着小路慢慢走，太阳透过树叶洒下斑驳的光影，整个人都放松了很多。 原来，生活的…\n开心\n#旅行\n2",
+    "fontSizes": [
+      "17px",
+      "10.5px",
+      "20px",
+      "10px",
+      "14.5px",
+      "13px",
+      "11px"
+    ],
+    "families": [
+      "-apple-system, \"system-ui\", \"PingFang SC\", \"Microsoft YaHei\", \"Segoe UI\", sans-serif",
+      "NotoSerifSC-SemiBold, NotoSerifSC, \"Songti SC\", \"Noto Serif CJK SC\", STSong, Georgia, serif",
+      "NotoSerifSC, \"Songti SC\", \"Noto Serif CJK SC\", STSong, Georgia, serif"
+    ],
+    "overflows": [],
+    "bodyWidth": 390
+  },
+  {
+    "source": "app/index.tsx",
+    "route": "/",
+    "slug": "index",
+    "actualURL": "http://127.0.0.1:8765/",
+    "screenshot": "screenshots/index.png",
+    "errors": [],
+    "text": "记得日记\n全部\n草稿 2\n收藏\n置顶\n夜深了，记得自己\n11月21日 周六 · 已记录 1 篇\n连续 13 天\n131 / 200 字\n置顶\n1 篇\n取消置顶\n收藏\n删除\n11月\n15\n周日\n关于成长的一点思考\n好像越长大越明白，很多事情急不来。慢慢来，比较快。 接受自己的不完美，也是成长的一部分。允许自己有低落的时候，也…\n感恩\n#成长\n今天\n1 篇\n置顶\n取消收藏\n删除\n11月\n21\n周六\n在山间的一个下午\n今天去了城郊的山林，空气非常清新。沿着小路慢慢走，太阳透过树叶洒下斑驳的光影，整个人都放松了很多。 原来，生活的…\n开心\n#旅行\n2\n昨天\n1 篇\n置顶\n取消收藏\n删除\n11月\n20\n周五\n阅读笔记：《被讨厌的勇气》\n“所谓的自由，就是被别人讨厌。” 读到这里停了很久。很多时候我们太在意别人的评价，反而忘了自己真正想要什么。 今…\n平静\n#阅读\n本周\n4 篇\n置顶\n收藏\n删除\n11月\n19\n周四\n一个安静的周末\n今天在家读了很久的书，窗外阳光正好，泡了一壶茶，听着喜欢的音乐。心情也跟着平静下来。 有时候什么都不做，也是一种…\n平静\n#生活\n置顶\n收藏\n删除\n11月\n18\n周三\n微雨的傍晚\n晚饭后下了一点小雨，站在阳台听雨滴打在树叶上的声音。写了几行随想，内心慢慢安稳下来。\n平静\n#生活\n置顶\n收藏\n删除\n11月\n17\n周二\n工作之外的松弛\n下班路过公园，看到夕阳把整片天空染成橘色。停下来拍了几张照片，感觉一天的疲惫都被抚平了。 要记得在忙碌里给自己留…\n疲惫\n#工作\n置顶\n收藏\n删除\n11月\n16\n周一\n读完一章好书\n晚上泡了一杯热牛奶，把书桌收拾干净，专心读完了两章。生活还是需要一点仪式感。\n开心\n#阅读\n本月\n8 篇\n置顶\n收藏\n删除\n11月\n14\n周六\n街角的梧桐树\n路过老街，午后的阳光斜斜洒下来，地面都是斑驳的树影。随手拍了一张。\n平静\n#生活\n置顶\n收藏\n删除\n11月\n13\n周五\n整理桌面与心境\n把书桌上的杂物归类放好，突然觉得思路也跟着清晰了很多。\n开心\n#成长\n置顶\n收藏\n删除\n11月\n12\n周四\n和朋友的见面\n很久没见的朋友，聊了很多过去的事。时间过得真快，但有些感情一直都在。 约好了春天一起去看海。\n开心\n#生活\n置顶\n收藏\n删除\n11月\n11\n周三\n夜跑之后的清爽\n沿着河边跑了四公里，微风吹过特别舒服。出完汗感觉一整天的压力都散去了。\n平静\n#运动\n置顶\n收藏\n删除\n11月\n10\n周二\n给自己的小礼物\n买了一束白色小雏菊插在窗台花瓶里，心情瞬间亮起来。\n感恩\n#生活\n置顶\n取消收藏\n删除\n11月\n9\n周一\n旅行记录 · 云南\n清晨的洱海边，雾气还没散去。远处的苍山若隐若现，像一幅水墨画。 印象最深的瞬间 骑车沿着环海路，风吹过耳边，觉得…\n开心\n#旅行\n3\n置顶\n收藏\n删除\n11月\n6\n周五\n有点焦虑的夜晚\n项目临近交付，脑子里一直在转。写下来之后好了一些。 先把最重要的一件事做完 剩下的明天再说 早点睡觉\n焦虑\n#工作\n置顶\n收藏\n删除\n11月\n1\n周日\n晨跑五公里\n坚持晨跑的第十二天。今天跑得很轻松，河边的风有点冷，但很清醒。\n平静\n#运动\n2026年10月\n2 篇\n置顶\n收藏\n删除\n10月\n25\n周日\n新年的小目标\n新的一年 每周至少写三篇日记 读完 24 本书 学会做饭 去一次没去过的城市 慢慢来，一件一件完成。\n感恩\n#成长\n置顶\n收藏\n删除\n10月\n7\n周三\n生活要有节奏\n开始尝试规律的作息，工作也变得更高效了。晚上留一小时给自己，读书或者写字。\n平静\n#生活\n2026年9月\n1 篇\n置顶\n取消收藏\n删除\n9月\n2\n周三\n海边的日落\n第一次一个人去看海。日落的时候，天空从橙色变成粉色，再慢慢变成深蓝。那一刻觉得一切都很好。\n开心\n#旅行\n日记\n日历\n回顾\n统计\n我的",
+    "fontSizes": [
+      "22px",
+      "14px",
+      "16px",
+      "12px",
+      "11px",
+      "15.5px",
+      "11.5px",
+      "10.5px",
+      "20px",
+      "10px",
+      "14.5px",
+      "13px"
+    ],
+    "families": [
+      "-apple-system, \"system-ui\", \"PingFang SC\", \"Microsoft YaHei\", \"Segoe UI\", sans-serif",
+      "NotoSerifSC-SemiBold, NotoSerifSC, \"Songti SC\", \"Noto Serif CJK SC\", STSong, Georgia, serif",
+      "NotoSerifSC, \"Songti SC\", \"Noto Serif CJK SC\", STSong, Georgia, serif"
+    ],
+    "overflows": [],
+    "bodyWidth": 390
+  },
+  {
+    "source": "app/memory/[id].tsx",
+    "route": "/memory/audit-entry",
+    "slug": "memory-id",
+    "actualURL": "http://127.0.0.1:8765/memory/audit-entry",
+    "screenshot": "screenshots/memory-id.png",
+    "errors": [],
+    "text": "在山间的一个下午\n11月21日 15:24 周六\n我的日记\n杭州市 · 西湖区\n·\n晴 12°C\n小林\n旅行\n成长\n开心\n今天去了城郊的山林，空气非常清新。沿着小路慢慢走，太阳透过树叶洒下斑驳的光影，整个人都放松了很多。\n原来，生活的美好常常藏在这样安静的时刻里。\n•\n带了一本没读完的书\n•\n在半山腰的亭子里坐了一个小时\n•\n回来的路上看到了很美的晚霞\n共 107 字 · 预计阅读 1 分钟\n下一篇\n阅读笔记：《被讨厌的勇气》\n分享\n已收藏\n编辑",
+    "fontSizes": [
+      "23px",
+      "12.5px",
+      "11px",
+      "12px",
+      "16px",
+      "11.5px",
+      "13px"
+    ],
+    "families": [
+      "NotoSerifSC-SemiBold, NotoSerifSC, \"Songti SC\", \"Noto Serif CJK SC\", STSong, Georgia, serif",
+      "-apple-system, \"system-ui\", \"PingFang SC\", \"Microsoft YaHei\", \"Segoe UI\", sans-serif",
+      "NotoSerifSC, \"Songti SC\", \"Noto Serif CJK SC\", STSong, Georgia, serif"
+    ],
+    "overflows": [],
+    "bodyWidth": 390
+  },
+  {
+    "source": "app/memory-map.tsx",
+    "route": "/memory-map",
+    "slug": "memory-map",
+    "actualURL": "http://127.0.0.1:8765/memory-map",
+    "screenshot": "screenshots/memory-map.png",
+    "errors": [],
+    "text": "足迹地图\n7 处地点 · 7 处有坐标\n地点分布示意\n5 处地点 ×10\n根据已保存的坐标显示相对分布，不是街道地图。相邻地点会合并成圆点，点开可选择每一处地点。\n有坐标的地点\n杭州市 · 西湖区\n4 篇含坐标\n4 篇 · 11月21日\n杭州市 · 上城区\n2 篇含坐标\n2 篇 · 11月14日\n杭州市 · 运河边\n2 篇含坐标\n2 篇 · 11月11日\n杭州市 · 拱墅区\n1 篇含坐标\n1 篇 · 11月20日\n杭州市 · 滨江区\n1 篇含坐标\n1 篇 · 11月17日\n大理市 · 洱海\n1 篇含坐标\n1 篇 · 11月9日\n舟山市 · 朱家尖\n1 篇含坐标\n1 篇 · 9月2日",
+    "fontSizes": [
+      "17px",
+      "12px",
+      "15px",
+      "13px"
+    ],
+    "families": [
+      "-apple-system, \"system-ui\", \"PingFang SC\", \"Microsoft YaHei\", \"Segoe UI\", sans-serif"
+    ],
+    "overflows": [],
+    "bodyWidth": 390
+  },
+  {
+    "source": "app/notebooks.tsx",
+    "route": "/notebooks",
+    "slug": "notebooks",
+    "actualURL": "http://127.0.0.1:8765/notebooks",
+    "screenshot": "screenshots/notebooks.png",
+    "errors": [],
+    "text": "我的日记本\n新建\n全部日记\n聚合显示所有日记本的内容\n分类日记本（1）\n我的日记\n默认\n共 22 篇日记\n新建日记本",
+    "fontSizes": [
+      "17px",
+      "15px",
+      "12px",
+      "12.5px",
+      "15.5px",
+      "10px"
+    ],
+    "families": [
+      "-apple-system, \"system-ui\", \"PingFang SC\", \"Microsoft YaHei\", \"Segoe UI\", sans-serif"
+    ],
+    "overflows": [],
+    "bodyWidth": 390
+  },
+  {
+    "source": "app/offline.tsx",
+    "route": "/offline",
+    "slug": "offline",
+    "actualURL": "http://127.0.0.1:8765/offline",
+    "screenshot": "screenshots/offline.png",
+    "errors": [],
+    "text": "离线也可以继续记录\n无需网络也能写日记。请留意编辑页的保存状态，确认内容已写入设备。\n云端同步和 AI 回信需要网络，联网后可重新尝试。清理浏览器数据前，请先导出备份。\n知道了",
+    "fontSizes": [
+      "22px",
+      "13px",
+      "15px"
+    ],
+    "families": [
+      "-apple-system, \"system-ui\", \"PingFang SC\", \"Microsoft YaHei\", \"Segoe UI\", sans-serif"
+    ],
+    "overflows": [],
+    "bodyWidth": 390
+  },
+  {
+    "source": "app/onboarding.tsx",
+    "route": "/onboarding",
+    "slug": "onboarding",
+    "actualURL": "http://127.0.0.1:8765/onboarding",
+    "screenshot": "screenshots/onboarding.png",
+    "errors": [],
+    "text": "跳过\n记录日常生活\n把生活里的小事、想法和感受\n都写下来，留住真实的日常。\n记录心情与思考\n不仅记录发生了什么，\n也记得当下的情绪、感受与思考，\n更好地理解自己。\n回看记忆与成长\n随时回翻过去的日记，\n看见情绪的变化、生活的轨迹，\n和一点点成长。\n下一步",
+    "fontSizes": [
+      "14px",
+      "26px",
+      "14.5px",
+      "15px"
+    ],
+    "families": [
+      "-apple-system, \"system-ui\", \"PingFang SC\", \"Microsoft YaHei\", \"Segoe UI\", sans-serif"
+    ],
+    "overflows": [
+      "记录日常生活把生活里的小事、想法和感受\n都写下来，留住真实的日常。记录心情与思考不仅记录发生了什么，\n也记得当下的情绪、感受与思考，\n更好地理解自己。回看记忆与",
+      "记录心情与思考不仅记录发生了什么，\n也记得当下的情绪、感受与思考，\n更好地理解自己。",
+      "记录心情与思考不仅记录发生了什么，\n也记得当下的情绪、感受与思考，\n更好地理解自己。",
+      "记录心情与思考不仅记录发生了什么，\n也记得当下的情绪、感受与思考，\n更好地理解自己。",
+      "记录心情与思考",
+      "不仅记录发生了什么，\n也记得当下的情绪、感受与思考，\n更好地理解自己。"
+    ],
+    "bodyWidth": 390
+  },
+  {
+    "source": "app/people/[id].tsx",
+    "route": "/people/audit-person",
+    "slug": "people-id",
+    "actualURL": "http://127.0.0.1:8765/people/audit-person",
+    "screenshot": "screenshots/people-id.png",
+    "errors": [],
+    "text": "小林\n小\n小林\n朋友\n也叫：林同学\n生日还有 24 天（12-15）\n一起旅行的朋友\n1 篇\n写到 TA\n今天\n最近一次\n开心\n常见心情\n和 小林 有关的日记\n11月\n21\n周六\n在山间的一个下午\n今天去了城郊的山林，空气非常清新。沿着小路慢慢走，太阳透过树叶洒下斑驳的光影，整个人都放松了很多。 原来，生活的…\n开心\n#旅行\n2\n移除这个人（日记保留）",
+    "fontSizes": [
+      "17px",
+      "31.9px",
+      "21px",
+      "12px",
+      "13px",
+      "15px",
+      "11px",
+      "10.5px",
+      "20px",
+      "10px",
+      "14.5px"
+    ],
+    "families": [
+      "-apple-system, \"system-ui\", \"PingFang SC\", \"Microsoft YaHei\", \"Segoe UI\", sans-serif",
+      "NotoSerifSC, \"Songti SC\", \"Noto Serif CJK SC\", STSong, Georgia, serif",
+      "NotoSerifSC-SemiBold, NotoSerifSC, \"Songti SC\", \"Noto Serif CJK SC\", STSong, Georgia, serif"
+    ],
+    "overflows": [],
+    "bodyWidth": 390
+  },
+  {
+    "source": "app/people/index.tsx",
+    "route": "/people",
+    "slug": "people-index",
+    "actualURL": "http://127.0.0.1:8765/people",
+    "screenshot": "screenshots/people-index.png",
+    "errors": [],
+    "text": "身边人\n记一个人\n只保存在这台设备上，对方不会收到任何通知。\n朋友\n小\n小林\n24 天后生日\n1 篇日记 · 今天刚写过",
+    "fontSizes": [
+      "17px",
+      "14px",
+      "12px",
+      "13px",
+      "18.5px",
+      "15.5px",
+      "10.5px"
+    ],
+    "families": [
+      "-apple-system, \"system-ui\", \"PingFang SC\", \"Microsoft YaHei\", \"Segoe UI\", sans-serif"
+    ],
+    "overflows": [],
+    "bodyWidth": 390
+  },
+  {
+    "source": "app/photos.tsx",
+    "route": "/photos",
+    "slug": "photos",
+    "actualURL": "http://127.0.0.1:8765/photos",
+    "screenshot": "screenshots/photos.png",
+    "errors": [],
+    "text": "影像记忆\n共 21 张照片\n11月21日\n11月21日\n11月20日\n11月19日\n11月18日\n11月17日\n11月16日\n11月15日\n11月14日\n11月13日\n11月12日\n11月11日\n11月10日\n11月9日\n11月9日\n11月9日\n11月1日\n10月25日\n10月7日\n9月2日\n11月21日\n轻触查看影像，照片中可打开对应日记",
+    "fontSizes": [
+      "17px",
+      "12px"
+    ],
+    "families": [
+      "-apple-system, \"system-ui\", \"PingFang SC\", \"Microsoft YaHei\", \"Segoe UI\", sans-serif"
+    ],
+    "overflows": [],
+    "bodyWidth": 390
+  },
+  {
+    "source": "app/picker/audio.tsx",
+    "route": "/picker/audio",
+    "slug": "picker-audio",
+    "actualURL": "http://127.0.0.1:8765/picker/audio",
+    "screenshot": "screenshots/picker-audio.png",
+    "errors": [],
+    "text": "录音记录\n00:00\n点击下方按钮开始录音\n轻触开始",
+    "fontSizes": [
+      "17px",
+      "38px",
+      "13px",
+      "12.5px"
+    ],
+    "families": [
+      "-apple-system, \"system-ui\", \"PingFang SC\", \"Microsoft YaHei\", \"Segoe UI\", sans-serif"
+    ],
+    "overflows": [],
+    "bodyWidth": 390
+  },
+  {
+    "source": "app/picker/location.tsx",
+    "route": "/picker/location",
+    "slug": "picker-location",
+    "actualURL": "http://127.0.0.1:8765/picker/location",
+    "screenshot": "screenshots/picker-location.png",
+    "errors": [],
+    "text": "天气与地点\n天气\n记录当时的天气，也可以留空。\n晴\n多云\n阴\n小雨\n中雨\n大雨\n雪\n雷阵雨\n地点\n使用当前位置\n用过的地点\n杭州市 · 西湖区\n杭州市 · 拱墅区\n杭州市 · 滨江区\n杭州市 · 上城区\n杭州市 · 运河边\n大理市 · 洱海\n舟山市 · 朱家尖\n完成",
+    "fontSizes": [
+      "17px",
+      "16px",
+      "13px",
+      "15px",
+      "12px"
+    ],
+    "families": [
+      "-apple-system, \"system-ui\", \"PingFang SC\", \"Microsoft YaHei\", \"Segoe UI\", sans-serif"
+    ],
+    "overflows": [],
+    "bodyWidth": 390
+  },
+  {
+    "source": "app/picker/mood.tsx",
+    "route": "/picker/mood",
+    "slug": "picker-mood",
+    "actualURL": "http://127.0.0.1:8765/picker/mood",
+    "screenshot": "screenshots/picker-mood.png",
+    "errors": [],
+    "text": "选择心情\n开心\n心情愉悦\n平静\n内心安稳\n疲惫\n有些累\n低落\n情绪低沉\n焦虑\n有些不安\n感恩\n心怀感激\n确定",
+    "fontSizes": [
+      "17px",
+      "16px",
+      "12px",
+      "15px"
+    ],
+    "families": [
+      "-apple-system, \"system-ui\", \"PingFang SC\", \"Microsoft YaHei\", \"Segoe UI\", sans-serif"
+    ],
+    "overflows": [],
+    "bodyWidth": 390
+  },
+  {
+    "source": "app/picker/people.tsx",
+    "route": "/picker/people",
+    "slug": "picker-people",
+    "actualURL": "http://127.0.0.1:8765/picker/people",
+    "screenshot": "screenshots/picker-people.png",
+    "errors": [],
+    "text": "和谁在一起\n朋友\n小\n小林\n也叫：林同学\n记下一个人\n确定",
+    "fontSizes": [
+      "17px",
+      "13px",
+      "14.3px",
+      "14.5px",
+      "11.5px",
+      "14px",
+      "15px"
+    ],
+    "families": [
+      "-apple-system, \"system-ui\", \"PingFang SC\", \"Microsoft YaHei\", \"Segoe UI\", sans-serif"
+    ],
+    "overflows": [],
+    "bodyWidth": 390
+  },
+  {
+    "source": "app/picker/photos.tsx",
+    "route": "/picker/photos",
+    "slug": "picker-photos",
+    "actualURL": "http://127.0.0.1:8765/picker/photos",
+    "screenshot": "screenshots/picker-photos.png",
+    "errors": [],
+    "text": "选择照片\n完成 (0)\n从设备选择\n拍照\n本篇照片\n示例素材\n显示本篇已有及本次导入的照片，取消勾选后点完成即可移除。\n还没有照片，选择设备中的照片，留住这一刻。",
+    "fontSizes": [
+      "17px",
+      "14px",
+      "15px",
+      "13px",
+      "12px"
+    ],
+    "families": [
+      "-apple-system, \"system-ui\", \"PingFang SC\", \"Microsoft YaHei\", \"Segoe UI\", sans-serif"
+    ],
+    "overflows": [],
+    "bodyWidth": 390
+  },
+  {
+    "source": "app/picker/tags.tsx",
+    "route": "/picker/tags",
+    "slug": "picker-tags",
+    "actualURL": "http://127.0.0.1:8765/picker/tags",
+    "screenshot": "screenshots/picker-tags.png",
+    "errors": [],
+    "text": "选择标签\n学习\n工作\n生活\n旅行\n情绪\n成长\n阅读\n运动\n健康\n理财\n新建标签\n确定",
+    "fontSizes": [
+      "17px",
+      "14.5px",
+      "14px",
+      "15px"
+    ],
+    "families": [
+      "-apple-system, \"system-ui\", \"PingFang SC\", \"Microsoft YaHei\", \"Segoe UI\", sans-serif"
+    ],
+    "overflows": [],
+    "bodyWidth": 390
+  },
+  {
+    "source": "app/picker/video.tsx",
+    "route": "/picker/video",
+    "slug": "picker-video",
+    "actualURL": "http://127.0.0.1:8765/picker/video",
+    "screenshot": "screenshots/picker-video.png",
+    "errors": [],
+    "text": "添加视频\n完成\n选择视频文件\n单段最长 60 秒，可一次选多段 · 电脑网页端不能直接拍摄，请选拍好的视频\n还没有选择视频\n拍一段此刻，或从相册里挑一段，让这篇日记动起来。",
+    "fontSizes": [
+      "17px",
+      "14px",
+      "13px",
+      "12px",
+      "18px"
+    ],
+    "families": [
+      "-apple-system, \"system-ui\", \"PingFang SC\", \"Microsoft YaHei\", \"Segoe UI\", sans-serif"
+    ],
+    "overflows": [],
+    "bodyWidth": 390
+  },
+  {
+    "source": "app/saved.tsx",
+    "route": "/saved",
+    "slug": "saved",
+    "actualURL": "http://127.0.0.1:8765/saved?id=audit-entry",
+    "screenshot": "screenshots/saved.png",
+    "errors": [],
+    "text": "已保存到本地\n云端有另一份修改，请确认要保留的版本。\n已连续记录 13 天，继续保持\n查看日记\n继续写作\n回到首页",
+    "fontSizes": [
+      "23px",
+      "13px",
+      "12.5px",
+      "15px"
+    ],
+    "families": [
+      "-apple-system, \"system-ui\", \"PingFang SC\", \"Microsoft YaHei\", \"Segoe UI\", sans-serif"
+    ],
+    "overflows": [],
+    "bodyWidth": 390
+  },
+  {
+    "source": "app/search.tsx",
+    "route": "/search",
+    "slug": "search",
+    "actualURL": "http://127.0.0.1:8765/search",
+    "screenshot": "screenshots/search.png",
+    "errors": [],
+    "text": "建议关键词\n成长\n情绪\n旅行\n生活\n工作\n阅读\n自我\n感恩\n视频\n按心情筛选\n开心\n平静\n感恩\n疲惫\n低落\n焦虑\n按身边人筛选\n小林",
+    "fontSizes": [
+      "13.5px",
+      "13px"
+    ],
+    "families": [
+      "-apple-system, \"system-ui\", \"PingFang SC\", \"Microsoft YaHei\", \"Segoe UI\", sans-serif"
+    ],
+    "overflows": [],
+    "bodyWidth": 390
+  },
+  {
+    "source": "app/settings/about.tsx",
+    "route": "/settings/about",
+    "slug": "settings-about",
+    "actualURL": "http://127.0.0.1:8765/settings/about",
+    "screenshot": "screenshots/settings-about.png",
+    "errors": [],
+    "text": "关于记得日记\n记得日记\n记下生活，记得自己 · v1.0.0\n体验与权限\n权限说明与授权\n相册、麦克风、通知权限管理\n新手导览\n跟着光圈重新认识首页的每个入口\n重新查看引导页\n重温产品初见介绍\n导入示例日记\n添加精选示例日记，方便体验回顾与统计\n数据状态\n本机保存与离线使用\n同步冲突处理\n一款专注记录、回顾与自我理解的日记应用",
+    "fontSizes": [
+      "24px",
+      "21px",
+      "13px",
+      "15px",
+      "12px"
+    ],
+    "families": [
+      "-apple-system, \"system-ui\", \"PingFang SC\", \"Microsoft YaHei\", \"Segoe UI\", sans-serif"
+    ],
+    "overflows": [],
+    "bodyWidth": 390
+  },
+  {
+    "source": "app/settings/account.tsx",
+    "route": "/settings/account",
+    "slug": "settings-account",
+    "actualURL": "http://127.0.0.1:8765/settings/account",
+    "screenshot": "screenshots/settings-account.png",
+    "errors": [],
+    "text": "账号与同步\n本地使用（推荐）\n无需登录，数据仅保存在本机\n账号登录同步\n点击登录或注册，多设备同步日记\n同步与数据\n云端同步\n同步到云端，多设备可访问同一账号的日记\n仅在 Wi-Fi 下同步\n无法识别网络类型时暂停同步；确认网络后可关闭此限制\n同步照片、视频与录音\n附件实际上传到云存储；单次新增附件合计上限 25 MiB\n同步标签、人物与日记本\n同步外观、提醒与目标\n同一设置同时修改时保留本机选择；设备锁与 AI 密钥不上传\n同步内容\n日记、照片、视频、录音、标签、人物、日记本、外观、提醒、目标\n上次同步\n检测到 1 处同步冲突，请及时处理\n立即同步\n发现 1 条同步冲突\n云端与本机对同一篇日记有不同修改，请手动选择保留方式。\n前往处理冲突\n登录 / 注册账号",
+    "fontSizes": [
+      "24px",
+      "15.5px",
+      "13px",
+      "15px",
+      "12px",
+      "16px"
+    ],
+    "families": [
+      "-apple-system, \"system-ui\", \"PingFang SC\", \"Microsoft YaHei\", \"Segoe UI\", sans-serif"
+    ],
+    "overflows": [],
+    "bodyWidth": 390
+  },
+  {
+    "source": "app/settings/ai.tsx",
+    "route": "/settings/ai",
+    "slug": "settings-ai",
+    "actualURL": "http://127.0.0.1:8765/settings/ai",
+    "screenshot": "screenshots/settings-ai.png",
+    "errors": [],
+    "text": "记得\n它读你写的，问你、帮你整理、给你回信\n写不下去时追问：顺着原文的具体细节接着问\n帮你整理：标题、心情、标签、和谁在一起\n写完回一封短信，记得你以前写过的事\n不替你写，不改写；隐藏日记永远不发\n开启「记得」\n关闭中，日记不会离开这台设备\n使用「记得」时，当前这篇日记的文字会发送到你填写的服务。照片、视频、录音、位置不会发送；隐藏日记和已删除的日记永远不会发送。不开网络时，本机的追问和整理建议仍然可用。",
+    "fontSizes": [
+      "24px",
+      "13px",
+      "13.5px",
+      "15px",
+      "12px"
+    ],
+    "families": [
+      "-apple-system, \"system-ui\", \"PingFang SC\", \"Microsoft YaHei\", \"Segoe UI\", sans-serif"
+    ],
+    "overflows": [],
+    "bodyWidth": 390
+  },
+  {
+    "source": "app/settings/appearance.tsx",
+    "route": "/settings/appearance",
+    "slug": "settings-appearance",
+    "actualURL": "http://127.0.0.1:8765/settings/appearance",
+    "screenshot": "screenshots/settings-appearance.png",
+    "errors": [],
+    "text": "外观主题\n显示模式\n浅色\n深色\n跟随系统\n显示模式会应用到所有页面与弹层。\n整体风格\n纸面、卡片、圆角与描边一起变化。选择风格会应用搭配的强调色，之后仍可单独调整。\n温润\n米白纸张与暖棕墨色\n清冷\n冷灰蓝、细线、少圆角\n墨白\n黑白分明，像一页排好的书\n森野\n苔绿与雾白，安静自然\n樱雾\n柔粉、圆润，轻一点软一点\n旧纸\n牛皮纸与朱砂，像老笔记本\n强调色\n用于主要操作与选中状态；心情颜色保持原有含义。\n奶茶\n藕粉\n雾紫\n雾蓝\n青苔\n钢蓝\n墨黑\n朱砂\n松绿\n靛青\n文字大小\n同时调整界面与日记正文的文字大小。\nAa 字\n标准\nAa 字\n较大\nAa 字\n更大\n效果预览\n记录\n阅读\n控件\n以下为示例内容，随当前设置即时变化。\n11月21日 · 08:30\n今早的热茶刚刚好，想把这一刻留下来。\n11月20日 · 平静 · 3张照片\n走进山林的下午\n沿着小路慢慢走，阳光穿过树叶，落在肩上。\n字体与排版\n日记阅读字体、行距、正文宽度与卡片样式",
+    "fontSizes": [
+      "24px",
+      "16px",
+      "13px",
+      "12px",
+      "14px",
+      "19px",
+      "22px",
+      "18px",
+      "15px"
+    ],
+    "families": [
+      "-apple-system, \"system-ui\", \"PingFang SC\", \"Microsoft YaHei\", \"Segoe UI\", sans-serif",
+      "NotoSerifSC, \"Songti SC\", \"Noto Serif CJK SC\", STSong, Georgia, serif",
+      "NotoSerifSC-SemiBold, NotoSerifSC, \"Songti SC\", \"Noto Serif CJK SC\", STSong, Georgia, serif"
+    ],
+    "overflows": [],
+    "bodyWidth": 390
+  },
+  {
+    "source": "app/settings/backup.tsx",
+    "route": "/settings/backup",
+    "slug": "settings-backup",
+    "actualURL": "http://127.0.0.1:8765/settings/backup",
+    "screenshot": "screenshots/settings-backup.png",
+    "errors": [],
+    "text": "备份与恢复\n云端同步\n登录账号后，日记会同步到云端并在多设备间保持一致\n最近同步\n未同步\n同步按账号独立保存；在「账号与同步」中开启附件后，照片、视频与录音也会上传，失败时会保留本机版本。\n本地备份\n手动备份\n将日记与真实附件打包带走\n自动备份\n每 7 天在本机留一份快照\n最近备份时间\n暂无记录\n手动备份包含照片、视频、录音与封面，可带到其他设备。附件合计上限 25 MiB，备份文件上限 50 MiB。自动快照只保留本机数据与附件位置，卸载或清理浏览器后无法找回。\n恢复数据\n从备份文件恢复日记、附件与日记本",
+    "fontSizes": [
+      "24px",
+      "15px",
+      "12px",
+      "13px"
+    ],
+    "families": [
+      "-apple-system, \"system-ui\", \"PingFang SC\", \"Microsoft YaHei\", \"Segoe UI\", sans-serif"
+    ],
+    "overflows": [],
+    "bodyWidth": 390
+  },
+  {
+    "source": "app/settings/delete-account.tsx",
+    "route": "/settings/delete-account",
+    "slug": "settings-delete-account",
+    "actualURL": "http://127.0.0.1:8765/settings/delete-account",
+    "screenshot": "screenshots/settings-delete-account.png",
+    "errors": [],
+    "text": "注销账号\n确定要注销账号吗？\n注销后将删除当前账号及其日记、已同步附件和本机快照，该操作不可恢复。建议先在「备份与恢复」里做一次手动备份。\n• 当前账号在本机的数据将被删除\n• 本地模式与其他账号的日记仍会保留\n• 无法使用原账号重新登录恢复数据\n确认注销账号\n取消",
+    "fontSizes": [
+      "17px",
+      "21px",
+      "13px",
+      "13.5px",
+      "15px"
+    ],
+    "families": [
+      "-apple-system, \"system-ui\", \"PingFang SC\", \"Microsoft YaHei\", \"Segoe UI\", sans-serif"
+    ],
+    "overflows": [],
+    "bodyWidth": 390
+  },
+  {
+    "source": "app/settings/goals.tsx",
+    "route": "/settings/goals",
+    "slug": "settings-goals",
+    "actualURL": "http://127.0.0.1:8765/settings/goals",
+    "screenshot": "screenshots/settings-goals.png",
+    "errors": [],
+    "text": "写作目标\n开启每日写作目标\n在首页与编辑器顶部展示每日字数进度\n今日完成度\n还差 69 字\n131\n/ 200 字\n每日目标字数\n50 字\n100 字\n200 字\n300 字\n500 字\n应用\n近 7 天达标情况\n达标 0 / 7 天\n67\n日\n40\n一\n62\n二\n43\n三\n61\n四\n108\n五\n131\n今天",
+    "fontSizes": [
+      "17px",
+      "15px",
+      "12px",
+      "28px",
+      "14px",
+      "13px",
+      "10px",
+      "11px"
+    ],
+    "families": [
+      "-apple-system, \"system-ui\", \"PingFang SC\", \"Microsoft YaHei\", \"Segoe UI\", sans-serif"
+    ],
+    "overflows": [],
+    "bodyWidth": 390
+  },
+  {
+    "source": "app/settings/help.tsx",
+    "route": "/settings/help",
+    "slug": "settings-help",
+    "actualURL": "http://127.0.0.1:8765/settings/help",
+    "screenshot": "screenshots/settings-help.png",
+    "errors": [],
+    "text": "帮助与教程\n新手导览\n首页导览\n约 1 分钟 · 记录、整理与回看的入口\n写作页导览\n时间、心情、排版与多媒体\n导览会用光圈指出真实的按钮位置，随时可以跳过。\n手势与技巧\n左滑日记卡片\n在首页列表向左滑动卡片，可以置顶、收藏或删除。\n长按日记卡片\n长按任意一篇日记，可以移动到别的日记本。\n点心情直接开写\n首页「今日」卡片里点一个心情，带着它开始记录。\n补记过去的某一天\n写作页点时间胶囊，可以选任意日期和时刻；日历里也能「补记这一天」。\n回车接续列表\n在列表、待办或引用行里回车，会自动接上下一项；空项上再回车就结束。\n快速回到顶部\n在首页再点一次底部的「日记」，列表会滚回最上面。\n下拉同步\n登录账号后，可在首页下拉发起同步；同步结果请查看账号页。\n常见问题\n不登录账号也能正常写日记吗？\n可以。记得日记采用本地优先设计，所有日记、照片、语音与标签都默认存储在当前设备中，无需联网即可完整使用。\n写到一半退出，内容会丢吗？\n怎么修改一篇日记的日期？\n误删了日记怎么找回？\n如何把日记备份或迁移到新手机？\n应用锁忘记密码怎么办？\n意见与建议\n仅发送你在此填写的内容，不会附带日记。未发送内容会保留在本机。\n提交反馈\n导出反馈副本",
+    "fontSizes": [
+      "24px",
+      "13px",
+      "15px",
+      "12px",
+      "14.5px",
+      "12.5px"
+    ],
+    "families": [
+      "-apple-system, \"system-ui\", \"PingFang SC\", \"Microsoft YaHei\", \"Segoe UI\", sans-serif"
+    ],
+    "overflows": [],
+    "bodyWidth": 390
+  },
+  {
+    "source": "app/settings/index.tsx",
+    "route": "/settings",
+    "slug": "settings-index",
+    "actualURL": "http://127.0.0.1:8765/settings",
+    "screenshot": "screenshots/settings-index.png",
+    "errors": [],
+    "text": "设置\n账号\n账号与同步\n本地保存与云端同步状态\n本地使用\n记录与回顾\n我的日记本\n新建、分类管理你的日记本\n1 本\n写作目标\n每日字数目标与连续达标记录\n200 字\n提醒通知\n每日提醒、重要事项提醒\n记得（AI 助手）\n追问、整理、回信与周回顾\n未开启\n外观与阅读\n外观主题\n明暗模式、风格与主题颜色\n字体与排版\n正文宽度、行距、卡片样式\n隐私与数据\n隐私与安全\n应用锁、加密与隐私设置\n备份与恢复\n加密备份、自动快照与恢复\n导入与导出\nMarkdown、PDF 等格式\n应用\n关于\n版本 1.0.0",
+    "fontSizes": [
+      "24px",
+      "13px",
+      "15px",
+      "12px"
+    ],
+    "families": [
+      "-apple-system, \"system-ui\", \"PingFang SC\", \"Microsoft YaHei\", \"Segoe UI\", sans-serif"
+    ],
+    "overflows": [],
+    "bodyWidth": 390
+  },
+  {
+    "source": "app/settings/privacy.tsx",
+    "route": "/settings/privacy",
+    "slug": "settings-privacy",
+    "actualURL": "http://127.0.0.1:8765/settings/privacy",
+    "screenshot": "screenshots/settings-privacy.png",
+    "errors": [],
+    "text": "隐私与安全\n应用锁\n开启后，进入应用需验证身份\n解锁方式\n未开启\n生物识别\n使用 Face ID / 指纹快速解锁\n隐藏日记验证\n开启应用锁后，查看隐藏日记需再次验证\n查看隐藏日记\n1 篇\n加密备份\n以加密方式备份数据，提升安全性\n清空所有数据\n删除本地的全部日记、图片与设置",
+    "fontSizes": [
+      "24px",
+      "15px",
+      "12px",
+      "13px"
+    ],
+    "families": [
+      "-apple-system, \"system-ui\", \"PingFang SC\", \"Microsoft YaHei\", \"Segoe UI\", sans-serif"
+    ],
+    "overflows": [],
+    "bodyWidth": 390
+  },
+  {
+    "source": "app/settings/reminder-time.tsx",
+    "route": "/settings/reminder-time",
+    "slug": "settings-reminder-time",
+    "actualURL": "http://127.0.0.1:8765/settings/reminder-time",
+    "screenshot": "screenshots/settings-reminder-time.png",
+    "errors": [],
+    "text": "取消\n设置提醒时间\n确定\n00\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n13\n14\n15\n16\n17\n18\n19\n20\n21\n22\n23\n:\n00\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n13\n14\n15\n16\n17\n18\n19\n20\n21\n22\n23\n24\n25\n26\n27\n28\n29\n30\n31\n32\n33\n34\n35\n36\n37\n38\n39\n40\n41\n42\n43\n44\n45\n46\n47\n48\n49\n50\n51\n52\n53\n54\n55\n56\n57\n58\n59\n重复设置\n每天\n周一至周五\n周末（周六、周日）\n自定义\n选择具体的星期",
+    "fontSizes": [
+      "15px",
+      "17px",
+      "18px",
+      "24px",
+      "22px",
+      "13px",
+      "12px"
+    ],
+    "families": [
+      "-apple-system, \"system-ui\", \"PingFang SC\", \"Microsoft YaHei\", \"Segoe UI\", sans-serif"
+    ],
+    "overflows": [],
+    "bodyWidth": 390
+  },
+  {
+    "source": "app/settings/reminders.tsx",
+    "route": "/settings/reminders",
+    "slug": "settings-reminders",
+    "actualURL": "http://127.0.0.1:8765/settings/reminders",
+    "screenshot": "screenshots/settings-reminders.png",
+    "errors": [],
+    "text": "提醒设置\n当前网页不支持后台定时通知。这里保存 App 的提醒偏好，预览仅在页面内显示。\nApp 每日提醒\n按所选时间和重复规则提醒\n提醒时间\n20:30 · 每天\n自定义提醒文案\n提醒方式\n通知 + 声音\n预览一次提醒",
+    "fontSizes": [
+      "24px",
+      "13px",
+      "15px",
+      "12px",
+      "14px"
+    ],
+    "families": [
+      "-apple-system, \"system-ui\", \"PingFang SC\", \"Microsoft YaHei\", \"Segoe UI\", sans-serif"
+    ],
+    "overflows": [],
+    "bodyWidth": 390
+  },
+  {
+    "source": "app/settings/transfer.tsx",
+    "route": "/settings/transfer",
+    "slug": "settings-transfer",
+    "actualURL": "http://127.0.0.1:8765/settings/transfer",
+    "screenshot": "screenshots/settings-transfer.png",
+    "errors": [],
+    "text": "导入与导出\n导入日记（从其他格式文件）\n从 Markdown 文件导入\n支持 .md 文件\n从纯文本文件导入\n支持 .txt 文件\n从 JSON 文件导入\n支持 .json 格式\n导出日记（保存或迁移数据）\n导出为 Markdown\n通用格式，便于长期保存\n导出为 PDF\n适合打印与归档\n导出为纯文本\n轻量，兼容性强\n导出为 JSON\n包含日记完整信息（标签、时间等）",
+    "fontSizes": [
+      "24px",
+      "13px",
+      "15px",
+      "12px"
+    ],
+    "families": [
+      "-apple-system, \"system-ui\", \"PingFang SC\", \"Microsoft YaHei\", \"Segoe UI\", sans-serif"
+    ],
+    "overflows": [],
+    "bodyWidth": 390
+  },
+  {
+    "source": "app/settings/typography.tsx",
+    "route": "/settings/typography",
+    "slug": "settings-typography",
+    "actualURL": "http://127.0.0.1:8765/settings/typography",
+    "screenshot": "screenshots/settings-typography.png",
+    "errors": [],
+    "text": "字体与排版\n日记阅读字体\n用于日记标题、正文与内容摘要。导航、按钮、表单和数字使用系统字体。\n记得\n宋体\n记得\n黑体\n记得\n楷体\n楷体优先使用设备可用的楷体字形；字体不可用时自动回退，记录仍可继续。\n正文宽度\n控制每篇日记的阅读宽度\n窄\n适中\n宽\n行距\n调整正文的行间距\n紧凑\n标准\n舒适\n卡片样式\n日记列表的展示样式\n简洁卡片\n图文卡片\n排版实时预览\n把平凡的一天，慢慢记住\n今天去了城郊的山林，空气非常清新。沿着小路慢慢走，太阳透过树叶洒下斑驳的光影，整个人都放松了很多。\n「記得當時的心情」，也记得回家的路。下午 3:30，写下“Take it slow.”——普通的一天，也值得认真留下来。\n界面字体预览\n保存日记 · 取消 · 2026年11月21日\n阅读字体只改变日记内容，这些控件文字保持系统字体。",
+    "fontSizes": [
+      "24px",
+      "15px",
+      "13px",
+      "22px",
+      "12px",
+      "16px"
+    ],
+    "families": [
+      "-apple-system, \"system-ui\", \"PingFang SC\", \"Microsoft YaHei\", \"Segoe UI\", sans-serif",
+      "NotoSerifSC-SemiBold, NotoSerifSC, \"Songti SC\", \"Noto Serif CJK SC\", STSong, Georgia, serif",
+      "\"Kaiti SC\", STKaiti, KaiTi, \"Songti SC\", \"Noto Serif CJK SC\", serif",
+      "NotoSerifSC, \"Songti SC\", \"Noto Serif CJK SC\", STSong, Georgia, serif"
+    ],
+    "overflows": [],
+    "bodyWidth": 390
+  },
+  {
+    "source": "app/sync-conflict.tsx",
+    "route": "/sync-conflict",
+    "slug": "sync-conflict",
+    "actualURL": "http://127.0.0.1:8765/sync-conflict",
+    "screenshot": "screenshots/sync-conflict.png",
+    "errors": [],
+    "text": "检测到同步冲突\n云端与本机对同一篇日记有不同的修改，共 1 篇待处理，请逐篇比较后选择：\n冲突日记：在山间的一个下午\n本机修改：2026-11-21 18:00\n云端修改：2026-11-21 18:00\n本机版本\n今天去了城郊的山林，空气非常清新。沿着小路慢慢走，太阳透过树叶洒下斑驳的光影，整个人都放松了很多。\n\n原来，生活的美好常常藏在这样安静的时刻里。\n\n- 带了一本没读完的书\n- 在半山腰的亭子里坐了一个小时\n- 回来的路上看到了很美的晚霞\n同步版本\n另一个版本的示例内容\n保留本机\n使用当前设备上的版本\n保留云端\n使用云端同步过来的版本\n保留最新版本\n逐篇比较修改时间，保留较新的完整版本\n确认这篇的保留版本",
+    "fontSizes": [
+      "21px",
+      "13px",
+      "12px",
+      "16px",
+      "15.5px",
+      "15px"
+    ],
+    "families": [
+      "-apple-system, \"system-ui\", \"PingFang SC\", \"Microsoft YaHei\", \"Segoe UI\", sans-serif"
+    ],
+    "overflows": [],
+    "bodyWidth": 390
+  },
+  {
+    "source": "app/templates.tsx",
+    "route": "/templates",
+    "slug": "templates",
+    "actualURL": "http://127.0.0.1:8765/templates",
+    "screenshot": "screenshots/templates.png",
+    "errors": [],
+    "text": "模板中心\n先看看内容，再选择适合今天的记录方式。\n全部\n生活\n成长\n学习\n工作\n每日复盘\n回顾今日收获，反思与改进\n自由日记\n随心记录当下的想法与感受\n旅行记录\n记录旅途中的风景、体验与见闻\n阅读笔记\n整理阅读收获、摘录与思考\n目标打卡\n设定目标并记录每天的进展\n感恩日记\n写下今天值得感谢的人和事\n情绪梳理\n觉察情绪，温柔地与自己对话",
+    "fontSizes": [
+      "17px",
+      "13px",
+      "14px",
+      "16px"
+    ],
+    "families": [
+      "-apple-system, \"system-ui\", \"PingFang SC\", \"Microsoft YaHei\", \"Segoe UI\", sans-serif"
+    ],
+    "overflows": [],
+    "bodyWidth": 390
+  },
+  {
+    "source": "app/trash.tsx",
+    "route": "/trash",
+    "slug": "trash",
+    "actualURL": "http://127.0.0.1:8765/trash",
+    "screenshot": "screenshots/trash.png",
+    "errors": [],
+    "text": "最近删除\n全部恢复\n已删除的日记会在 30 天后自动清除（左滑可快速恢复）\n恢复\n彻底删除\n回收站示例\n删除于 11月21日\n剩余 30 天\n清空回收站",
+    "fontSizes": [
+      "17px",
+      "15px",
+      "12.5px",
+      "10.5px",
+      "15.5px",
+      "12px",
+      "11.5px"
+    ],
+    "families": [
+      "-apple-system, \"system-ui\", \"PingFang SC\", \"Microsoft YaHei\", \"Segoe UI\", sans-serif"
+    ],
+    "overflows": [],
+    "bodyWidth": 390
+  },
+  {
+    "source": "app/write.tsx",
+    "route": "/write",
+    "slug": "write",
+    "actualURL": "http://127.0.0.1:8765/write?id=audit-entry",
+    "screenshot": "screenshots/write.png",
+    "errors": [],
+    "text": "取消\n编辑日记\n107 / 200 字\n保存\n我的日记\n11月21日 15:24 周六\n开心\n西湖区 · 晴 12°\n2 个标签\n小林\n模板\n记得\n追问 · 整理 · 理顺口述\n追问\n整理\n理顺口述\n顺着你已经写的，接着问自己：\n这件事里，哪个瞬间你记得最清楚？\n写入 ›\n当时你心里最先冒出来的念头是什么？\n写入 ›\n有什么是你当时想说、但没有说的？\n写入 ›\n换一批\n以下建议都在本机生成；开启「记得」后会读一读再帮你问和整理 · 去设置 ›\n小林\n#旅行\n#成长\n图片排版 (2 张)\n网格\n大图\n轮播",
+    "fontSizes": [
+      "15px",
+      "17px",
+      "12px",
+      "14px",
+      "13px",
+      "13.5px",
+      "11px",
+      "11.5px",
+      "16px"
+    ],
+    "families": [
+      "-apple-system, \"system-ui\", \"PingFang SC\", \"Microsoft YaHei\", \"Segoe UI\", sans-serif",
+      "NotoSerifSC, \"Songti SC\", \"Noto Serif CJK SC\", STSong, Georgia, serif"
+    ],
+    "overflows": [
+      "我的日记11月21日 15:24 周六开心西湖区 · 晴 12°2 个标签小林模板",
+      "西湖区 · 晴 12°",
+      "西湖区 · 晴 12°",
+      "2 个标签",
+      "2 个标签",
+      "小林"
+    ],
+    "bodyWidth": 390
+  }
+]

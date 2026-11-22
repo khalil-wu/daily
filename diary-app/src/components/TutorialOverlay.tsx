@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Animated, BackHandler, Easing, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Animated, BackHandler, Easing, Pressable, StyleSheet, View } from 'react-native';
+import { Text } from './text';
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Path } from 'react-native-svg';
@@ -36,7 +37,7 @@ const HOME_STEPS: TourStep[] = [
     key: 'welcome',
     tag: '新手导览',
     title: '一分钟，认识记得日记',
-    desc: '跟着光圈走一遍，就能上手记录、整理和回看。\n随时可以跳过，之后可在「我的」里重看。',
+    desc: '跟着光圈快速熟悉记录、整理与回看，\n随时可跳过，之后可在「我的」重新打开。',
   },
   {
     key: 'fab',

@@ -49,6 +49,12 @@ export function moodMeta(key?: MoodKey): MoodMeta | undefined {
   return MOODS.find(m => m.key === key);
 }
 
+/** 心情徽标/卡片柔和底色：浅色用柔彩，深色用低透明色，避免白字压浅底不可读 */
+export function moodTint(mood: MoodMeta | undefined, dark: boolean): string {
+  if (!mood) return 'transparent';
+  return dark ? `${mood.color}2A` : mood.soft;
+}
+
 export interface WeatherMeta {
   key: WeatherKey;
   label: string;
@@ -163,6 +169,24 @@ export const DAILY_PROMPTS: { id: string; category: string; title: string; guide
   { id: 'p6', category: '五感记忆', title: '今天看到、听到或尝到最难忘的一个瞬间', guide: '用具体的细节留住当下的画面、声音与气味。' },
   { id: 'p7', category: '能量来源', title: '最近什么活动让你做完之后觉得身心充电？', guide: '观察能给你带来平静与快乐的日常习惯。' },
   { id: 'p8', category: '给未来', title: '想对一年后的自己说的一句话', guide: '把此刻的期待、困惑或祝福存进时间胶囊。' },
+];
+
+/** 列表底部「每日一句」（参考 Diarly 首页名言卡 / 一言），按日轮换 */
+export const DAILY_QUOTES: { text: string; from: string }[] = [
+  { text: '人生如逆旅，我亦是行人。', from: '苏轼' },
+  { text: '此心安处是吾乡。', from: '苏轼' },
+  { text: '岁月不饶人，我亦未曾饶过岁月。', from: '木心' },
+  { text: '从前的日色变得慢，车、马、邮件都慢，一生只够爱一个人。', from: '木心' },
+  { text: '面朝大海，春暖花开。', from: '海子' },
+  { text: '黑夜给了我黑色的眼睛，我却用它寻找光明。', from: '顾城' },
+  { text: '草在结它的种子，风在摇它的叶子，我们站着，不说话，就十分美好。', from: '顾城' },
+  { text: '醒来觉得甚是爱你。', from: '朱生豪' },
+  { text: '落霞与孤鹜齐飞，秋水共长天一色。', from: '王勃' },
+  { text: '一个人只拥有此生此世是不够的，他还应该拥有诗意的世界。', from: '王小波' },
+  { text: '星星发亮是为了让每一个人有一天都能找到属于自己的星星。', from: '《小王子》' },
+  { text: '凡是过往，皆为序章。', from: '莎士比亚' },
+  { text: '人生碌碌，竞短论长，却不道荣枯有数，得失难量。', from: '沈复' },
+  { text: '生活不是你活过的样子，而是你记住的样子。', from: '麦家' },
 ];
 
 export const APP_VERSION = '1.0.0';

@@ -1,11 +1,14 @@
 import React, { useEffect, useState } from 'react';
-import { Image, Pressable, Text, View } from 'react-native';
+import { Image, Pressable, View } from 'react-native';
+import { Text } from '../../src/components/text';
 import { router } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Lock, ShieldCheck, User } from 'lucide-react-native';
 import { useTheme } from '../../src/theme/ThemeProvider';
 import { actions } from '../../src/store/store';
 import { cloudConfigured } from '../../src/services/cloud';
+import { captchaGateActive, withOtpTicket } from '../../src/services/mailgate';
+import { CaptchaSheet } from '../../src/components/captchaSheet';
 import { isEmail, isPhone } from '../../src/utils/text';
 import { Button, Field, NavBar, Screen, goBack } from '../../src/components/ui';
 import { BotanicalAccent } from '../../src/components/MoodIcon';
@@ -21,8 +24,8 @@ export default function ForgotPasswordScreen() {
   const [sentCode, setSentCode] = useState('');
   const [countdown, setCountdown] = useState(0);
   const [password, setPassword] = useState('');
-  const [emailSent, setEmailSent] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [captchaOpen, setCaptchaOpen] = useState(false);
 
   useEffect(() => {
     if (countdown <= 0) return;
@@ -30,42 +33,42 @@ export default function ForgotPasswordScreen() {
     return () => clearTimeout(tmr);
   }, [countdown]);
 
+  const remoteSend = async () => {
+    const id = identifier.trim();
+    const res = await actions.sendResetCode(id);
+    if (!res.ok) {
+      toast(res.message || '发送失败', { type: 'error' });
+      return;
+    }
+    setSentCode('remote');
+    setCountdown(60);
+    toast(isPhone(id) ? '验证码已发送，请查收短信' : '验证码已发送，请查收邮件（含垃圾箱）', { type: 'info' });
+  };
+
   const sendCode = async () => {
     const id = identifier.trim();
     if (!id || (!isPhone(id) && !isEmail(id))) {
       toast('请先输入正确的手机号或邮箱', { type: 'warning' });
       return;
     }
-    if (cloudConfigured()) {
-      const res = await actions.sendResetCode(id);
-      if (!res.ok) {
-        toast(res.message || '发送失败', { type: 'error' });
-        return;
-      }
-      if (isEmail(id)) {
-        setEmailSent(true);
-        toast('重置邮件已发送，请前往邮箱点击链接', { type: 'info' });
-        return;
-      }
-      setSentCode('remote');
+    if (!cloudConfigured()) {
+      const gen = '668822';
+      setSentCode(gen);
       setCountdown(60);
-      toast('验证码已发送，请查收短信', { type: 'info' });
+      toast(`验证码已发送：${gen}`, { type: 'info' });
       return;
     }
-    const gen = '668822';
-    setSentCode(gen);
-    setCountdown(60);
-    toast(`验证码已发送：${gen}`, { type: 'info' });
+    if (captchaGateActive()) {
+      setCaptchaOpen(true);
+      return;
+    }
+    await remoteSend();
   };
 
   const submit = async () => {
     const id = identifier.trim();
     if (!id) {
       toast('请输入手机号或邮箱', { type: 'warning' });
-      return;
-    }
-    if (cloudConfigured() && isEmail(id)) {
-      toast('重置密码需前往邮箱点击链接，完成后用新密码登录', { type: 'info' });
       return;
     }
     if (!code.trim() || (sentCode && sentCode !== 'remote' && code.trim() !== sentCode)) {
@@ -83,6 +86,11 @@ export default function ForgotPasswordScreen() {
       toast(res.message || '重置失败', { type: 'error' });
       return;
     }
+    if (res.account) {
+      toast('密码已重置，已为你登录');
+      router.replace('/(tabs)');
+      return;
+    }
     toast('密码已重置，请使用新密码登录');
     router.replace('/auth/login');
   };
@@ -98,30 +106,22 @@ export default function ForgotPasswordScreen() {
 
           <View style={{ marginTop: 28 }}>
             <Field icon={User} placeholder="手机号 / 邮箱" value={identifier} onChangeText={setIdentifier} autoCapitalize="none" />
-            {emailSent && cloudConfigured() && isEmail(identifier.trim()) ? (
-              <Text style={{ fontSize: fs(13), color: c.textSub, lineHeight: fs(13) * 1.7, marginTop: 4 }}>
-                重置密码邮件已发送到 {identifier.trim()}，请前往邮箱点击链接完成重置，然后回来用新密码登录。
-              </Text>
-            ) : (
-              <>
-                <Field
-                  icon={ShieldCheck}
-                  placeholder="验证码"
-                  value={code}
-                  onChangeText={setCode}
-                  keyboardType="number-pad"
-                  right={
-                    <Pressable disabled={countdown > 0} onPress={() => void sendCode()} hitSlop={8}>
-                      <Text style={{ fontSize: fs(13), color: countdown > 0 ? c.textMuted : c.primaryDark, fontWeight: '500' }}>
-                        {countdown > 0 ? `${countdown}s 后重发` : '获取验证码'}
-                      </Text>
-                    </Pressable>
-                  }
-                />
-                <Field icon={Lock} placeholder="新密码 (6-20位)" value={password} onChangeText={setPassword} secure />
-                <Button title="重置密码" onPress={() => void submit()} loading={loading} style={{ marginTop: 8 }} />
-              </>
-            )}
+            <Field
+              icon={ShieldCheck}
+              placeholder="验证码"
+              value={code}
+              onChangeText={setCode}
+              keyboardType="number-pad"
+              right={
+                <Pressable disabled={countdown > 0} onPress={() => void sendCode()} hitSlop={8}>
+                  <Text style={{ fontSize: fs(13), color: countdown > 0 ? c.textMuted : c.primaryDark, fontWeight: '500' }}>
+                    {countdown > 0 ? `${countdown}s 后重发` : '获取验证码'}
+                  </Text>
+                </Pressable>
+              }
+            />
+            <Field icon={Lock} placeholder="新密码 (6-20位)" value={password} onChangeText={setPassword} secure />
+            <Button title="重置密码" onPress={() => void submit()} loading={loading} style={{ marginTop: 8 }} />
           </View>
 
           <Pressable onPress={goBack} style={{ alignItems: 'center', marginTop: 22 }}>
@@ -134,6 +134,15 @@ export default function ForgotPasswordScreen() {
           <LinearGradient colors={[c.bg, 'transparent']} style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 80 }} />
         </View>
       </View>
+
+      <CaptchaSheet
+        visible={captchaOpen}
+        onCancel={() => setCaptchaOpen(false)}
+        onSolved={ticket => {
+          setCaptchaOpen(false);
+          void withOtpTicket(ticket, remoteSend);
+        }}
+      />
     </Screen>
   );
 }

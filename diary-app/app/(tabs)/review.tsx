@@ -1,15 +1,16 @@
-import React, { useMemo, useState } from 'react';
-import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import React, { useCallback, useMemo, useState } from 'react';
+import { ActivityIndicator, Platform, Pressable, ScrollView, SectionList, StyleSheet, View } from 'react-native';
+import { Text } from '../../src/components/text';
 import { router } from 'expo-router';
-import { Award, CheckCircle2, Image as ImageIcon, Quote, RefreshCw, Search, Sparkles } from 'lucide-react-native';
+import { Award, CheckCircle2, ChevronLeft, ChevronRight, Image as ImageIcon, Quote, RefreshCw, Search, Sparkles } from 'lucide-react-native';
 import { useTheme } from '../../src/theme/ThemeProvider';
 import { useStore } from '../../src/store/store';
-import { Card, EmptyState, IconButton, Photo, Screen, Segmented } from '../../src/components/ui';
+import { Button, Card, EmptyState, IconButton, Photo, Screen, Segmented, webSpaceAction } from '../../src/components/ui';
 import { useFeedback } from '../../src/components/feedback';
-import { FadeIn } from '../../src/components/motion';
+import { BottomSheet, useCountUp } from '../../src/components/motion';
 import { MoodIcon } from '../../src/components/MoodIcon';
 import { MonthlyBarChart } from '../../src/components/Charts';
-import { computeMilestones, computeStats, findThrowbacks } from '../../src/utils/stats';
+import { computeMilestones, computeStats, findThrowbacks, type ThrowbackRange } from '../../src/utils/stats';
 import { excerpt, fmtNumber, wordCount } from '../../src/utils/text';
 import { fmtFullDate, fmtMonthDay } from '../../src/utils/date';
 import { MIN_REVIEW_ENTRIES, entriesInRange, periodRange, periodStats } from '../../src/utils/ai/review';
@@ -23,7 +24,7 @@ type ReviewTab = 'period' | 'timeline' | 'year' | 'milestone';
 
 /** 13. 回顾页（时间线 / 年度 / 里程碑 - 1:1 复刻设计稿1 #13） */
 export default function ReviewScreen() {
-  const { c, t, fs } = useTheme();
+  const { c, t, fs, r, dark } = useTheme();
   const { toast } = useFeedback();
   const entries = useStore(s => s.entries);
   const tags = useStore(s => s.tags);
@@ -33,6 +34,10 @@ export default function ReviewScreen() {
   const [sub, setSub] = useState<ReviewTab>('period');
   const [periodSel, setPeriodSel] = useState<'week' | 'lastWeek' | 'month' | 'lastMonth'>('week');
   const [reviewBusy, setReviewBusy] = useState(false);
+  const [memorySettingsOpen, setMemorySettingsOpen] = useState(false);
+  const [memoryRange, setMemoryRange] = useState<ThrowbackRange>('all');
+  const [excludedTags, setExcludedTags] = useState<string[]>([]);
+  const memoryTags = useMemo(() => tags.filter(tag => entries.some(entry => !entry.hidden && !entry.deletedAt && entry.status === 'published' && entry.tags.includes(tag.id))), [entries, tags]);
 
   const published = useMemo(
     () => entries.filter(e => !e.deletedAt && !e.hidden && e.status === 'published').sort((a, b) => b.createdAt - a.createdAt),
@@ -50,16 +55,30 @@ export default function ReviewScreen() {
   const activeYear = years[Math.min(yearIdx, years.length - 1)] ?? new Date().getFullYear();
 
   const byYear = useMemo(() => {
-    const groups: { year: number; list: Entry[] }[] = [];
-    for (const y of years) {
-      const list = published.filter(e => new Date(e.createdAt).getFullYear() === y);
-      if (list.length) groups.push({ year: y, list });
+    if (sub !== 'timeline') return [];
+    const groups = new Map<number, Entry[]>();
+    for (const entry of published) {
+      const year = new Date(entry.createdAt).getFullYear();
+      const list = groups.get(year) ?? [];
+      list.push(entry);
+      groups.set(year, list);
     }
-    return groups;
-  }, [published, years]);
+    return Array.from(groups, ([year, data]) => ({ year, data }));
+  }, [published, sub]);
 
-  const yearEntries = useMemo(() => published.filter(e => new Date(e.createdAt).getFullYear() === activeYear), [published, activeYear]);
+  const yearEntries = useMemo(
+    () => (sub === 'year' ? published.filter(e => new Date(e.createdAt).getFullYear() === activeYear) : []),
+    [published, activeYear, sub],
+  );
   const yearStats = useMemo(() => {
+    if (sub !== 'year') {
+      return {
+        words: 0,
+        photos: [] as string[],
+        months: [] as { label: string; count: number }[],
+        topTags: [] as { id: string; name: string; cnt: number }[],
+      };
+    }
     const words = yearEntries.reduce((sum, e) => sum + wordCount(e.title) + wordCount(e.body), 0);
     const photos = yearEntries.flatMap(e => e.photos);
     const months = Array.from({ length: 12 }, (_, m) => ({
@@ -73,11 +92,34 @@ export default function ReviewScreen() {
       .slice(0, 6)
       .map(([id, cnt]) => ({ id, name: tags.find(tg => tg.id === id)?.name ?? id, cnt }));
     return { words, photos, months, topTags };
-  }, [yearEntries, tags]);
+  }, [yearEntries, tags, sub]);
 
-  const statsAll = useMemo(() => computeStats(published), [published]);
-  const milestones = useMemo(() => computeMilestones(published, statsAll), [published, statsAll]);
-  const throwbacks = useMemo(() => findThrowbacks(published), [published]);
+  const milestones = useMemo(() => sub === 'milestone' ? computeMilestones(published, computeStats(published)) : [], [published, sub]);
+  const throwbacks = useMemo(() => sub === 'milestone' ? findThrowbacks(published, Date.now(), { range: memoryRange, excludedTags }) : [], [published, sub, memoryRange, excludedTags]);
+  const toggleMemoryTag = (id: string) => setExcludedTags(current => current.includes(id) ? current.filter(value => value !== id) : [...current, id]);
+
+  const renderTimelineEntry = useCallback(({ item: entry }: { item: Entry }) => (
+    <View style={{ marginLeft: 6, paddingLeft: 18, paddingBottom: 18, borderLeftWidth: 1.5, borderLeftColor: c.divider }}>
+      <Pressable accessibilityRole="button" accessibilityLabel={`${fmtMonthDay(entry.createdAt)}，${entry.title || '无题日记'}`}
+        onPress={() => router.push({ pathname: '/memory/[id]', params: { id: entry.id } })}
+        style={({ pressed }) => ({ opacity: pressed ? 0.85 : 1 })}>
+        <View style={{ position: 'absolute', left: -25, top: 3, width: 12, height: 12, borderRadius: 6, backgroundColor: c.primaryFaint, alignItems: 'center', justifyContent: 'center' }}>
+          <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: c.primary }} />
+        </View>
+        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
+          <Text style={{ fontSize: fs(12.5), color: c.textSub, fontWeight: '500' }}>{fmtMonthDay(entry.createdAt)}</Text>
+          {entry.mood && <MoodIcon mood={entry.mood} size={16} />}
+        </View>
+        <Card style={{ padding: 14 }}>
+          <Text style={[t.readingTitle, { fontSize: fs(15.5), lineHeight: fs(24) }]} numberOfLines={1}>{entry.title || '无题日记'}</Text>
+          {!!entry.body.trim() && <Text textRole="reading" style={{ fontSize: fs(13), color: c.textSub, marginTop: 6, lineHeight: fs(13) * 1.6 }} numberOfLines={3}>{excerpt(entry.body, 80)}</Text>}
+          {entry.photos.length > 0 && <View style={{ flexDirection: 'row', gap: 8, marginTop: 10 }}>
+            {entry.photos.slice(0, 3).map((photo, i) => <Photo key={photo + i} uri={photo} style={{ flex: 1, height: 76 }} radius={r(10)} />)}
+          </View>}
+        </Card>
+      </Pressable>
+    </View>
+  ), [c, fs, r, t.readingTitle]);
 
   return (
     <Screen edges={['top']}>
@@ -110,9 +152,24 @@ export default function ReviewScreen() {
             onAction={() => router.push('/write')}
           />
         </View>
+      ) : sub === 'timeline' ? (
+        <SectionList
+          sections={byYear}
+          keyExtractor={entry => entry.id}
+          renderItem={renderTimelineEntry}
+          renderSectionHeader={({ section }) => <Text style={[t.h2, { fontSize: fs(19), paddingTop: 8, paddingBottom: 14 }]}>{section.year}年</Text>}
+          stickySectionHeadersEnabled={false}
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 36 }}
+          initialNumToRender={10}
+          maxToRenderPerBatch={8}
+          windowSize={7}
+          removeClippedSubviews={Platform.OS !== 'web'}
+        />
       ) : (
         <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 36 }}>
-          <FadeIn key={sub} dy={10} duration={300}>
+
+          <View>
           {sub === 'period' && (
             <View style={{ gap: 14, paddingTop: 4 }}>
               {/* 时段选择 */}
@@ -128,7 +185,7 @@ export default function ReviewScreen() {
                     <Pressable
                       key={p.key}
                       onPress={() => setPeriodSel(p.key)}
-                      style={{ flex: 1, alignItems: 'center', paddingVertical: 8, borderRadius: 999, backgroundColor: on ? c.primaryFaint : c.card, borderWidth: on ? 1.2 : StyleSheet.hairlineWidth, borderColor: on ? c.primary : c.divider }}
+                      style={{ flex: 1, minHeight: 44, alignItems: 'center', justifyContent: 'center', borderRadius: r(999), backgroundColor: on ? c.primaryFaint : c.card, borderWidth: on ? 1.2 : StyleSheet.hairlineWidth, borderColor: on ? c.primary : c.divider }}
                     >
                       <Text style={{ fontSize: fs(13), color: on ? c.primaryDark : c.textSub, fontWeight: on ? '600' : '400' }}>{p.label}</Text>
                     </Pressable>
@@ -160,73 +217,28 @@ export default function ReviewScreen() {
             </View>
           )}
 
-          {sub === 'timeline' && (
-            <View style={{ paddingTop: 4 }}>
-              {byYear.map(grp => (
-                <View key={grp.year} style={{ marginBottom: 22 }}>
-                  <Text style={[t.h2, { fontSize: fs(19), marginBottom: 14 }]}>{grp.year}年</Text>
-                  <View style={{ paddingLeft: 18, borderLeftWidth: 1.5, borderLeftColor: c.divider, marginLeft: 6, gap: 18 }}>
-                    {grp.list.map(e => {
-                      const d = new Date(e.createdAt);
-                      return (
-                        <Pressable
-                          key={e.id}
-                          onPress={() => router.push({ pathname: '/memory/[id]', params: { id: e.id } })}
-                          style={({ pressed }) => ({ opacity: pressed ? 0.85 : 1 })}
-                        >
-                          {/* 时间线圆点 */}
-                          <View style={{ position: 'absolute', left: -24, top: 4, width: 10, height: 10, borderRadius: 5, backgroundColor: c.primary, borderWidth: 2, borderColor: c.bg }} />
-
-                          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
-                            <Text style={{ fontSize: fs(12.5), color: c.textSub, fontWeight: '500' }}>
-                              {d.getMonth() + 1}月{d.getDate()}日
-                            </Text>
-                            {e.mood && <MoodIcon mood={e.mood} size={16} />}
-                          </View>
-
-                          <Card style={{ padding: 14 }}>
-                            <Text style={[t.h3, { fontSize: fs(15.5) }]} numberOfLines={1}>
-                              {e.title || '无题日记'}
-                            </Text>
-                            {!!e.body.trim() && (
-                              <Text style={{ fontSize: fs(13), color: c.textSub, marginTop: 6, lineHeight: fs(13) * 1.6 }} numberOfLines={3}>
-                                {excerpt(e.body, 80)}
-                              </Text>
-                            )}
-                            {e.photos.length > 0 && (
-                              <View style={{ flexDirection: 'row', gap: 8, marginTop: 10 }}>
-                                {e.photos.slice(0, 3).map((p, i) => (
-                                  <Photo key={p + i} uri={p} style={{ flex: 1, height: 76, maxWidth: e.photos.length === 1 ? '100%' : undefined }} radius={10} />
-                                ))}
-                              </View>
-                            )}
-                          </Card>
-                        </Pressable>
-                      );
-                    })}
-                  </View>
-                </View>
-              ))}
-            </View>
-          )}
-
           {sub === 'year' && (
             <View style={{ gap: 14, paddingTop: 4 }}>
-              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 24 }}>
-                <Pressable hitSlop={12} disabled={yearIdx >= years.length - 1} onPress={() => setYearIdx(i => i + 1)}>
-                  <Text style={{ fontSize: 18, color: yearIdx >= years.length - 1 ? c.textMuted : c.textSub }}>‹</Text>
+              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 18 }}>
+                <Pressable accessibilityRole="button" accessibilityLabel="上一年" disabled={yearIdx >= years.length - 1} onPress={() => setYearIdx(i => i + 1)} style={{ width: 44, height: 44, alignItems: 'center', justifyContent: 'center' }}>
+                  <View style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: c.cardAlt, alignItems: 'center', justifyContent: 'center', opacity: yearIdx >= years.length - 1 ? 0.35 : 1 }}>
+                    <ChevronLeft size={17} color={c.textSub} />
+                  </View>
                 </Pressable>
                 <Text style={[t.h2, { fontSize: fs(18) }]}>{activeYear} 年度回顾</Text>
-                <Pressable hitSlop={12} disabled={yearIdx <= 0} onPress={() => setYearIdx(i => i - 1)}>
-                  <Text style={{ fontSize: 18, color: yearIdx <= 0 ? c.textMuted : c.textSub }}>›</Text>
+                <Pressable accessibilityRole="button" accessibilityLabel="下一年" disabled={yearIdx <= 0} onPress={() => setYearIdx(i => i - 1)} style={{ width: 44, height: 44, alignItems: 'center', justifyContent: 'center' }}>
+                  <View style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: c.cardAlt, alignItems: 'center', justifyContent: 'center', opacity: yearIdx <= 0 ? 0.35 : 1 }}>
+                    <ChevronRight size={17} color={c.textSub} />
+                  </View>
                 </Pressable>
               </View>
 
-              <Card style={{ backgroundColor: c.primaryFaint, borderColor: c.primarySoft }}>
+              <Card style={{ backgroundColor: dark ? c.cardAlt : c.primaryFaint, borderColor: c.primarySoft }}>
                 <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
                   <Text style={[t.h3, { color: c.primaryDark }]}>这一年的足迹</Text>
-                  <Pressable onPress={() => router.push({ pathname: '/annual-report', params: { year: String(activeYear) } })}>
-                    <Text style={{ fontSize: fs(12.5), color: c.primaryDark, fontWeight: '600' }}>完整年度报告 ›</Text>
+                  <Pressable onPress={() => router.push({ pathname: '/annual-report', params: { year: String(activeYear) } })} style={{ flexDirection: 'row', alignItems: 'center', gap: 2 }}>
+                    <Text style={{ fontSize: fs(12.5), color: c.primaryDark, fontWeight: '600' }}>完整年度报告</Text>
+                    <ChevronRight size={14} color={c.primaryDark} />
                   </Pressable>
                 </View>
                 <View style={{ flexDirection: 'row', marginTop: 14 }}>
@@ -256,7 +268,7 @@ export default function ReviewScreen() {
                       <Pressable
                         key={tg.id}
                         onPress={() => router.push({ pathname: '/search', params: { q: tg.name } })}
-                        style={{ paddingHorizontal: 12, paddingVertical: 6, borderRadius: 999, backgroundColor: c.primaryFaint }}
+                        style={{ paddingHorizontal: 12, paddingVertical: 6, borderRadius: r(999), backgroundColor: c.primaryFaint }}
                       >
                         <Text style={{ fontSize: fs(13), color: c.primaryDark }}>#{tg.name} · {tg.cnt}</Text>
                       </Pressable>
@@ -272,13 +284,14 @@ export default function ReviewScreen() {
                       <ImageIcon size={16} color={c.primaryDark} />
                       <Text style={[t.h3, { fontSize: fs(15) }]}>年度影像</Text>
                     </View>
-                    <Pressable onPress={() => router.push('/photos')}>
-                      <Text style={{ fontSize: fs(12.5), color: c.primaryDark }}>查看全部 ›</Text>
+                    <Pressable onPress={() => router.push('/photos')} style={{ flexDirection: 'row', alignItems: 'center', gap: 2 }}>
+                      <Text style={{ fontSize: fs(12.5), color: c.primaryDark }}>查看全部</Text>
+                      <ChevronRight size={14} color={c.primaryDark} />
                     </Pressable>
                   </View>
                   <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
                     {yearStats.photos.slice(0, 6).map((p, idx) => (
-                      <Photo key={p + idx} uri={p} style={{ width: '31.5%', aspectRatio: 1 }} radius={10} />
+                      <Photo key={p + idx} uri={p} style={{ width: '31.5%', aspectRatio: 1 }} radius={r(10)} />
                     ))}
                   </View>
                 </Card>
@@ -288,12 +301,15 @@ export default function ReviewScreen() {
 
           {sub === 'milestone' && (
             <View style={{ gap: 16, paddingTop: 4 }}>
-              {throwbacks.length > 0 && (
                 <View>
-                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 10 }}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 4 }}>
                     <Sparkles size={16} color={c.primaryDark} />
-                    <Text style={[t.h3, { fontSize: fs(15) }]}>记忆胶囊</Text>
+                    <Text style={[t.h3, { fontSize: fs(15), flex: 1 }]}>记忆胶囊</Text>
+                    <Pressable accessibilityRole="button" accessibilityLabel="设置回忆范围" onPress={() => setMemorySettingsOpen(true)} style={{ minHeight: 44, justifyContent: 'center', paddingHorizontal: 8 }}>
+                      <Text style={{ fontSize: fs(13), color: c.primaryDark }}>回忆范围</Text>
+                    </Pressable>
                   </View>
+                  <Text style={[t.caption, { marginBottom: 10 }]}>{memoryRange === 'past-year' ? '近一年' : memoryRange === 'earlier' ? '一年以前' : '全部往事'}{excludedTags.length ? ` · 已排除 ${excludedTags.length} 个标签` : ''} · 不含隐藏、已删与草稿</Text>
                   <View style={{ gap: 10 }}>
                     {throwbacks.map(tb => (
                       <Card key={tb.entry.id} onPress={() => router.push({ pathname: '/memory/[id]', params: { id: tb.entry.id } })}>
@@ -301,13 +317,13 @@ export default function ReviewScreen() {
                           <Text style={{ fontSize: fs(12), color: c.primaryDark, fontWeight: '600' }}>{tb.label}</Text>
                           <Text style={{ fontSize: fs(12), color: c.textMuted }}>{fmtFullDate(tb.entry.createdAt)}</Text>
                         </View>
-                        <Text style={[t.h3, { fontSize: fs(15) }]} numberOfLines={1}>{tb.entry.title || '无题日记'}</Text>
-                        <Text style={[t.sub, { marginTop: 4 }]} numberOfLines={2}>{excerpt(tb.entry.body, 70)}</Text>
+                        <Text style={[t.readingTitle, { fontSize: fs(15), lineHeight: fs(23) }]} numberOfLines={1}>{tb.entry.title || '无题日记'}</Text>
+                        <Text textRole="reading" style={{ fontSize: fs(13), color: c.textSub, lineHeight: fs(21), marginTop: 4 }} numberOfLines={2}>{excerpt(tb.entry.body, 70)}</Text>
                       </Card>
                     ))}
+                    {!throwbacks.length && <Card><Text style={t.sub}>当前范围还没有可回看的往事。可以调整范围，或继续记录新的生活。</Text></Card>}
                   </View>
                 </View>
-              )}
 
               <View>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 10 }}>
@@ -333,11 +349,35 @@ export default function ReviewScreen() {
               </View>
             </View>
           )}
-          </FadeIn>
+          </View>
         </ScrollView>
       )}
+      <BottomSheet visible={memorySettingsOpen} onClose={() => setMemorySettingsOpen(false)} title="回忆范围">
+        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 16, gap: 16 }}>
+          <Text style={t.sub}>只调整本次记忆胶囊，原文、统计与 AI 周记的范围不受影响。</Text>
+          <View style={{ gap: 8 }}>
+            {([{ key: 'all', label: '全部往事' }, { key: 'past-year', label: '近一年' }, { key: 'earlier', label: '一年以前' }] as const).map(option => <Pressable key={option.key} accessibilityRole="radio" accessibilityLabel={option.label} accessibilityState={{ checked: memoryRange === option.key }} aria-checked={memoryRange === option.key} {...webSpaceAction(() => setMemoryRange(option.key))} onPress={() => setMemoryRange(option.key)} style={{ minHeight: 48, padding: 12, borderRadius: r(10), backgroundColor: memoryRange === option.key ? c.primaryFaint : c.card, borderWidth: 1, borderColor: memoryRange === option.key ? c.primary : c.divider }}>
+              <Text style={{ color: memoryRange === option.key ? c.primaryDark : c.text, fontSize: fs(15) }}>{memoryRange === option.key ? '✓ ' : ''}{option.label}</Text>
+            </Pressable>)}
+          </View>
+          {!!memoryTags.length && <>
+            <Text style={t.h3}>不回顾这些标签</Text>
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+              {memoryTags.map(tag => <Pressable key={tag.id} accessibilityRole="checkbox" accessibilityLabel={`排除标签：${tag.name}`} accessibilityState={{ checked: excludedTags.includes(tag.id) }} aria-checked={excludedTags.includes(tag.id)} {...webSpaceAction(() => toggleMemoryTag(tag.id))} onPress={() => toggleMemoryTag(tag.id)} style={{ minHeight: 44, justifyContent: 'center', paddingHorizontal: 12, borderRadius: r(10), backgroundColor: excludedTags.includes(tag.id) ? c.primaryFaint : c.card, borderWidth: 1, borderColor: excludedTags.includes(tag.id) ? c.primary : c.divider }}>
+                <Text style={{ color: c.text, fontSize: fs(14) }}>{excludedTags.includes(tag.id) ? '✓ ' : ''}#{tag.name}</Text>
+              </Pressable>)}
+            </View>
+          </>}
+        </ScrollView>
+        <Button title="完成" onPress={() => setMemorySettingsOpen(false)} />
+      </BottomSheet>
     </Screen>
   );
+}
+
+function PeriodStatNum({ value }: { value: number }) {
+  const v = useCountUp(value, 500);
+  return <>{fmtNumber(v)}</>;
 }
 
 interface PeriodCardProps {
@@ -354,7 +394,7 @@ interface PeriodCardProps {
 
 /** 「周记」页：这段时间的本机统计 + 「记得」写的回看 */
 function PeriodCard({ sel, entries, people, reviews, aiReady, busy, onGenerate, onOpenSettings, onOpenEntry }: PeriodCardProps) {
-  const { c, t, fs } = useTheme();
+  const { c, t, fs, r, dark } = useTheme();
   const kind = sel === 'month' || sel === 'lastMonth' ? 'month' : 'week';
   const offset = sel === 'lastWeek' || sel === 'lastMonth' ? -1 : 0;
   const period = useMemo(() => periodRange(kind, offset), [kind, offset]);
@@ -374,12 +414,14 @@ function PeriodCard({ sel, entries, people, reviews, aiReady, busy, onGenerate, 
         </View>
         <View style={{ flexDirection: 'row', marginTop: 12 }}>
           {[
-            { val: String(stats.count), label: '篇日记' },
-            { val: String(stats.days), label: '记录天数' },
-            { val: fmtNumber(stats.words), label: '写下字数' },
+            { val: stats.count, label: '篇日记' },
+            { val: stats.days, label: '记录天数' },
+            { val: stats.words, label: '写下字数' },
           ].map(col => (
             <View key={col.label} style={{ flex: 1 }}>
-              <Text style={{ fontSize: fs(20), color: c.text, fontWeight: '600', fontVariant: ['tabular-nums'] }}>{col.val}</Text>
+              <Text style={{ fontSize: fs(20), color: c.text, fontWeight: '600', fontVariant: ['tabular-nums'] }}>
+                <PeriodStatNum value={col.val} />
+              </Text>
               <Text style={{ fontSize: fs(11.5), color: c.textSub, marginTop: 2 }}>{col.label}</Text>
             </View>
           ))}
@@ -412,7 +454,7 @@ function PeriodCard({ sel, entries, people, reviews, aiReady, busy, onGenerate, 
 
       {/* 「记得」写的回看 */}
       {review ? (
-        <Card style={{ padding: 16, backgroundColor: c.primaryFaint, borderColor: c.primarySoft }}>
+        <Card style={{ padding: 16, backgroundColor: dark ? c.cardAlt : c.primaryFaint, borderColor: c.primarySoft, borderLeftWidth: 3, borderLeftColor: c.primary }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
               <Sparkles size={14} color={c.primaryDark} />
@@ -427,7 +469,7 @@ function PeriodCard({ sel, entries, people, reviews, aiReady, busy, onGenerate, 
           {review.themes.length > 0 && (
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 12 }}>
               {review.themes.map(theme => (
-                <View key={theme} style={{ paddingHorizontal: 9, paddingVertical: 4, borderRadius: 999, backgroundColor: c.card }}>
+                <View key={theme} style={{ paddingHorizontal: 9, paddingVertical: 4, borderRadius: r(999), backgroundColor: c.card }}>
                   <Text style={{ fontSize: fs(11.5), color: c.primaryDark }}>{theme}</Text>
                 </View>
               ))}
@@ -435,7 +477,7 @@ function PeriodCard({ sel, entries, people, reviews, aiReady, busy, onGenerate, 
           )}
           {!!review.moodLine && <Text style={{ fontSize: fs(12.5), color: c.textSub, marginTop: 10, fontStyle: 'italic' }}>{review.moodLine}</Text>}
           {review.quote && (
-            <Pressable onPress={() => onOpenEntry(review.quote!.entryId)} style={{ flexDirection: 'row', gap: 6, marginTop: 12, backgroundColor: c.card, borderRadius: 12, padding: 10 }}>
+            <Pressable onPress={() => onOpenEntry(review.quote!.entryId)} style={{ flexDirection: 'row', gap: 6, marginTop: 12, backgroundColor: c.card, borderRadius: r(12), borderLeftWidth: 3, borderLeftColor: c.primary, padding: 10 }}>
               <Quote size={13} color={c.textMuted} style={{ marginTop: 2 }} />
               <Text style={{ flex: 1, fontSize: fs(12.5), color: c.textSub, lineHeight: fs(12.5) * 1.6, fontStyle: 'italic' }}>
                 {review.quote.text}
