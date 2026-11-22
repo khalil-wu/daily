@@ -32,6 +32,10 @@ export default function NotebooksScreen() {
   const entries = useStore(s => s.entries);
   const reduced = useReducedMotion();
   const { width: winW, height: winH } = useWindowDimensions();
+  const rootRef = useRef<View>(null);
+  const [box, setBox] = useState<{ w: number; h: number } | null>(null);
+  const cw = box?.w ?? Math.min(winW, 680);
+  const ch = box?.h ?? winH;
 
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState<Notebook | null>(null);
@@ -49,9 +53,9 @@ export default function NotebooksScreen() {
   const edges = useRef(new Animated.Value(0)).current; // 书口层叠 / 书脊条，翻页完成后淡入
 
   // 翻开后的目标位：居中，宽 = min(屏宽-40, 380)，高 = 宽×1.38
-  const bookW = Math.min(winW - 40, 380);
+  const bookW = Math.min(cw - 40, 380, (ch - 32) / 1.38);
   const bookH = bookW * 1.38;
-  const target = { x: (winW - bookW) / 2, y: Math.max(24, (winH - bookH) / 2) };
+  const target = { x: (cw - bookW) / 2, y: Math.max(16, (ch - bookH) / 2) };
 
   const counts = useMemo(() => {
     const map = new Map<string | null, number>();
@@ -86,8 +90,10 @@ export default function NotebooksScreen() {
       setPageReady(false);
       setOpen({ ...book, rect });
     };
-    if (node?.measureInWindow) node.measureInWindow((x, y, w, h) => go({ x, y, w, h }));
-    else go({ x: target.x, y: target.y, w: bookW, h: bookH });
+    const root = rootRef.current;
+    if (node?.measureInWindow && root?.measureInWindow) {
+      root.measureInWindow((rx, ry) => node.measureInWindow((x, y, w, h) => go({ x: x - rx, y: y - ry, w, h })));
+    } else go({ x: target.x, y: target.y, w: bookW, h: bookH });
   };
 
   const closeBook = React.useCallback(() => {
@@ -290,43 +296,8 @@ export default function NotebooksScreen() {
   const flipDeg = flip.interpolate({ inputRange: [0, 165], outputRange: ['0deg', '-165deg'] });
   const coverOpacity = reduced ? 0 : flip.interpolate({ inputRange: [0, 110, 165], outputRange: [1, 1, 0] });
 
-  return (
-    <Screen edges={['top', 'bottom']}>
-      <NavBar title="我的日记本" right={<TextAction label="新建" bold color={c.primaryDark} onPress={openCreate} />} />
-
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 14, paddingBottom: 36 }}>
-        {(() => {
-          // 书宽 = min((内容宽-22)/2, 150)，两本一排放上横板
-          const tileW = Math.min((winW - 40 - 22) / 2, 150);
-          const tiles: React.ReactNode[] = [
-            renderTile(null, '全部日记', c.primary, tileW, '-5deg'),
-            ...notebooks.map((nb, i) => renderTile(nb.id, nb.name, nb.color, tileW, i % 2 === 0 ? '-5deg' : '4deg', nb)),
-            <Pressable
-              key="__create__"
-              accessibilityRole="button"
-              accessibilityLabel="新建日记本"
-              onPress={openCreate}
-              style={{ width: tileW, aspectRatio: 3 / 4, borderRadius: r(12), borderWidth: 1.5, borderStyle: 'dashed', borderColor: c.textMuted, alignItems: 'center', justifyContent: 'center', gap: 8 }}
-            >
-              <Plus size={22} color={c.textMuted} />
-              <Text style={{ fontSize: fs(13), color: c.textMuted }}>新建日记本</Text>
-            </Pressable>,
-          ];
-          const plankColor = ink.on ? mixHex(c.bgDeep, ink.line, 0.18) : c.border;
-          const plankShadow = ink.on ? `0px 4px 0px ${ink.line}` : '0px 6px 10px rgba(0,0,0,0.08)';
-          const rows: React.ReactNode[][] = [];
-          for (let i = 0; i < tiles.length; i += 2) rows.push(tiles.slice(i, i + 2));
-          return rows.map((rowTiles, i) => (
-            <View key={`shelf_${i}`} style={{ marginBottom: 28 }}>
-              <View style={{ flexDirection: 'row', justifyContent: 'center', gap: 22 }}>
-                {rowTiles}
-              </View>
-              <View style={{ height: 8, borderRadius: 3, backgroundColor: plankColor, boxShadow: plankShadow }} />
-            </View>
-          ));
-        })()}
-      </ScrollView>
-
+  const overlayNode = (
+      <View ref={rootRef} collapsable={false} pointerEvents="box-none" style={StyleSheet.absoluteFill} onLayout={e => setBox({ w: e.nativeEvent.layout.width, h: e.nativeEvent.layout.height })}>
       {open && (
         <View style={StyleSheet.absoluteFill} accessibilityViewIsModal accessibilityLabel={`日记本：${open.name}`}>
           <Animated.View style={[StyleSheet.absoluteFill, { backgroundColor: c.overlay, opacity: fade }]}>
@@ -395,6 +366,46 @@ export default function NotebooksScreen() {
           </Animated.View>
         </View>
       )}
+      </View>
+  );
+
+  return (
+    <Screen edges={['top', 'bottom']} overlay={overlayNode}>
+      <NavBar title="我的日记本" right={<TextAction label="新建" bold color={c.primaryDark} onPress={openCreate} />} />
+
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 14, paddingBottom: 36 }}>
+        {(() => {
+          // 书宽 = min((内容宽-22)/2, 150)，两本一排放上横板
+          const tileW = Math.min((cw - 40 - 22) / 2, 150);
+          const tiles: React.ReactNode[] = [
+            renderTile(null, '全部日记', c.primary, tileW, '-5deg'),
+            ...notebooks.map((nb, i) => renderTile(nb.id, nb.name, nb.color, tileW, i % 2 === 0 ? '-5deg' : '4deg', nb)),
+            <Pressable
+              key="__create__"
+              accessibilityRole="button"
+              accessibilityLabel="新建日记本"
+              onPress={openCreate}
+              style={{ width: tileW, aspectRatio: 3 / 4, borderRadius: r(12), borderWidth: 1.5, borderStyle: 'dashed', borderColor: c.textMuted, alignItems: 'center', justifyContent: 'center', gap: 8 }}
+            >
+              <Plus size={22} color={c.textMuted} />
+              <Text style={{ fontSize: fs(13), color: c.textMuted }}>新建日记本</Text>
+            </Pressable>,
+          ];
+          const plankColor = ink.on ? mixHex(c.bgDeep, ink.line, 0.18) : c.border;
+          const plankShadow = ink.on ? `0px 4px 0px ${ink.line}` : '0px 6px 10px rgba(0,0,0,0.08)';
+          const rows: React.ReactNode[][] = [];
+          for (let i = 0; i < tiles.length; i += 2) rows.push(tiles.slice(i, i + 2));
+          return rows.map((rowTiles, i) => (
+            <View key={`shelf_${i}`} style={{ marginBottom: 28 }}>
+              <View style={{ flexDirection: 'row', justifyContent: 'center', gap: 22 }}>
+                {rowTiles}
+              </View>
+              <View style={{ height: 8, borderRadius: 3, backgroundColor: plankColor, boxShadow: plankShadow }} />
+            </View>
+          ));
+        })()}
+      </ScrollView>
+
 
       {/* 新建 / 编辑日记本弹窗 */}
       <BottomSheet visible={modalOpen} onClose={() => setModalOpen(false)} title={editing ? '编辑日记本' : '新建日记本'} keyboard>

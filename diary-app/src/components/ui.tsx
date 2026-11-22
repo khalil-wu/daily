@@ -78,9 +78,11 @@ interface ScreenProps {
   keyboard?: boolean;
   bg?: string;
   scrollProps?: ScrollViewProps;
+  /** 铺满整个容器（含安全区与两侧留白）的浮层 */
+  overlay?: React.ReactNode;
 }
 
-export function Screen({ children, scroll, edges = ['top'], style, contentStyle, header, footer, keyboard, bg, scrollProps }: ScreenProps) {
+export function Screen({ children, scroll, edges = ['top'], style, contentStyle, header, footer, keyboard, bg, scrollProps, overlay }: ScreenProps) {
   const { c } = useTheme();
   const insets = useSafeAreaInsets();
   const maxW = 680;
@@ -113,6 +115,7 @@ export function Screen({ children, scroll, edges = ['top'], style, contentStyle,
       ) : (
         inner
       )}
+      {overlay}
     </SafeAreaView>
   );
 }
