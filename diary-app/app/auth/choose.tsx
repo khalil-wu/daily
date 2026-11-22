@@ -1,18 +1,16 @@
 import React from 'react';
-import { Image, View } from 'react-native';
+import { View } from 'react-native';
 import { Text } from '../../src/components/text';
 import { router } from 'expo-router';
-import { LinearGradient } from 'expo-linear-gradient';
 import { ChevronRight, Cloud, Smartphone } from 'lucide-react-native';
-import { useIllustrations, useTheme } from '../../src/theme/ThemeProvider';
+import { useTheme } from '../../src/theme/ThemeProvider';
 import { actions } from '../../src/store/store';
 import { Card, NavBar, Screen, haptic } from '../../src/components/ui';
 import { cloudConfigured } from '../../src/services/cloud';
 
 /** 5. 选择使用方式 */
 export default function ChooseModeScreen() {
-  const { c, t, fs, dark, r } = useTheme();
-  const pack = useIllustrations();
+  const { c, t, fs, r } = useTheme();
 
   const pickLocal = () => {
     haptic('medium');
@@ -60,11 +58,9 @@ export default function ChooseModeScreen() {
             </Card>
           </View>
         </View>
-
-        <View style={{ height: 224, width: '100%', overflow: 'hidden', backgroundColor: dark ? c.bgDeep : '#FFFFFF' }}>
-          <Image source={pack.cover as any} style={{ width: '100%', height: '100%', opacity: dark ? 0.5 : 0.96 }} resizeMode="cover" />
-          <LinearGradient colors={[c.bg, 'transparent']} style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 64 }} />
-        </View>
+        <Text style={{ fontSize: fs(12.5), color: c.textMuted, textAlign: 'center', paddingHorizontal: 32, paddingBottom: 28, lineHeight: fs(20) }}>
+          之后也可以在「我的 · 账号与同步」登录；本地写的日记会继续留在这台设备上。
+        </Text>
       </View>
     </Screen>
   );

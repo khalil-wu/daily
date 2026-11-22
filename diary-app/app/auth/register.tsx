@@ -1,10 +1,9 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Image, Pressable, ScrollView, View } from 'react-native';
+import { Pressable, ScrollView, View } from 'react-native';
 import { Text } from '../../src/components/text';
 import { router } from 'expo-router';
-import { LinearGradient } from 'expo-linear-gradient';
 import { Lock, ShieldCheck, User } from 'lucide-react-native';
-import { useIllustrations, useTheme } from '../../src/theme/ThemeProvider';
+import { useTheme } from '../../src/theme/ThemeProvider';
 import { actions, useStore } from '../../src/store/store';
 import { Button, Checkbox, Field, NavBar, Screen } from '../../src/components/ui';
 import { BotanicalAccent } from '../../src/components/MoodIcon';
@@ -17,8 +16,7 @@ import { CaptchaSheet } from '../../src/components/captchaSheet';
 
 /** 7. 注册页（1:1 复刻设计稿1 #7） */
 export default function RegisterScreen() {
-  const { c, t, fs, dark } = useTheme();
-  const pack = useIllustrations();
+  const { c, t, fs } = useTheme();
   const { toast } = useFeedback();
   const onboarded = useStore(s => s.onboarded);
   const [identifier, setIdentifier] = useState('');
@@ -162,11 +160,6 @@ export default function RegisterScreen() {
               已有账号? <Text style={{ color: c.primaryDark, fontWeight: '600' }}>去登录</Text>
             </Text>
           </Pressable>
-        </View>
-
-        <View style={{ height: 140, width: '100%', overflow: 'hidden' }}>
-          <Image source={pack.cover as any} style={{ width: '100%', height: '100%', opacity: dark ? 0.3 : 0.85 }} resizeMode="cover" />
-          <LinearGradient colors={[c.bg, 'transparent']} style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 70 }} />
         </View>
       </View>
 

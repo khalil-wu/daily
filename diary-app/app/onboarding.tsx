@@ -196,11 +196,7 @@ export default function OnboardingScreen() {
         style={{ flex: 1 }}
       >
         {PAGES.map((p, idx) => (
-          <View key={p.key} accessibilityElementsHidden={idx !== step} importantForAccessibility={idx === step ? 'auto' : 'no-hide-descendants'} aria-hidden={idx !== step} style={{ width: pageW, flexShrink: 0, paddingHorizontal: 28, justifyContent: 'center', gap: 20, paddingTop: 12, paddingBottom: 12 }}>
-            <View>
-              <Text style={[t.h1, { fontSize: fs(26), letterSpacing: 1 }]}>{p.title}</Text>
-              <Text style={[t.sub, { fontSize: fs(14.5), marginTop: 12, lineHeight: fs(14.5) * 1.75 }]}>{p.desc}</Text>
-            </View>
+          <View key={p.key} accessibilityElementsHidden={idx !== step} importantForAccessibility={idx === step ? 'auto' : 'no-hide-descendants'} aria-hidden={idx !== step} style={{ width: pageW, flexShrink: 0, paddingHorizontal: 28, justifyContent: 'center', alignItems: 'center', gap: 32, paddingTop: 12, paddingBottom: 12 }}>
 
             <Animated.View style={[{ width: '100%', alignItems: 'center' }, pageMotion(idx)]}>
               {idx === 0 && (
@@ -208,8 +204,8 @@ export default function OnboardingScreen() {
                   <View
                     style={{
                       width: '100%',
-                      maxWidth: 320,
-                      maxHeight: 320,
+                      maxWidth: 300,
+                      maxHeight: 300,
                       aspectRatio: 1,
                       borderRadius: inkLook ? r(20) : 24,
                       overflow: 'hidden',
@@ -277,8 +273,8 @@ export default function OnboardingScreen() {
                   <View
                     style={{
                       width: '100%',
-                      maxWidth: 320,
-                      maxHeight: 320,
+                      maxWidth: 300,
+                      maxHeight: 300,
                       aspectRatio: 1,
                       borderRadius: inkLook ? r(20) : 24,
                       overflow: 'hidden',
@@ -290,6 +286,11 @@ export default function OnboardingScreen() {
                 </Postcard>
               )}
             </Animated.View>
+
+            <View style={{ alignItems: 'center', maxWidth: 340 }}>
+              <Text style={[t.h1, { fontSize: fs(26), letterSpacing: 1, textAlign: 'center' }]}>{p.title}</Text>
+              <Text style={[t.sub, { fontSize: fs(14.5), marginTop: 12, lineHeight: fs(14.5) * 1.75, textAlign: 'center' }]}>{p.desc}</Text>
+            </View>
           </View>
         ))}
       </Animated.ScrollView>

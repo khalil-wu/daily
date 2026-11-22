@@ -1,10 +1,9 @@
 import { HiddenAccessBoundary } from '../src/components/HiddenAccessBoundary';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { Animated, Easing, Image, Platform, Pressable, View } from 'react-native';
+import { Animated, Easing, Platform, Pressable, View } from 'react-native';
 import { Text } from '../src/components/text';
 import { router, useLocalSearchParams } from 'expo-router';
-import { LinearGradient } from 'expo-linear-gradient';
-import { useIllustrations, useTheme } from '../src/theme/ThemeProvider';
+import { useTheme } from '../src/theme/ThemeProvider';
 import { actions, useEntry, useEntrySaveStatus, useStore } from '../src/store/store';
 import { flushPendingState, saveState } from '../src/store/storage';
 import { useFeedback } from '../src/components/feedback';
@@ -91,8 +90,7 @@ export default function SavedScreen() {
 
 function SavedContent() {
   const { id, revision } = useLocalSearchParams<{ id?: string; revision?: string }>();
-  const { c, t, fs, dark, r, frame } = useTheme();
-  const pack = useIllustrations();
+  const { c, t, fs, r } = useTheme();
   const status = useEntrySaveStatus(id, Number(revision) || undefined);
   const { toast } = useFeedback();
   const synced = status.synced;
@@ -194,11 +192,6 @@ function SavedContent() {
           <Pressable onPress={() => router.replace('/(tabs)')} style={{ marginTop: 18 }}>
             <Text style={{ fontSize: fs(13), color: c.textSub }}>回到日记本</Text>
           </Pressable>
-        </View>
-
-        <View style={{ height: 140, width: '100%', overflow: 'hidden' }}>
-          <Image source={pack.cover as any} style={{ width: '100%', height: '100%', opacity: dark ? 0.3 : 0.85 }} resizeMode="cover" />
-          <LinearGradient colors={[c.bg, 'transparent']} style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 70 }} />
         </View>
       </View>
     </Screen>

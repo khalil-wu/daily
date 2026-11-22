@@ -10,7 +10,6 @@ import type { Entry, MoodKey } from '../src/store/types';
 import { Chip, EmptyState, Screen, SearchBar, goBack } from '../src/components/ui';
 import { EntryListCard } from '../src/components/EntryCard';
 import { MoodIcon } from '../src/components/MoodIcon';
-import { IMAGES } from '../src/data/assets';
 import { resolveSearchScope } from '../src/utils/editor';
 import { buildSearchIndex, searchEntries } from '../src/utils/search';
 
@@ -132,7 +131,7 @@ export default function SearchScreen() {
           {recent.length > 0 && (
             <View style={{ marginBottom: 24 }}>
               <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
-                <Text style={{ fontSize: fs(13.5), color: c.textSub, fontWeight: '500' }}>最近搜索</Text>
+                <Text style={{ fontSize: fs(13), color: c.textSub, fontWeight: '600' }}>最近搜索</Text>
                 <Pressable onPress={() => actions.clearSearches()}>
                   <Text style={{ fontSize: fs(12.5), color: c.textMuted }}>清空</Text>
                 </Pressable>
@@ -164,7 +163,7 @@ export default function SearchScreen() {
             </View>
           )}
 
-          <Text style={{ fontSize: fs(13.5), color: c.textSub, fontWeight: '500', marginBottom: 12 }}>
+          <Text style={{ fontSize: fs(13), color: c.textSub, fontWeight: '600', marginBottom: 12 }}>
             {topUsedTags.length >= 4 ? '常用标签' : '建议关键词'}
           </Text>
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginBottom: 24 }}>
@@ -177,7 +176,7 @@ export default function SearchScreen() {
                 .map(kw => <Chip key={kw} label={kw} onPress={() => commitQuery(kw)} />)}
           </View>
 
-          <Text style={{ fontSize: fs(13.5), color: c.textSub, fontWeight: '500', marginBottom: 12 }}>按心情筛选</Text>
+          <Text style={{ fontSize: fs(13), color: c.textSub, fontWeight: '600', marginBottom: 12 }}>按心情筛选</Text>
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>
             {MOODS.map(m => (
               <Chip key={m.key} label={m.label} icon={<MoodIcon mood={m.key} size={15} />} onPress={() => setFilterMood(m.key)} />
@@ -186,7 +185,7 @@ export default function SearchScreen() {
 
           {people.length > 0 && (
             <>
-              <Text style={{ fontSize: fs(13.5), color: c.textSub, fontWeight: '500', marginTop: 24, marginBottom: 12 }}>按身边人筛选</Text>
+              <Text style={{ fontSize: fs(13), color: c.textSub, fontWeight: '600', marginTop: 24, marginBottom: 12 }}>按身边人筛选</Text>
               <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>
                 {people.map(p => (
                   <Chip key={p.id} label={p.name} onPress={() => setFilterPerson(p.id)} />
