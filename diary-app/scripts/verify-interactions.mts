@@ -103,12 +103,6 @@ try {
   await page.getByRole('button', { name: /验收日记/ }).waitFor();
   results.push('搜索记录删除不触发父级搜索，关键词结果可打开');
 
-  await page.goto(baseURL);
-  const expand = page.getByRole('button', { name: '展开今日卡片', exact: true });
-  if (await expand.count()) await expand.click();
-  await page.getByRole('button', { name: '换一个写作灵感', exact: true }).click();
-  assert.equal(new URL(page.url()).pathname, '/shelf');
-  results.push('更换灵感只更新题目，不误触新建日记');
   await context.close();
 
   const failure = await seededContext(seedState());

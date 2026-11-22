@@ -7,6 +7,7 @@ import * as Notifications from 'expo-notifications';
 import * as SystemUI from 'expo-system-ui';
 import { StatusBar } from 'expo-status-bar';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import '../src/utils/webPointer';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { ThemeProvider, useIllustrations, useTheme } from '../src/theme/ThemeProvider';
 import { FeedbackProvider } from '../src/components/feedback';

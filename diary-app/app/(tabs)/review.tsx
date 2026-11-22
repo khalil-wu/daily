@@ -487,14 +487,6 @@ function PeriodCard({ sel, entries, people, reviews, aiReady, busy, onGenerate, 
               </Text>
             </Pressable>
           )}
-          {!!review.question && (
-            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 12, paddingTop: 10, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: c.primarySoft }}>
-              <Text style={{ flex: 1, fontSize: fs(12.5), color: c.text, fontWeight: '500' }}>{review.question}</Text>
-              <Pressable onPress={() => router.push({ pathname: '/write', params: { prompt: 'p8' } })} hitSlop={8}>
-                <Text style={{ fontSize: fs(12), color: c.primaryDark }}>去写 ›</Text>
-              </Pressable>
-            </View>
-          )}
         </Card>
       ) : (
         <Card style={{ padding: 16 }}>

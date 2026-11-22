@@ -5,7 +5,7 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import {
   AudioLines, BookOpen, Check, ChevronDown, Cloud, Eye, EyeOff,
-  MapPin, Minus, RefreshCw, Smile, Sparkles, Square, Tag as TagIcon, Users,
+  MapPin, Minus, Smile, Square, Tag as TagIcon, Users,
 } from 'lucide-react-native';
 import { EDITOR_ICONS, PAPER_IMAGES, PAPER_THUMBS } from '../src/data/assets';
 import { Image as ExpoImage } from 'expo-image';
@@ -17,7 +17,7 @@ import {
   getEditorDraft, markAutoSaved, startEditorSession, updateEditorDraft, useEditorDraft,
   removeEditorAudio, removeEditorPhoto, removeEditorVideo, clearEditorSession,
 } from '../src/store/editorSession';
-import { DAILY_PROMPTS, DEFAULT_NOTEBOOK_ID, MOODS, MOOD_ORDER, PAPERS, TEMPLATES, WEATHERS, moodMeta, moodTint, paperColors, weatherMeta } from '../src/data/constants';
+import { DEFAULT_NOTEBOOK_ID, MOODS, MOOD_ORDER, PAPERS, TEMPLATES, WEATHERS, moodMeta, moodTint, paperColors, weatherMeta } from '../src/data/constants';
 import { Chip, NavBar, PillAction, Screen, TextAction, goBack, haptic } from '../src/components/ui';
 import { MoodIcon, WeatherIcon } from '../src/components/MoodIcon';
 import { AudioClipCard } from '../src/components/AudioPlayer';
@@ -46,7 +46,7 @@ export default function WriteScreen() {
 }
 
 function WriteEditor() {
-  const params = useLocalSearchParams<{ id?: string; template?: string; date?: string; action?: string; prompt?: string; mood?: string; tour?: string; notebook?: string }>();
+  const params = useLocalSearchParams<{ id?: string; template?: string; date?: string; action?: string; mood?: string; tour?: string; notebook?: string }>();
   const { c, t, fs, lineHeight, contentWidth, dark, r, frameInk } = useTheme();
   const { toast } = useFeedback();
   const tags = useStore(s => s.tags);
@@ -65,7 +65,6 @@ function WriteEditor() {
   const [nbModal, setNbModal] = useState(false);
   const [paperSheet, setPaperSheet] = useState(false);
   const [viewerIdx, setViewerIdx] = useState<number | null>(null);
-  const [promptTipIdx, setPromptTipIdx] = useState(0);
   const [selection, setSelection] = useState({ start: 0, end: 0 });
   const selectionRef = useRef(selection);
   const [saving, setSaving] = useState(false);
@@ -137,7 +136,6 @@ function WriteEditor() {
     lastSavedEntryRef.current = null;
     initActionRan.current = false;
     const tpl = params.template ? TEMPLATES.find(x => x.id === params.template) : undefined;
-    const promptItem = params.prompt ? DAILY_PROMPTS.find(p => p.id === params.prompt) : undefined;
     const createdAt = params.date ? Number(params.date) : undefined;
     const presetMood = MOODS.find(m => m.key === params.mood)?.key as MoodKey | undefined;
     const existing = params.id ? actions.snapshot().entries.find(e => e.id === params.id) : undefined;
@@ -152,9 +150,7 @@ function WriteEditor() {
       notebookId: resolveWriteNotebook(params.notebook, notebooks, params.id),
       templateData: tpl
         ? { title: tpl.title, body: tpl.body, tags: tpl.tags, template: tpl.id }
-        : promptItem
-          ? { title: promptItem.title, body: `${promptItem.guide}\n\n`, tags: [] }
-          : undefined,
+        : undefined,
     });
     return () => {
       dictationRef.current?.stop();
@@ -163,7 +159,7 @@ function WriteEditor() {
       void persistCurrentDraft();
       clearEditorSession();
     };
-  }, [params.id, params.template, params.date, params.prompt, params.mood, params.notebook, notebooks, persistCurrentDraft]);
+  }, [params.id, params.template, params.date, params.mood, params.notebook, notebooks, persistCurrentDraft]);
 
   // 快捷入口直达录音/拍照/拍视频；离开写作页时取消尚未触发的导航。
   const sessionId = draft?.entry.id;
@@ -826,32 +822,6 @@ function WriteEditor() {
           )}
         </View>
         </View>
-
-        {/* 空白写作灵感引导条 */}
-        {!entry.title && !entry.body && !previewMode && (
-          <View style={{ marginTop: 12, backgroundColor: dark ? c.cardAlt : c.primaryFaint, borderRadius: r(14), borderLeftWidth: 3, borderLeftColor: c.primary, padding: 13, gap: 8 }}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
-                <Sparkles size={13} color={c.primaryDark} />
-                <Text style={{ fontSize: fs(12), color: c.primaryDark, fontWeight: '500' }}>不知道写什么？试试这个提问</Text>
-              </View>
-              <Pressable hitSlop={8} onPress={() => setPromptTipIdx(i => (i + 1) % DAILY_PROMPTS.length)} style={{ flexDirection: 'row', alignItems: 'center', gap: 3 }}>
-                <RefreshCw size={11} color={c.textMuted} />
-                <Text style={{ fontSize: fs(11.5), color: c.textSub }}>换一条</Text>
-              </Pressable>
-            </View>
-            <Pressable
-              onPress={() => {
-                const p = DAILY_PROMPTS[promptTipIdx] ?? DAILY_PROMPTS[0];
-                updateEditorDraft({ title: p.title });
-                setBody(`${p.guide}\n\n`, { step: true });
-              }}
-            >
-              <Text style={{ fontSize: fs(13.5), color: c.text }}>{(DAILY_PROMPTS[promptTipIdx] ?? DAILY_PROMPTS[0]).title}</Text>
-              <Text style={{ fontSize: fs(11.5), color: c.primaryDark, marginTop: 4 }}>轻触填入日记 ›</Text>
-            </Pressable>
-          </View>
-        )}
 
         {/* 已选标签与身边人展示（置于正文后，不打断开篇视线） */}
         {(entry.tags.length > 0 || entry.people.length > 0) && (

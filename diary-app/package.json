@@ -19,6 +19,7 @@
     "verify:release": "node --import tsx scripts/verify-release.mts",
     "test:overlays": "node --import tsx scripts/verify-overlays.mts",
     "test:design": "node scripts/verify-design-system.mjs",
+    "test:shelf": "node --import tsx scripts/verify-shelf-drag.mts",
     "test:editor": "node --import tsx scripts/verify-editor-workflows.mts",
     "test:review": "node --import tsx scripts/verify-review-reminders.mts",
     "test:feedback": "python3 -m unittest discover -s server -p 'test_*.py' -v"

@@ -189,18 +189,6 @@ export const TEMPLATE_CATEGORIES = [
   { key: 'work', label: '工作' },
 ] as const;
 
-/** 每日写作灵感提示词库（参考 Stoic / 格志日记 / Apple Journal） */
-export const DAILY_PROMPTS: { id: string; category: string; title: string; guide: string }[] = [
-  { id: 'p1', category: '小确幸', title: '今天发生的最温暖的一件小事是什么？', guide: '不用很宏大，也许是一杯热饮、一句问候或窗外的一缕阳光。' },
-  { id: 'p2', category: '情绪觉察', title: '如果把今天的心情比作一种天气，它是什么样的？', guide: '试着描述它为什么而来，又如何慢慢流动。' },
-  { id: 'p3', category: '自我对话', title: '最近有哪些事一直在占用你的注意力？', guide: '写下来之后，哪些是可以放下的，哪些值得继续专注？' },
-  { id: 'p4', category: '感恩时刻', title: '此刻最想感谢的自己或身边的一个人', guide: '写下对方或你自己做过的一件值得被记住的小事。' },
-  { id: 'p5', category: '微小进步', title: '今天有哪些做得比昨天更从容的地方？', guide: '哪怕只是早睡了二十分钟，或者拒绝了一件勉强的事。' },
-  { id: 'p6', category: '五感记忆', title: '今天看到、听到或尝到最难忘的一个瞬间', guide: '用具体的细节留住当下的画面、声音与气味。' },
-  { id: 'p7', category: '能量来源', title: '最近什么活动让你做完之后觉得身心充电？', guide: '观察能给你带来平静与快乐的日常习惯。' },
-  { id: 'p8', category: '给未来', title: '想对一年后的自己说的一句话', guide: '把此刻的期待、困惑或祝福存进时间胶囊。' },
-];
-
 /** 列表底部「每日一句」（参考 Diarly 首页名言卡 / 一言），按日轮换 */
 export const DAILY_QUOTES: { text: string; from: string }[] = [
   { text: '人生如逆旅，我亦是行人。', from: '苏轼' },

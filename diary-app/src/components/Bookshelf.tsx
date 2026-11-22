@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Animated, BackHandler, Easing, Image, Platform, Pressable, ScrollView, StyleSheet, useWindowDimensions, View } from 'react-native';
-import { Gesture, GestureDetector } from 'react-native-gesture-handler';
+import { Gesture, GestureDetector, PointerType } from 'react-native-gesture-handler';
 import Reanimated, {
   scrollTo, useAnimatedReaction, useAnimatedRef, useAnimatedStyle, useFrameCallback, useScrollViewOffset, useSharedValue, withSequence, withSpring, withTiming, runOnJS,
   type SharedValue,
@@ -9,6 +9,7 @@ import { Text } from './text';
 import { router, useFocusEffect } from 'expo-router';
 import { ArrowLeft, ArrowRight, Check, Edit3, FolderOpen, MoreHorizontal, PenLine, Plus, Search, Trash2, X } from 'lucide-react-native';
 import { Image as ExpoImage } from 'expo-image';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useTheme } from '../theme/ThemeProvider';
 import { mixHex } from '../theme/palette';
 import { actions, inNotebook, openTutorial, useHydrated, useStore } from '../store/store';
@@ -76,6 +77,7 @@ export function Bookshelf() {
   const flip = useRef(new Animated.Value(0)).current; // 封面翻转角度 0 → 165
   const fade = useRef(new Animated.Value(0)).current; // 遮罩 / 减动效交叉淡入
   const edges = useRef(new Animated.Value(0)).current; // 书口层叠 / 书脊条，翻页完成后淡入
+  const leaves = useRef([0, 1, 2].map(() => new Animated.Value(0))).current; // 翻开时三张薄页依次掀起
   const expand = useRef(new Animated.Value(0)).current; // 书页放大铺满，随后淡入进入书内
 
   const bookW = Math.min(cw - 40, 380, (ch - 32) / COVER_ASPECT);
@@ -133,7 +135,8 @@ export function Bookshelf() {
     fade.stopAnimation();
     edges.stopAnimation();
     expand.stopAnimation();
-  }, [fly, flip, fade, edges, expand]);
+    leaves.forEach(l => l.stopAnimation());
+  }, [fly, flip, fade, edges, expand, leaves]);
 
   const closeBook = React.useCallback(() => {
     stopAll();
@@ -145,6 +148,7 @@ export function Bookshelf() {
     }
     const steps: Animated.CompositeAnimation[] = [];
     if (expandedRef.current) steps.push(Animated.timing(expand, { toValue: 0, duration: 240, easing: Easing.inOut(Easing.cubic), useNativeDriver: ND }));
+    steps.push(Animated.stagger(50, [2, 1, 0].map(i => Animated.timing(leaves[i], { toValue: 0, duration: 160, easing: Easing.inOut(Easing.cubic), useNativeDriver: ND }))));
     steps.push(Animated.timing(flip, { toValue: 0, duration: 300, easing: Easing.inOut(Easing.cubic), useNativeDriver: ND }));
     steps.push(
       Animated.parallel([
@@ -158,7 +162,7 @@ export function Bookshelf() {
         setOpen(null);
       }
     });
-  }, [fly, flip, fade, expand, reduced, stopAll]);
+  }, [fly, flip, fade, expand, leaves, reduced, stopAll]);
 
   const enterBook = React.useCallback(
     (id: string | null) => {
@@ -181,6 +185,7 @@ export function Bookshelf() {
       fly.setValue(1);
       flip.setValue(165);
       edges.setValue(0);
+      leaves.forEach(l => l.setValue(0));
       expandedRef.current = true;
       expand.setValue(1);
       Animated.timing(fade, { toValue: 1, duration: 150, useNativeDriver: ND }).start(({ finished }) => finished && enterBook(id));
@@ -188,12 +193,17 @@ export function Bookshelf() {
       fly.setValue(0);
       flip.setValue(0);
       edges.setValue(0);
+      leaves.forEach(l => l.setValue(0));
       Animated.parallel([
         Animated.timing(fade, { toValue: 1, duration: 250, useNativeDriver: ND }),
         Animated.timing(fly, { toValue: 1, duration: 320, easing: Easing.out(Easing.cubic), useNativeDriver: ND }),
         Animated.sequence([
           Animated.delay(140),
           Animated.timing(flip, { toValue: 165, duration: 440, easing: Easing.inOut(Easing.cubic), useNativeDriver: ND }),
+        ]),
+        Animated.sequence([
+          Animated.delay(400),
+          Animated.stagger(70, leaves.map(l => Animated.timing(l, { toValue: 170, duration: 220, easing: Easing.inOut(Easing.cubic), useNativeDriver: ND }))),
         ]),
         Animated.sequence([
           Animated.delay(560),
@@ -209,7 +219,7 @@ export function Bookshelf() {
     }
     const focusTimer = setTimeout(() => titleRef.current?.focus?.(), reduced ? 200 : 700);
     return () => clearTimeout(focusTimer);
-  }, [open, fly, flip, fade, edges, expand, reduced, stopAll, enterBook]);
+  }, [open, fly, flip, fade, edges, expand, leaves, reduced, stopAll, enterBook]);
 
   useEffect(() => stopAll, [stopAll]);
 
@@ -345,11 +355,24 @@ export function Bookshelf() {
   });
   const dragCtx = useMemo<DragCtx>(() => ({ order: orderSV, dragId: dragIdSV, geo: geoSV, scrollY, scrollDir, containerTop, viewportH }), [orderSV, dragIdSV, geoSV, scrollY, scrollDir, containerTop, viewportH]);
 
+  const liftedRef = useRef(false);
+  useEffect(() => {
+    if (Platform.OS !== 'web') return;
+    const block = (e: TouchEvent) => {
+      if (liftedRef.current && e.cancelable) e.preventDefault();
+    };
+    document.addEventListener('touchmove', block, { passive: false });
+    return () => document.removeEventListener('touchmove', block);
+  }, []);
+  const finePointer = useMemo(() => Platform.OS === 'web' && typeof window !== 'undefined' && !!window.matchMedia?.('(hover: hover) and (pointer: fine)').matches, []);
+
   const onLift = React.useCallback((id: string) => {
+    liftedRef.current = true;
     setDragId(id);
     haptic('medium');
   }, []);
   const onDrop = React.useCallback((ids: string[], success: boolean) => {
+    liftedRef.current = false;
     setDragId('');
     lastDragEnd.current = Date.now();
     if (!success) return;
@@ -408,6 +431,32 @@ export function Bookshelf() {
             </Animated.View>
 
             <TitlePage name={open.name} color={open.color} range={bookInfo.range} count={bookInfo.count} titleRef={titleRef} onClose={closeBook} />
+
+            {!reduced && [0, 1, 2].map(i => (
+              <Animated.View
+                key={`leaf_${i}`}
+                pointerEvents="none"
+                style={[
+                  StyleSheet.absoluteFill,
+                  {
+                    backgroundColor: ['#F7F3EA', '#F3EEE4', '#EFE9DE'][i],
+                    borderRadius: r(12),
+                    overflow: 'hidden',
+                    opacity: leaves[i].interpolate({ inputRange: [0, 0.5, 110, 170], outputRange: [0, 1, 1, 0], extrapolate: 'clamp' }),
+                    transform: [
+                      { perspective: 1400 },
+                      { translateX: -bookW / 2 },
+                      { rotateY: leaves[i].interpolate({ inputRange: [0, 170], outputRange: ['0deg', '-170deg'] }) },
+                      { translateX: bookW / 2 },
+                    ],
+                  },
+                ]}
+              >
+                <Animated.View style={[StyleSheet.absoluteFill, { opacity: leaves[i].interpolate({ inputRange: [0, 90, 170], outputRange: [0, 0.25, 0] }) }]}>
+                  <LinearGradient colors={['rgba(0,0,0,0.9)', 'rgba(0,0,0,0)']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={StyleSheet.absoluteFill} />
+                </Animated.View>
+              </Animated.View>
+            ))}
 
             <Animated.View
               pointerEvents="none"
@@ -487,7 +536,7 @@ export function Bookshelf() {
           <TextAction label="新建" bold color={c.primaryDark} onPress={openCreate} />
         </View>
         {notebooks.length >= 2 && !dragHintSeen && (
-          <Text style={{ fontSize: fs(12), color: c.textMuted, marginBottom: 12 }}>长按书本可以拖动整理</Text>
+          <Text style={{ fontSize: fs(12), color: c.textMuted, marginBottom: 12 }}>{finePointer ? '拖动书本可以整理书架' : '长按书本拖动整理'}</Text>
         )}
         <View
           ref={booksTarget}
@@ -497,7 +546,7 @@ export function Bookshelf() {
             const w = e.nativeEvent.layout.width;
             if (Math.abs(w - shelfW) > 0.5) setShelfW(w);
           }}
-          style={{ height: shelfRows * rowStride, userSelect: 'none' } as any}
+          style={{ height: shelfRows * rowStride, userSelect: 'none', WebkitTouchCallout: 'none', WebkitUserSelect: 'none' } as any}
         >
           {Array.from({ length: shelfRows }, (_, i) => (
             <View key={`plank_${i}`} pointerEvents="none" style={{ position: 'absolute', left: 0, right: 0, top: i * rowStride + tileH, height: 8, borderRadius: 3, backgroundColor: plankColor, boxShadow: plankShadow }} />
@@ -780,11 +829,14 @@ function DraggableBook({ id, init, geo, ctx, reduced, color, onLift, onDrop, chi
     },
   );
 
-  const pan = useMemo(
-    () =>
-      Gesture.Pan()
-        .activateAfterLongPress(260)
+  const downX = useSharedValue(0);
+  const downY = useSharedValue(0);
+
+  const pan = useMemo(() => {
+    const wire = (g: ReturnType<typeof Gesture.Pan>) =>
+      g
         .onStart(() => {
+          'worklet';
           startX.value = sx.value;
           startY.value = sy.value;
           startScroll.value = scrollY.value;
@@ -801,6 +853,7 @@ function DraggableBook({ id, init, geo, ctx, reduced, color, onLift, onDrop, chi
           if (onLift) runOnJS(onLift)(id);
         })
         .onUpdate(e => {
+          'worklet';
           dx.value = e.translationX;
           dy.value = e.translationY;
           if (!reduced) {
@@ -810,6 +863,7 @@ function DraggableBook({ id, init, geo, ctx, reduced, color, onLift, onDrop, chi
           hover();
         })
         .onFinalize((_e, success) => {
+          'worklet';
           if (!active.value) return;
           scrollDir.value = 0;
           if (!success) order.value = startOrder.value;
@@ -824,9 +878,38 @@ function DraggableBook({ id, init, geo, ctx, reduced, color, onLift, onDrop, chi
           rot.value = reduced ? 0 : withSpring(0, SETTLE);
           lift.value = withTiming(0, { duration: 200 });
           if (onDrop) runOnJS(onDrop)(order.value.slice(), success);
+        });
+
+    // 鼠标：按下后移动 ≥ 6px 立即开始拖动；其余指针（触摸 / 触控笔）：长按 250ms 抬起
+    const mouse = wire(
+      Gesture.Pan()
+        .manualActivation(true)
+        .onTouchesDown((e, sm) => {
+          'worklet';
+          if (e.pointerType !== PointerType.MOUSE) {
+            sm.fail();
+            return;
+          }
+          downX.value = e.allTouches[0]?.absoluteX ?? 0;
+          downY.value = e.allTouches[0]?.absoluteY ?? 0;
+        })
+        .onTouchesMove((e, sm) => {
+          'worklet';
+          const t = e.allTouches[0];
+          if (!t) return;
+          if (Math.hypot(t.absoluteX - downX.value, t.absoluteY - downY.value) >= 6) sm.activate();
         }),
-    [id, reduced, onLift, onDrop],
-  );
+    );
+    const touch = wire(
+      Gesture.Pan()
+        .activateAfterLongPress(250)
+        .onTouchesDown((e, sm) => {
+          'worklet';
+          if (e.pointerType === PointerType.MOUSE) sm.fail();
+        }),
+    );
+    return Gesture.Race(mouse, touch);
+  }, [id, reduced, onLift, onDrop]);
 
   const style = useAnimatedStyle(() => ({
     transform: [
@@ -840,7 +923,7 @@ function DraggableBook({ id, init, geo, ctx, reduced, color, onLift, onDrop, chi
   const shadowStyle = useAnimatedStyle(() => ({ opacity: lift.value }));
 
   return (
-    <GestureDetector gesture={pan}>
+    <GestureDetector gesture={pan} touchAction="pan-y">
       <Reanimated.View style={[{ position: 'absolute', left: 0, top: 0, width: geo.tileW }, style]}>
         <Reanimated.View
           pointerEvents="none"

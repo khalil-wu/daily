@@ -2,10 +2,10 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Animated, Image, Pressable, View } from 'react-native';
 import { Text } from './text';
 import { router, useFocusEffect } from 'expo-router';
-import { Check, ChevronDown, ChevronRight, ChevronUp, Flame, RefreshCw, Sparkles } from 'lucide-react-native';
+import { Check, ChevronDown, ChevronUp, Flame } from 'lucide-react-native';
 import { useTheme } from '../theme/ThemeProvider';
 import { useStore } from '../store/store';
-import { DAILY_PROMPTS, MOODS, moodTint } from '../data/constants';
+import { MOODS, moodTint } from '../data/constants';
 import { fmtMonthDay, greetingFor, WEEK_CN } from '../utils/date';
 import { computeDailyGoalProgress, computeTodaySummary } from '../utils/grouping';
 import { fmtNumber } from '../utils/text';
@@ -16,7 +16,7 @@ import { IMAGES } from '../data/assets';
 import { useTourTarget } from './tour';
 
 /**
- * 首页「今日」卡片 —— 问候 + Diarly 式单排心情快开 + 杂志引文式今日灵感 + 目标进度。
+ * 首页「今日」卡片 —— 问候 + Diarly 式单排心情快开 + 目标进度。
  * 今天写过之后自动收起为一行进度，把屏幕让给日记列表。
  */
 export function TodayCard() {
@@ -41,8 +41,6 @@ export function TodayCard() {
 
   const [manual, setManual] = useState<boolean | null>(null);
   const expanded = manual ?? !summary.wroteToday;
-  const [promptIdx, setPromptIdx] = useState(() => new Date().getDate() % DAILY_PROMPTS.length);
-  const prompt = DAILY_PROMPTS[promptIdx] ?? DAILY_PROMPTS[0];
 
   const d = new Date(now);
   const dateText = `${fmtMonthDay(now)} ${WEEK_CN[d.getDay()]}`;
@@ -148,47 +146,6 @@ export function TodayCard() {
             ))}
           </View>
 
-          {/* 今日灵感（杂志引文风） */}
-          <View
-            style={{
-              marginTop: 12,
-              backgroundColor: dark ? c.cardAlt : c.primaryFaint,
-              borderRadius: r(12),
-              borderLeftWidth: 3,
-              borderLeftColor: c.primary,
-              paddingHorizontal: 13,
-              paddingTop: 4,
-              paddingBottom: 7,
-            }}
-          >
-            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
-                <Sparkles size={12} color={c.primaryDark} />
-                <Text style={{ fontSize: fs(11.5), color: c.primaryDark, fontWeight: '600' }}>今日灵感 · {prompt.category}</Text>
-              </View>
-              <Pressable
-                accessibilityRole="button"
-                accessibilityLabel="换一个写作灵感"
-                onPress={() => {
-                  haptic('light');
-                  setPromptIdx(i => (i + 1) % DAILY_PROMPTS.length);
-                }}
-                style={{ flexDirection: 'row', alignItems: 'center', gap: 3, minHeight: 44, minWidth: 44, paddingLeft: 8, justifyContent: 'flex-end' }}
-              >
-                <RefreshCw size={11} color={c.textSub} />
-                <Text style={{ fontSize: fs(11.5), color: c.textSub }}>换一题</Text>
-              </Pressable>
-            </View>
-            <PressableScale
-              scaleTo={0.985}
-              onPress={() => router.push({ pathname: '/write', params: { prompt: prompt.id } })}
-              accessibilityLabel={`用今日灵感写一篇：${prompt.title}`}
-              style={{ flexDirection: 'row', alignItems: 'center', gap: 8, minHeight: 44, marginTop: -2 }}
-            >
-              <Text numberOfLines={2} style={[t.readingTitle, { fontSize: fs(14.5), flex: 1, lineHeight: fs(14.5) * 1.55 }]}>{prompt.title}</Text>
-              <ChevronRight size={16} color={c.primaryDark} />
-            </PressableScale>
-          </View>
         </FadeIn>
       )}
 
