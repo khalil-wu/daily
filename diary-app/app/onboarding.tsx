@@ -5,7 +5,7 @@ import { router } from 'expo-router';
 import { useIllustrations, useTheme } from '../src/theme/ThemeProvider';
 import { Button, Screen } from '../src/components/ui';
 import { MoodIcon } from '../src/components/MoodIcon';
-import { ND, PressableScale, SPRING, useReducedMotion } from '../src/components/motion';
+import { Jelly, ND, PressableScale, SPRING, useReducedMotion } from '../src/components/motion';
 import type { MoodKey } from '../src/store/types';
 
 const PAGES = [
@@ -241,7 +241,9 @@ export default function OnboardingScreen() {
                             transform: [{ scale: on ? 1.1 : 1 }],
                           }}
                         >
-                          <MoodIcon mood={m} size={36} />
+                          <Jelly active={on}>
+                            <MoodIcon mood={m} size={36} />
+                          </Jelly>
                         </PressableScale>
                       );
                     })}

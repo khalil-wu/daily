@@ -13,7 +13,7 @@ import { EntryGridCard, EntryListCard } from '../../src/components/EntryCard';
 import { SwipeRow, closeOpenSwipeRow, type SwipeAction } from '../../src/components/SwipeRow';
 import { TodayCard } from '../../src/components/TodayCard';
 import { OnThisDay } from '../../src/components/OnThisDay';
-import { animateNextLayout, BottomSheet, FadeIn, ND, PressableScale, useReducedMotion, SPRING } from '../../src/components/motion';
+import { animateNextLayout, BottomSheet, CrumpleRow, FadeIn, ND, PressableScale, useReducedMotion, SPRING } from '../../src/components/motion';
 import { setTourHandler, useTourTarget } from '../../src/components/tour';
 import { HomeSkeleton } from '../../src/components/Skeleton';
 import { MoodIcon } from '../../src/components/MoodIcon';
@@ -176,8 +176,20 @@ export default function HomeScreen() {
     else router.push({ pathname: '/memory/[id]', params: { id: e.id } });
   }, []);
 
-  const trashWithUndo = useCallback(
+  const [removingIds, setRemovingIds] = useState<ReadonlySet<string>>(new Set());
+  const removingRef = useRef(new Set<string>());
+  const markRemoving = useCallback((id: string) => {
+    removingRef.current.add(id);
+    setRemovingIds(new Set(removingRef.current));
+  }, []);
+  const unmarkRemoving = useCallback((id: string) => {
+    removingRef.current.delete(id);
+    setRemovingIds(new Set(removingRef.current));
+  }, []);
+
+  const doTrash = useCallback(
     (entry: Entry) => {
+      unmarkRemoving(entry.id);
       animateNextLayout();
       actions.trashEntry(entry.id);
       toast('已移入最近删除', {
@@ -192,7 +204,23 @@ export default function HomeScreen() {
         },
       });
     },
-    [toast],
+    [toast, unmarkRemoving],
+  );
+
+  // 先揉成纸团（可见的行播放 CrumpleRow，离屏/减动效直接删），动画/兜底计时结束才真正移入回收站
+  const trashWithUndo = useCallback(
+    (entry: Entry) => {
+      if (reducedMotion) {
+        doTrash(entry);
+        return;
+      }
+      markRemoving(entry.id);
+      // 若行未挂载（离屏虚拟化），400ms 兜底保证删除一定发生
+      setTimeout(() => {
+        if (removingRef.current.has(entry.id)) doTrash(entry);
+      }, 400);
+    },
+    [reducedMotion, doTrash, markRemoving],
   );
 
   const openNotebookPickerForEntry = useCallback(
@@ -416,32 +444,36 @@ export default function HomeScreen() {
           }}
         >
           <SwipeRow actions={makeSwipeActions(item.entry)} radius={item.first && item.last ? r(18) : 0}>
-            <EntryListCard
-              entry={item.entry}
-              grouped={{ first: item.first, last: item.last }}
-              onPress={() => openEntry(item.entry)}
-              onLongPress={() => openEntrySheet(item.entry)}
-            />
+            <CrumpleRow active={removingIds.has(item.entry.id)} onDone={() => doTrash(item.entry)}>
+              <EntryListCard
+                entry={item.entry}
+                grouped={{ first: item.first, last: item.last }}
+                onPress={() => openEntry(item.entry)}
+                onLongPress={() => openEntrySheet(item.entry)}
+              />
+            </CrumpleRow>
           </SwipeRow>
         </View>
       );
     },
-    [c.card, c.border, c.divider, c.shadow, c.textMuted, dark, fs, look.flat, r, t.h2, makeSwipeActions, openEntry, openEntrySheet],
+    [c.card, c.border, c.divider, c.shadow, c.textMuted, dark, fs, look.flat, r, t.h2, makeSwipeActions, openEntry, openEntrySheet, removingIds, doTrash],
   );
 
   const renderGridItem = useCallback(
     ({ item }: { item: Entry }) => (
       <View style={{ width: '48.2%', flexDirection: 'row' }}>
         <View style={{ flex: 1, minWidth: 0, flexDirection: 'row' }}>
-          <EntryGridCard
-            entry={item}
-            onPress={() => openEntry(item)}
-            onLongPress={() => openEntrySheet(item)}
-          />
+          <CrumpleRow active={removingIds.has(item.id)} onDone={() => doTrash(item)} style={{ flex: 1 }}>
+            <EntryGridCard
+              entry={item}
+              onPress={() => openEntry(item)}
+              onLongPress={() => openEntrySheet(item)}
+            />
+          </CrumpleRow>
         </View>
       </View>
     ),
-    [openEntry, openEntrySheet],
+    [openEntry, openEntrySheet, removingIds, doTrash],
   );
 
   return (

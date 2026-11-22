@@ -2,7 +2,7 @@ import React, { useMemo, useState } from 'react';
 import { Pressable, ScrollView, View } from 'react-native';
 import { Text } from '../../src/components/text';
 import { router } from 'expo-router';
-import { Check, ChevronRight, Flame, MapPin, Search, Sparkles } from 'lucide-react-native';
+import { ChevronRight, Flame, MapPin, Search, Sparkles } from 'lucide-react-native';
 import { useTheme } from '../../src/theme/ThemeProvider';
 import { useStore } from '../../src/store/store';
 import { Card, IconButton, Screen, Segmented } from '../../src/components/ui';
@@ -19,6 +19,7 @@ import {
   WordCloud,
 } from '../../src/components/Charts';
 import { moodMeta } from '../../src/data/constants';
+import { MoodJar, StreakBranch } from '../../src/components/stats-delight';
 import { computeStats } from '../../src/utils/stats';
 import { extractKeywords } from '../../src/utils/keywords';
 import { fmtNumber } from '../../src/utils/text';
@@ -46,7 +47,15 @@ export default function StatsScreen() {
     [visibleEntries, sub],
   );
   const currentYear = new Date().getFullYear();
-  const weekLabels = ['一', '二', '三', '四', '五', '六', '日'];
+  // 本月心情罐：当月已发布、有心情的日记
+  const monthEntries = useMemo(() => {
+    const d = new Date();
+    return visibleEntries.filter(e => {
+      if (e.deletedAt || e.status !== 'published' || !e.mood) return false;
+      const ed = new Date(e.createdAt);
+      return ed.getFullYear() === d.getFullYear() && ed.getMonth() === d.getMonth();
+    });
+  }, [visibleEntries]);
   const domMood = moodMeta(stats.dominantMood);
   const topTagMood = stats.tagMoods[0];
   const topTagName = topTagMood ? tags.find(x => x.id === topTagMood.tagId)?.name : undefined;
@@ -108,26 +117,25 @@ export default function StatsScreen() {
                     <Text style={{ fontSize: fs(26), color: c.text, fontWeight: '600', fontVariant: ['tabular-nums'] }}><CountText to={stats.currentStreak} /></Text>
                     <Text style={{ fontSize: fs(14), color: c.text }}>天</Text>
                   </View>
-                  <Text style={{ fontSize: fs(12), color: c.textMuted, marginTop: 4 }}>最长连续 {stats.longestStreak} 天</Text>
+                  <Text style={{ fontSize: fs(12), color: c.textMuted, marginTop: 4 }}>
+                    {stats.currentStreak > 0 ? `最长连续 ${stats.longestStreak} 天` : '今天写一点，小枝就会发芽'}
+                  </Text>
                 </View>
                 <View style={{ width: 52, height: 52, borderRadius: 26, backgroundColor: c.primaryFaint, alignItems: 'center', justifyContent: 'center' }}>
                   <Flame size={28} color={c.primary} fill={c.primarySoft} />
                 </View>
               </View>
 
-              <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 16, paddingTop: 14, borderTopWidth: 0.5, borderTopColor: c.divider }}>
-                {weekLabels.map((lbl, idx) => {
-                  const on = stats.weekChecked[idx];
-                  return (
-                    <View key={lbl} style={{ alignItems: 'center', gap: 6 }}>
-                      <Text style={{ fontSize: fs(11), color: c.textMuted }}>{lbl}</Text>
-                      <View style={{ width: 22, height: 22, borderRadius: 11, backgroundColor: on ? c.primary : c.bgDeep, alignItems: 'center', justifyContent: 'center' }}>
-                        {on && <Check size={12} color={c.textOnPrimary} strokeWidth={2.8} />}
-                      </View>
-                    </View>
-                  );
-                })}
+              <StreakBranch weekChecked={stats.weekChecked} />
+            </Card>
+
+            {/* 本月心情罐 */}
+            <Card>
+              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+                <Text style={[t.h3, { fontSize: fs(15) }]}>本月心情罐</Text>
+                <Text style={{ fontSize: fs(11.5), color: c.textMuted }}>{monthEntries.length} 颗心情</Text>
               </View>
+              <MoodJar monthEntries={monthEntries} onPress={() => setSub('mood')} />
             </Card>
 
             {/* 近 12 周像素热力矩阵（写作热度 / 心情像素切换） */}

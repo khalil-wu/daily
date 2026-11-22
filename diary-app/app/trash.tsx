@@ -1,8 +1,8 @@
 import { HiddenAccessBoundary } from '../src/components/HiddenAccessBoundary';
-import React, { useCallback, useMemo } from 'react';
+import React, { useCallback, useMemo, useRef, useState } from 'react';
 import { FlatList, Platform, Pressable, View } from 'react-native';
 import { Text } from '../src/components/text';
-import { animateNextLayout, PressableScale } from '../src/components/motion';
+import { animateNextLayout, CrumpleRow, PressableScale, useReducedMotion } from '../src/components/motion';
 import { RotateCcw, Trash2 } from 'lucide-react-native';
 import { useTheme } from '../src/theme/ThemeProvider';
 import { TRASH_DAYS, actions, useStore } from '../src/store/store';
@@ -23,6 +23,36 @@ function TrashContents() {
   const { c, t, fs, r } = useTheme();
   const { toast, confirm, sheet } = useFeedback();
   const entries = useStore(s => s.entries);
+  const reduced = useReducedMotion();
+  const [restoringIds, setRestoringIds] = useState<ReadonlySet<string>>(new Set());
+  const restoringRef = useRef(new Set<string>());
+
+  const doRestore = useCallback(
+    (e: Entry) => {
+      restoringRef.current.delete(e.id);
+      setRestoringIds(new Set(restoringRef.current));
+      animateNextLayout();
+      actions.restoreEntry(e.id);
+      toast('已恢复日记');
+    },
+    [toast],
+  );
+
+  // 恢复 = 纸团展开：先放展开动画再放回列表，400ms 兜底不丢恢复
+  const restoreWithUnfold = useCallback(
+    (e: Entry) => {
+      if (reduced) {
+        doRestore(e);
+        return;
+      }
+      restoringRef.current.add(e.id);
+      setRestoringIds(new Set(restoringRef.current));
+      setTimeout(() => {
+        if (restoringRef.current.has(e.id)) doRestore(e);
+      }, 400);
+    },
+    [reduced, doRestore],
+  );
 
   const list = useMemo(
     () => entries.filter(e => !!e.deletedAt).sort((a, b) => (b.deletedAt ?? 0) - (a.deletedAt ?? 0)),
@@ -68,9 +98,8 @@ function TrashContents() {
             label: '恢复这篇日记',
             icon: RotateCcw,
             onPress: () => {
-              animateNextLayout();
-              actions.restoreEntry(id);
-              toast('已恢复日记');
+              const entry = entries.find(x => x.id === id);
+              if (entry) restoreWithUnfold(entry);
             },
           },
           {
@@ -83,7 +112,7 @@ function TrashContents() {
         title || '无题日记',
       );
     },
-    [confirmDestroy, sheet, toast],
+    [confirmDestroy, entries, restoreWithUnfold, sheet],
   );
 
   const renderItem = useCallback(
@@ -99,11 +128,7 @@ function TrashContents() {
               label: '恢复',
               icon: RotateCcw,
               color: c.primary,
-              onPress: () => {
-                animateNextLayout();
-                actions.restoreEntry(e.id);
-                toast('已恢复日记');
-              },
+              onPress: () => restoreWithUnfold(e),
             },
             {
               key: 'destroy',
@@ -114,6 +139,7 @@ function TrashContents() {
             },
           ]}
         >
+          <CrumpleRow active={restoringIds.has(e.id)} reverse onDone={() => doRestore(e)}>
           <Card
             padded={false}
             style={{ flexDirection: 'row', alignItems: 'center' }}
@@ -145,10 +171,11 @@ function TrashContents() {
               <RotateCcw size={16} color={c.primaryDark} />
             </Pressable>
           </Card>
+          </CrumpleRow>
         </SwipeRow>
       );
     },
-    [c.danger, c.primary, c.primaryDark, c.primaryFaint, c.textSub, confirmDestroy, fs, onItemPress, r, t.readingTitle, toast],
+    [c.danger, c.primary, c.primaryDark, c.primaryFaint, c.textSub, confirmDestroy, doRestore, fs, onItemPress, r, restoringIds, restoreWithUnfold, t.readingTitle, toast],
   );
 
   return (

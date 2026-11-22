@@ -140,6 +140,83 @@ export function PressableScale({ scaleTo = 0.97, style, onPressIn, onPressOut, c
   );
 }
 
+/* ---------------- 果冻反馈 ---------------- */
+
+/**
+ * 选中时的果冻挤压回弹：scaleX 1→1.18→0.94→1 / scaleY 1→0.82→1.06→1。
+ * `active` 由 false → true 时播放一次；减弱动效下静止。
+ */
+export function Jelly({ active, style, children }: { active: boolean; style?: StyleProp<ViewStyle>; children: React.ReactNode }) {
+  const reduced = useReducedMotion();
+  const sx = useRef(new Animated.Value(1)).current;
+  const sy = useRef(new Animated.Value(1)).current;
+  useEffect(() => {
+    if (!active || reduced) {
+      sx.setValue(1);
+      sy.setValue(1);
+      return;
+    }
+    sx.stopAnimation();
+    sy.stopAnimation();
+    const pair = (x: number, y: number, d: number) =>
+      Animated.parallel([
+        Animated.timing(sx, { toValue: x, duration: d, easing: Easing.inOut(Easing.cubic), useNativeDriver: ND }),
+        Animated.timing(sy, { toValue: y, duration: d, easing: Easing.inOut(Easing.cubic), useNativeDriver: ND }),
+      ]);
+    const anim = Animated.sequence([pair(1.18, 0.82, 110), pair(0.94, 1.06, 120), pair(1, 1, 150)]);
+    anim.start();
+    return () => anim.stop();
+  }, [active, reduced, sx, sy]);
+  return <Animated.View style={[style, { transform: [{ scaleX: sx }, { scaleY: sy }] }]}>{children}</Animated.View>;
+}
+
+/* ---------------- 纸团删除 / 展开恢复 ---------------- */
+
+/**
+ * 行的纸团折叠动画：active 变 true 后 forward（默认）揉成纸团再回调删除，
+ * reverse 时从纸团展开再回调恢复。超时兜底保证动作不丢。
+ */
+export function CrumpleRow({ active, reverse = false, onDone, style, children }: { active: boolean; reverse?: boolean; onDone: () => void; style?: StyleProp<ViewStyle>; children: React.ReactNode }) {
+  const reduced = useReducedMotion();
+  const v = useRef(new Animated.Value(reverse ? 1 : 0)).current;
+  const called = useRef(false);
+  const fired = () => {
+    if (called.current) return;
+    called.current = true;
+    onDone();
+  };
+  useEffect(() => {
+    if (!active) return;
+    if (reduced) {
+      fired();
+      return;
+    }
+    const timer = setTimeout(fired, 400);
+    const anim = Animated.timing(v, {
+      toValue: reverse ? 0 : 1,
+      duration: reverse ? 220 : 240,
+      easing: reverse ? Easing.out(Easing.cubic) : Easing.in(Easing.cubic),
+      useNativeDriver: ND,
+    });
+    anim.start(({ finished }) => {
+      if (finished) {
+        clearTimeout(timer);
+        fired();
+      }
+    });
+    return () => {
+      clearTimeout(timer);
+      anim.stop();
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [active, reduced]);
+  const sx = v.interpolate({ inputRange: [0, 1], outputRange: [1, reverse ? 0.6 : 0.35] });
+  const sy = v.interpolate({ inputRange: [0, 1], outputRange: [1, reverse ? 0.6 : 0.3] });
+  const rot = v.interpolate({ inputRange: [0, 1], outputRange: ['0deg', reverse ? '-8deg' : '-18deg'] });
+  const opacity = reverse ? 1 : v.interpolate({ inputRange: [0, 0.7, 1], outputRange: [1, 0.85, 0] });
+  return <Animated.View style={[style, { opacity, transform: [{ scaleX: sx }, { scaleY: sy }, { rotate: rot }] }]}>{children}</Animated.View>;
+}
+
 /* ---------------- 入场 ---------------- */
 
 /** 淡入 + 轻微上浮的入场动画 */

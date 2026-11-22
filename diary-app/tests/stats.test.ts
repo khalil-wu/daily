@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { extractKeywords } from '../src/utils/keywords';
 import { computeAnnualReport, getAvailableYears } from '../src/utils/annual';
-import { computeStats, findThrowbacks } from '../src/utils/stats';
+import { computeStats, findThrowbacks, layoutBeans } from '../src/utils/stats';
 import type { Entry, MoodKey } from '../src/store/types';
 
 function makeEntry(id: string, createdAt: number, overrides: Partial<Entry> = {}): Entry {
@@ -126,4 +126,26 @@ test('大数据性能测试：5000 篇日记的常规统计与年度报告分析
   assert.ok(ar.totalEntries > 4000);
   assert.ok(d1 < 1500, `computeStats 耗时 ${d1.toFixed(1)}ms 超过 1500ms`);
   assert.ok(d2 < 1500, `computeAnnualReport 耗时 ${d2.toFixed(1)}ms 超过 1500ms`);
+});
+
+test('layoutBeans: 确定性、罐内、数量保持、超容量收缩', () => {
+  const ids = Array.from({ length: 24 }, (_, i) => `entry-${i}`);
+  const a = layoutBeans(ids, 160, 120);
+  const b = layoutBeans(ids, 160, 120);
+  assert.deepEqual(a, b);
+  assert.equal(a.length, 24);
+  for (const bean of a) {
+    assert.ok(bean.x >= 0 && bean.x + bean.w <= 160, `x out of jar: ${JSON.stringify(bean)}`);
+    assert.ok(bean.y >= 0 && bean.y + bean.h <= 120, `y out of jar: ${JSON.stringify(bean)}`);
+  }
+  // 超过容量时豆子收缩且仍全部进罐
+  const many = layoutBeans(Array.from({ length: 200 }, (_, i) => `e${i}`), 160, 120);
+  assert.equal(many.length, 200);
+  assert.ok(many[0].w < 26);
+  for (const bean of many) {
+    assert.ok(bean.x >= 0 && bean.x + bean.w <= 160);
+    assert.ok(bean.y >= 0 && bean.y + bean.h <= 120);
+  }
+  // 空罐
+  assert.deepEqual(layoutBeans([], 160, 120), []);
 });

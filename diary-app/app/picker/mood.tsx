@@ -8,7 +8,7 @@ import { MOODS, MOOD_ORDER, moodTint } from '../../src/data/constants';
 import type { MoodKey } from '../../src/store/types';
 import { Button, NavBar, Screen, goBack, haptic, webSpaceAction } from '../../src/components/ui';
 import { MoodIcon } from '../../src/components/MoodIcon';
-import { PressableScale } from '../../src/components/motion';
+import { Jelly, PressableScale } from '../../src/components/motion';
 
 /** 4. 心情选择页 */
 export default function MoodPickerScreen() {
@@ -65,9 +65,11 @@ export default function MoodPickerScreen() {
                     <Check size={13} color="#182326" strokeWidth={3} />
                   </View>
                 )}
-                <View style={{ width: 52, height: 52, borderRadius: 26, backgroundColor: moodTint(m, dark), alignItems: 'center', justifyContent: 'center', marginBottom: 10 }}>
-                  <MoodIcon mood={m.key} size={36} />
-                </View>
+                <Jelly active={on} style={{ marginBottom: 10 }}>
+                  <View style={{ width: 52, height: 52, borderRadius: 26, backgroundColor: moodTint(m, dark), alignItems: 'center', justifyContent: 'center' }}>
+                    <MoodIcon mood={m.key} size={36} />
+                  </View>
+                </Jelly>
                 <Text style={[t.h3, { fontSize: fs(16) }]}>{m.label}</Text>
                 <Text style={{ fontSize: fs(12), color: c.textSub, marginTop: 4 }}>{m.desc}</Text>
               </PressableScale>
