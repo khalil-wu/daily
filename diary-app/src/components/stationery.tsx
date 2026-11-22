@@ -3,7 +3,6 @@ import { ActivityIndicator, Image, Pressable, type StyleProp, StyleSheet, View, 
 import Svg, { Circle, Line, Path } from 'react-native-svg';
 import { Text } from './text';
 import { useIllustrations, useTheme } from '../theme/ThemeProvider';
-import { IMAGES } from '../data/assets';
 import { mixHex } from '../theme/palette';
 import { haptic } from './ui';
 
@@ -67,9 +66,8 @@ function WashiTape({ color }: { color: string }) {
 }
 
 function PostageStampWithCancel({ postmark }: { postmark?: string }) {
-  const { ink } = useTheme();
   const pack = useIllustrations();
-  const art = ink.on ? IMAGES.companionBird : pack.memorySticker;
+  const art = pack.memorySticker;
 
   return (
     <View
@@ -186,20 +184,18 @@ export function PostcardNote({
   children,
   style,
 }: PostcardNoteProps) {
-  const { c, t, fs, r, dark, ink, frameInk } = useTheme();
+  const { c, t, fs, r, dark } = useTheme();
   const bodySize = fs(14.5);
   const bodyLineH = Math.round(bodySize * 1.82);
   const tapeColor = dark ? mixHex(c.primary, '#E8DFCE', 0.45) : c.primarySoft;
 
   const cardFrame: ViewStyle = dark
     ? {
-        borderWidth: ink.on ? 1.5 : 1,
-        borderColor: ink.on ? '#3B352D' : '#D5CCB8',
-        boxShadow: '0px 4px 0px #000000',
+        borderWidth: 1,
+        borderColor: '#D5CCB8',
+        boxShadow: '0px 6px 16px rgba(0,0,0,0.4)',
       }
-    : ink.on
-      ? frameInk
-      : {
+    : {
           borderWidth: 1,
           borderColor: POSTCARD.border,
           shadowColor: '#2A2015',

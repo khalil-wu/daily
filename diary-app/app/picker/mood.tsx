@@ -12,7 +12,7 @@ import { Jelly, PressableScale } from '../../src/components/motion';
 
 /** 4. 心情选择页 */
 export default function MoodPickerScreen() {
-  const { c, t, fs, dark, look, r, ink, frame, frameInk } = useTheme();
+  const { c, t, fs, dark, r } = useTheme();
   const [selected, setSelected] = useState<MoodKey | undefined>(() => getEditorDraft()?.entry.mood);
 
   const toggleMood = (key: MoodKey) => {
@@ -47,22 +47,13 @@ export default function MoodPickerScreen() {
                   paddingVertical: 16,
                   paddingHorizontal: 14,
                   alignItems: 'center',
-                  ...(ink.on
-                    ? on ? frameInk : frame
-                    : {
-                        borderWidth: on ? 1.5 : look.flat ? 1 : StyleSheet.hairlineWidth,
-                        borderColor: on ? c.primary : look.flat ? c.border : c.divider,
-                        shadowColor: c.shadow,
-                        shadowOpacity: dark || look.flat ? 0 : 0.05,
-                        shadowRadius: 10,
-                        shadowOffset: { width: 0, height: 2 },
-                        elevation: dark || look.flat ? 0 : 1,
-                      }),
+                  borderWidth: on ? 1.5 : StyleSheet.hairlineWidth,
+                  borderColor: on ? c.primary : c.divider,
                 }}
               >
-                {ink.on && on && (
-                  <View style={{ position: 'absolute', top: 8, right: 8, width: 22, height: 22, borderRadius: 11, backgroundColor: c.primary, borderWidth: 1.25, borderColor: ink.line, alignItems: 'center', justifyContent: 'center' }}>
-                    <Check size={13} color="#182326" strokeWidth={3} />
+                {on && (
+                  <View style={{ position: 'absolute', top: 8, right: 8, width: 20, height: 20, borderRadius: 10, backgroundColor: c.primary, alignItems: 'center', justifyContent: 'center' }}>
+                    <Check size={12} color={c.textOnPrimary} strokeWidth={3} />
                   </View>
                 )}
                 <Jelly active={on} style={{ marginBottom: 10 }}>

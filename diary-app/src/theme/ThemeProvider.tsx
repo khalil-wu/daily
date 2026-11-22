@@ -14,10 +14,6 @@ export interface Theme {
   look: StylePreset;
   r: (n: number) => number;
   frame: ViewStyle;
-  /** 线绘陪伴风的墨线 token：on 仅在该风格下为真 */
-  ink: { on: boolean; line: string; soft: string };
-  /** 主视觉卡片的墨线框：粗墨线 + 硬投影，其余风格等同 frame */
-  frameInk: ViewStyle;
   /** Stable platform UI font, independent of the user's reading font. */
   ui: string;
   fonts: FontRoles;
@@ -54,9 +50,7 @@ export function ThemeProvider({ children, fontsReady = true }: { children: React
     const c = buildPalette(dark, ap.accent, look.key);
     const r = (n: number) => scaleRadius(n, look);
     // 简约留白：所有风格共用同一套轻边界卡片，不再使用粗墨线、硬位移投影与装饰贴纸
-    const ink = { on: false, line: dark ? '#6F878F' : '#243238', soft: c.divider };
     const frame: ViewStyle = { borderWidth: StyleSheet.hairlineWidth, borderColor: c.divider, shadowOpacity: 0, elevation: 0 };
-    const frameInk: ViewStyle = frame;
     const scale = FONT_SCALE[ap.fontScale] ?? 1;
     const lh = LINE_HEIGHT[ap.lineHeight] ?? 1.8;
     const fs = (n: number) => Math.round(n * scale * 10) / 10;
@@ -66,7 +60,7 @@ export function ThemeProvider({ children, fontsReady = true }: { children: React
     return {
       c, dark, scale, lineHeight: lh,
       contentWidth: Number.isFinite(ap.contentWidth) ? Math.max(0, Math.min(1, ap.contentWidth)) : 0.5,
-      fs, look, r, frame, ink, frameInk, ui: fonts.ui, fonts, fontsReady,
+      fs, look, r, frame, ui: fonts.ui, fonts, fontsReady,
       serif: fonts.reading, reading: fonts.reading, readingBold: fonts.readingBold,
       t: {
         // 大标题用阅读衬线字：杂志/日记感的关键视觉锚点（墨记、素忆、Day One 同款策略）

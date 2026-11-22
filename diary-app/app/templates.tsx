@@ -13,7 +13,7 @@ import { RichBody } from '../src/components/RichBody';
 import { useFeedback } from '../src/components/feedback';
 
 export default function TemplatesScreen() {
-  const { c, t, fs, r, ink } = useTheme();
+  const { c, t, fs, r } = useTheme();
   const { toast } = useFeedback();
   const tags = useStore(s => s.tags);
   const [cat, setCat] = useState<'all' | 'life' | 'growth' | 'study' | 'work'>('all');
@@ -53,13 +53,10 @@ export default function TemplatesScreen() {
               <Image
                 source={TEMPLATE_IMAGES[tpl.image]}
                 style={{
-                  width: ink.on ? 56 : 52,
-                  height: ink.on ? 56 : 52,
-                  borderRadius: r(ink.on ? 12 : 10),
+                  width: 52,
+                  height: 52,
+                  borderRadius: r(10),
                   backgroundColor: c.primaryFaint,
-                  borderWidth: ink.on ? 1.25 : 0,
-                  borderColor: ink.line,
-                  transform: ink.on ? [{ rotate: `${idx % 2 === 0 ? -2 : 2}deg` }] : undefined,
                 }}
                 resizeMode="cover"
               />

@@ -34,44 +34,6 @@ const PAGES = [
 
 const PREVIEW_MOODS: MoodKey[] = ['happy', 'calm', 'tired', 'down', 'anxious'];
 
-/** 每页插画的固定小倾角，像贴在手账上的明信片 */
-const POSTCARD_ROT = [-1.5, 1.2, -0.8];
-
-/** 明信片外框：陪伴风给粗墨线 + 硬影，翻到该页时带轻微倾角回正 + 上浮 */
-function Postcard({ idx, step, children }: { idx: number; step: number; children: React.ReactNode }) {
-  const { ink } = useTheme();
-  const reduced = useReducedMotion();
-  const rot = POSTCARD_ROT[idx % POSTCARD_ROT.length];
-  const a = useRef(new Animated.Value(1)).current;
-  const prevActive = useRef(idx === step);
-  const active = idx === step;
-  useEffect(() => {
-    if (active && !prevActive.current) {
-      if (reduced) a.setValue(1);
-      else {
-        a.setValue(0);
-        Animated.spring(a, { toValue: 1, useNativeDriver: ND, ...SPRING.pop }).start();
-      }
-    }
-    prevActive.current = active;
-  }, [active, a, reduced]);
-  if (!ink.on) return <>{children}</>;
-  return (
-    <Animated.View
-      style={{
-        width: '100%',
-        alignItems: 'center',
-        transform: [
-          { rotate: a.interpolate({ inputRange: [0, 1], outputRange: [`${rot + 3}deg`, `${rot}deg`] }) },
-          { translateY: a.interpolate({ inputRange: [0, 1], outputRange: [10, 0] }) },
-        ],
-      }}
-    >
-      {children}
-    </Animated.View>
-  );
-}
-
 /** 页码指示点：原生驱动缩放胶囊，零布局宽度动画 */
 function Dot({ on, activeColor, inactiveColor, onPress, label }: { on: boolean; activeColor: string; inactiveColor: string; onPress: () => void; label: string }) {
   const reduced = useReducedMotion();
@@ -112,9 +74,8 @@ function Dot({ on, activeColor, inactiveColor, onPress, label }: { on: boolean; 
 
 /** 2-4. 引导页 1-3（1:1 复刻设计稿1 #2-#4） */
 export default function OnboardingScreen() {
-  const { c, t, fs, dark, r, ink, frameInk } = useTheme();
+  const { c, t, fs, dark } = useTheme();
   const pack = useIllustrations();
-  const inkLook = ink.on;
   const reduced = useReducedMotion();
   const [pageW, setPageW] = useState(1);
   const scrollRef = useRef<ScrollView>(null);
@@ -200,36 +161,35 @@ export default function OnboardingScreen() {
 
             <Animated.View style={[{ width: '100%', alignItems: 'center' }, pageMotion(idx)]}>
               {idx === 0 && (
-                <Postcard idx={idx} step={step}>
-                  <View
+                <View
                     style={{
                       width: '100%',
                       maxWidth: 300,
                       maxHeight: 300,
                       aspectRatio: 1,
-                      borderRadius: inkLook ? r(20) : 24,
+                      borderRadius: 24,
                       overflow: 'hidden',
                       backgroundColor: '#FFFFFF',
-                      ...(inkLook ? frameInk : { borderWidth: StyleSheet.hairlineWidth, borderColor: c.divider }),
+                      borderWidth: StyleSheet.hairlineWidth,
+                      borderColor: c.divider,
                     }}
                   >
                     <Image source={pack[p.art]} style={{ width: '100%', height: '100%' }} resizeMode="cover" />
                   </View>
-                </Postcard>
               )}
 
               {idx === 1 && (
                 <View style={{ width: '100%', maxWidth: 320, alignItems: 'center' }}>
-                  <Postcard idx={idx} step={step}>
-                    <View
+                  <View
                       style={{
                         width: '100%',
                         maxHeight: 240,
                         aspectRatio: 1.32,
-                        borderRadius: inkLook ? r(20) : 24,
+                        borderRadius: 24,
                         overflow: 'hidden',
                         backgroundColor: dark ? 'rgba(236,246,247,0.94)' : c.cardAlt,
-                        ...(inkLook ? frameInk : { borderWidth: StyleSheet.hairlineWidth, borderColor: c.divider }),
+                        borderWidth: StyleSheet.hairlineWidth,
+                      borderColor: c.divider,
                         padding: 14,
                         alignItems: 'center',
                         justifyContent: 'center',
@@ -237,7 +197,6 @@ export default function OnboardingScreen() {
                     >
                     <Image source={pack[p.art]} style={{ width: '100%', height: '100%' }} resizeMode="contain" />
                     </View>
-                  </Postcard>
                   <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', width: '96%', marginTop: 18 }}>
                     {PREVIEW_MOODS.map(m => {
                       const on = activeMood === m;
@@ -254,7 +213,7 @@ export default function OnboardingScreen() {
                             justifyContent: 'center',
                             backgroundColor: on ? c.card : 'transparent',
                             borderWidth: 1.5,
-                            borderColor: on ? (inkLook ? ink.line : c.primary) : 'transparent',
+                            borderColor: on ? c.primary : 'transparent',
                             transform: [{ scale: on ? 1.1 : 1 }],
                           }}
                         >
@@ -269,21 +228,20 @@ export default function OnboardingScreen() {
               )}
 
               {idx === 2 && (
-                <Postcard idx={idx} step={step}>
-                  <View
+                <View
                     style={{
                       width: '100%',
                       maxWidth: 300,
                       maxHeight: 300,
                       aspectRatio: 1,
-                      borderRadius: inkLook ? r(20) : 24,
+                      borderRadius: 24,
                       overflow: 'hidden',
-                      ...(inkLook ? frameInk : { borderWidth: StyleSheet.hairlineWidth, borderColor: c.divider }),
+                      borderWidth: StyleSheet.hairlineWidth,
+                      borderColor: c.divider,
                     }}
                   >
                     <Image source={pack[p.art]} style={{ width: '100%', height: '100%' }} resizeMode="cover" />
                   </View>
-                </Postcard>
               )}
             </Animated.View>
 

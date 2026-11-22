@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, Animated, Easing, Image, type ImageSourcePropType, KeyboardAvoidingView, Platform, Pressable, type PressableProps, ScrollView, type ScrollViewProps, type StyleProp, StyleSheet, type TextStyle, View, type ViewStyle } from 'react-native';
+import { ActivityIndicator, Animated, Image, type ImageSourcePropType, KeyboardAvoidingView, Platform, Pressable, ScrollView, type ScrollViewProps, type StyleProp, StyleSheet, View, type ViewStyle } from 'react-native';
 import { Image as ExpoImage } from 'expo-image';
 import { Text, TextInput, type TextProps, type TextInputProps } from './text';
 import { SafeAreaView, useSafeAreaInsets, type Edge } from 'react-native-safe-area-context';
@@ -188,114 +188,9 @@ export function TextAction({ label, onPress, color, disabled, bold }: { label: s
   );
 }
 
-/**
- * 线绘陪伴风的「按压到墨影上」容器：底层是一块纯色的硬位移投影（underlay），
- * 面层（face）按下时整体下移 offset 贴到影子上，松开弹簧回位。
- * 用于 Button / PillAction / FAB，不要各自复制这份逻辑。
- */
-export function InkPress({
-  offset = 3,
-  radius = 999,
-  underlay,
-  hold = false,
-  onPress,
-  onPressIn,
-  onPressOut,
-  disabled,
-  style,
-  faceStyle,
-  children,
-  ...rest
-}: Omit<PressableProps, 'children'> & {
-  children?: React.ReactNode;
-  offset?: number;
-  radius?: number;
-  underlay?: string;
-  /** 无投影、面层常驻按下位（禁用/加载态） */
-  hold?: boolean;
-  faceStyle?: StyleProp<ViewStyle>;
-}) {
-  const reduced = useReducedMotion();
-  const v = useRef(new Animated.Value(hold ? 1 : 0)).current;
-  useEffect(() => {
-    v.setValue(hold ? 1 : 0);
-    return () => v.stopAnimation();
-  }, [hold, v]);
-  const run = (down: boolean) => {
-    if (hold) return;
-    if (reduced) {
-      v.setValue(down ? 1 : 0);
-      return;
-    }
-    if (down) {
-      Animated.timing(v, { toValue: 1, duration: 70, easing: Easing.out(Easing.cubic), useNativeDriver: ND }).start();
-    } else {
-      Animated.spring(v, { toValue: 0, useNativeDriver: ND, ...SPRING.release }).start();
-    }
-  };
-  return (
-    <Pressable
-      accessibilityRole="button"
-      disabled={disabled}
-      {...rest}
-      onPressIn={e => {
-        run(true);
-        onPressIn?.(e);
-      }}
-      onPressOut={e => {
-        run(false);
-        onPressOut?.(e);
-      }}
-      onPress={onPress}
-      style={style}
-    >
-      <View style={{ paddingBottom: offset }}>
-        {underlay != null && (
-          <View pointerEvents="none" style={{ position: 'absolute', left: 0, right: 0, top: offset, bottom: 0, borderRadius: radius, backgroundColor: underlay }} />
-        )}
-        <Animated.View style={[faceStyle, { transform: [{ translateY: v.interpolate({ inputRange: [0, 1], outputRange: [0, offset] }) }] }]}>
-          {children}
-        </Animated.View>
-      </View>
-    </Pressable>
-  );
-}
-
 /** 胶囊主按钮（导航栏右侧 “发布”/“完成”：保持 44px 触控热区，内层视觉高度 34px 更轻巧） */
 export function PillAction({ label, onPress, disabled }: { label: string; onPress?: () => void; disabled?: boolean }) {
-  const { c, fs, r, ink, dark } = useTheme();
-  if (ink.on) {
-    const underlay = disabled ? undefined : dark ? '#000000' : ink.line;
-    return (
-      <InkPress
-        offset={2}
-        radius={r(999)}
-        underlay={underlay}
-        hold={!!disabled}
-        onPress={() => {
-          haptic('light');
-          onPress?.();
-        }}
-        disabled={disabled}
-        accessibilityState={{ disabled: !!disabled }}
-        hitSlop={6}
-        style={{ minHeight: control.target, minWidth: 56, justifyContent: 'center', alignItems: 'flex-end' }}
-        faceStyle={{
-          minHeight: 34,
-          paddingHorizontal: 15,
-          paddingVertical: 6,
-          borderRadius: r(999),
-          backgroundColor: disabled ? c.disabledBg : c.primary,
-          borderWidth: disabled ? 1.25 : 1.25,
-          borderColor: disabled ? c.divider : ink.line,
-          justifyContent: 'center',
-          alignItems: 'center',
-        }}
-      >
-        <Text style={{ color: disabled ? c.disabledText : dark ? '#0B1012' : '#182326', fontSize: fs(13.5), fontWeight: '600' }}>{label}</Text>
-      </InkPress>
-    );
-  }
+  const { c, fs, r } = useTheme();
   return (
     <PressableScale
       scaleTo={0.94}
@@ -351,68 +246,8 @@ interface ButtonProps {
   full?: boolean;
 }
 
-/** 线绘陪伴风按钮：矢量面层 + 硬质墨影，按下整面贴到影子上 */
-function InkButton({ title, onPress, variant = 'primary', size = 'lg', icon: Icon, loading, disabled, style, full }: ButtonProps) {
-  const { c, fs, r, ink, dark } = useTheme();
-  const h = size === 'lg' ? 52 : size === 'md' ? 44 : 36;
-  const offset = size === 'sm' ? 2 : 3;
-  const off = disabled || loading;
-  const conf = {
-    primary: { bg: c.primary, fg: dark ? '#0B1012' : '#182326', bd: ink.line, ul: dark ? '#000000' : ink.line, bw: 1.5 },
-    secondary: { bg: c.card, fg: c.text, bd: ink.line, ul: c.divider, bw: 1.5 },
-    danger: { bg: c.danger, fg: c.textOnDanger, bd: ink.line, ul: dark ? '#000000' : ink.line, bw: 1.5 },
-    soft: { bg: c.primaryFaint, fg: c.primaryDark, bd: 'transparent', ul: undefined, bw: 0 },
-    outline: { bg: 'transparent', fg: c.primaryDark, bd: c.primaryDark, ul: undefined, bw: 1.5 },
-    ghost: { bg: 'transparent', fg: c.textSub, bd: 'transparent', ul: undefined, bw: 0 },
-  }[variant];
-  const face: ViewStyle = {
-    height: h,
-    borderRadius: r(999),
-    backgroundColor: off ? c.disabledBg : conf.bg,
-    borderWidth: off ? (conf.bw ? 1 : 0) : conf.bw,
-    borderColor: off ? c.divider : conf.bd,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: size === 'sm' ? 18 : 24,
-    alignSelf: 'stretch',
-  };
-  const label = loading ? (
-    <ActivityIndicator color={off ? c.disabledText : conf.fg} size="small" />
-  ) : (
-    <>
-      {Icon && <Icon size={size === 'sm' ? 16 : 18} color={off ? c.disabledText : conf.fg} strokeWidth={1.8} style={{ marginRight: 7 }} />}
-      <Text style={{ color: off ? c.disabledText : conf.fg, fontSize: fs(size === 'sm' ? 14 : size === 'md' ? 15 : 16), fontWeight: '600', letterSpacing: 0.3, textAlign: 'center', flexShrink: 1 }}>{title}</Text>
-    </>
-  );
-  const a11y = {
-    accessibilityLabel: title,
-    accessibilityState: { disabled: !!off, busy: !!loading },
-    hitSlop: size === 'sm' ? 6 : undefined,
-    onPress: () => {
-      haptic('light');
-      onPress?.();
-    },
-    disabled: off,
-  };
-  if (!conf.ul) {
-    // soft / outline / ghost / 禁用态：无投影；禁用态面层停在按下位
-    return (
-      <InkPress offset={off ? offset : 0} hold={off} {...a11y} style={[{ alignSelf: full ? 'stretch' : 'center' }, style]} faceStyle={face}>
-        {label}
-      </InkPress>
-    );
-  }
-  return (
-    <InkPress offset={offset} radius={r(999)} underlay={conf.ul} {...a11y} style={[{ alignSelf: full ? 'stretch' : 'center' }, style]} faceStyle={face}>
-      {label}
-    </InkPress>
-  );
-}
-
 export function Button({ title, onPress, variant = 'primary', size = 'lg', icon: Icon, loading, disabled, style, full = true }: ButtonProps) {
-  const { c, fs, r, look, dark, ink } = useTheme();
-  if (ink.on) return <InkButton {...{ title, onPress, variant, size, icon: Icon, loading, disabled, style, full }} />;
+  const { c, fs, r, look, dark } = useTheme();
   const h = size === 'lg' ? 50 : control.target;
   const palette = {
     primary: { bg: c.primary, fg: c.textOnPrimary, bd: c.primary },
@@ -471,8 +306,8 @@ export function Button({ title, onPress, variant = 'primary', size = 'lg', icon:
 
 export function Card({ children, style, onPress, padded = true, hero }: { children: React.ReactNode; style?: StyleProp<ViewStyle>; onPress?: () => void; padded?: boolean; hero?: boolean }) {
   const s = useStyles(cardStyles);
-  const { frameInk } = useTheme();
-  const frameStyle = hero ? frameInk : undefined;
+  const { frame } = useTheme();
+  const frameStyle = hero ? frame : undefined;
   if (onPress) {
     return (
       <PressableScale scaleTo={0.98} onPress={onPress} style={[s.card, frameStyle, padded && s.pad, style]}>
@@ -689,7 +524,7 @@ export function Segmented<K extends string>({ items, value, onChange, style }: {
 
 /** 下划线标签栏（全部 / 日记 / 草稿 / 收藏 / 置顶）—— 下划线随选中项滑动 */
 export function UnderlineTabs<K extends string>({ items, value, onChange, style }: { items: { key: K; label: string; count?: number }[]; value: K; onChange: (k: K) => void; style?: StyleProp<ViewStyle> }) {
-  const { c, fs, ink } = useTheme();
+  const { c, fs } = useTheme();
   const reduced = useReducedMotion();
   const [layouts, setLayouts] = useState<Record<string, { x: number; w: number }>>({});
   const x = useRef(new Animated.Value(0)).current;
@@ -735,14 +570,14 @@ export function UnderlineTabs<K extends string>({ items, value, onChange, style 
               {it.label}
               {it.count ? ` ${it.count}` : ''}
             </Text>
-            <View style={{ marginTop: 6, height: 2.5, width: 16, borderRadius: 2, backgroundColor: on && curX == null ? (ink.on ? ink.line : c.primary) : 'transparent' }} />
+            <View style={{ marginTop: 6, height: 2.5, width: 16, borderRadius: 2, backgroundColor: on && curX == null ? c.primary : 'transparent' }} />
           </Pressable>
         );
       })}
       {curX != null && (
         <Animated.View
           pointerEvents="none"
-          style={{ position: 'absolute', left: 0, bottom: 8, width: 16, height: 2.5, borderRadius: 2, backgroundColor: ink.on ? ink.line : c.primary, transform: [{ translateX: x }] }}
+          style={{ position: 'absolute', left: 0, bottom: 8, width: 16, height: 2.5, borderRadius: 2, backgroundColor: c.primary, transform: [{ translateX: x }] }}
         />
       )}
     </ScrollView>
@@ -752,9 +587,9 @@ export function UnderlineTabs<K extends string>({ items, value, onChange, style 
 /* ============ 标签 Chip ============ */
 
 export function Chip({ label, icon: Icon, selected, onPress, onRemove, color, bg, style, size = 'md', tone }: { label: string; icon?: LucideIcon | React.ReactNode; selected?: boolean; onPress?: () => void; onRemove?: () => void; color?: string; bg?: string; style?: StyleProp<ViewStyle>; size?: 'sm' | 'md'; /** 'soft'：已填充的取值展示，不走选中态墨线 */ tone?: 'soft' }) {
-  const { c, fs, r, ink, dark } = useTheme();
+  const { c, fs, r } = useTheme();
   const soft = tone === 'soft';
-  const fg = color ?? (soft ? c.primaryDark : ink.on ? (selected ? (dark ? c.text : ink.line) : c.textSub) : selected ? c.primaryDark : c.textSub);
+  const fg = color ?? (soft || selected ? c.primaryDark : c.textSub);
   const iconNode = typeof Icon === 'function' || (Icon && typeof Icon === 'object' && 'render' in (Icon as object))
     ? React.createElement(Icon as LucideIcon, { size: size === 'sm' ? 12 : 14, color: fg, strokeWidth: 1.8 })
     : (Icon as React.ReactNode);
@@ -764,17 +599,17 @@ export function Chip({ label, icon: Icon, selected, onPress, onRemove, color, bg
     justifyContent: 'center',
     gap: 4,
     paddingHorizontal: size === 'sm' ? 10 : 12,
-    minHeight: ink.on ? (size === 'sm' ? 28 : 32) : size === 'sm' ? 28 : 34,
+    minHeight: size === 'sm' ? 28 : 34,
     paddingVertical: size === 'sm' ? 4 : 5,
     borderRadius: r(999),
-    backgroundColor: bg ?? (soft ? c.primaryFaint : selected ? (ink.on ? c.primarySoft : c.primaryFaint) : ink.on ? c.inputBg : c.card),
-    borderWidth: soft ? 0 : ink.on ? (selected ? 1.25 : 0) : 1,
-    borderColor: ink.on ? ink.line : selected ? c.primaryDark : c.divider,
+    backgroundColor: bg ?? (soft || selected ? c.primaryFaint : c.card),
+    borderWidth: soft ? 0 : 1,
+    borderColor: selected ? c.primaryDark : c.divider,
   };
   const inner = (
     <View style={[pillStyle, onPress ? undefined : style]}>
       {iconNode}
-      <Text style={{ fontSize: fs(size === 'sm' ? 12 : 13), color: fg, flexShrink: 1, fontWeight: soft ? '500' : ink.on && selected ? '600' : '400' }}>{label}</Text>
+      <Text style={{ fontSize: fs(size === 'sm' ? 12 : 13), color: fg, flexShrink: 1, fontWeight: soft ? '500' : '400' }}>{label}</Text>
       {onRemove && (
         <Pressable
           accessibilityRole="button"
@@ -938,7 +773,7 @@ export function Photo({ uri, style, radius: imageRadius = 10 }: { uri?: string; 
 /** 主题插画：跟随当前风格包。dark + darkPlate 的包贴上一块浅色底托，避免墨色笔触消失 */
 export function Illustration({ name, size = 160, style }: { name: IllustrationName; size?: number; style?: StyleProp<ViewStyle> }) {
   const pack = useIllustrations();
-  const { c, dark, ink, r } = useTheme();
+  const { dark, r } = useTheme();
   const img = (
     <ExpoImage
       source={pack[name] as any}
@@ -951,8 +786,8 @@ export function Illustration({ name, size = 160, style }: { name: IllustrationNa
   return (
     <View accessibilityElementsHidden importantForAccessibility="no-hide-descendants" style={[{ width: size, height: size }, style]}>
       {dark && pack.darkPlate ? (
-        // 「贴上去的明信片」底托：暖纸色 + 硬影 + 微倾角，避免墨色笔触在深色底上消失
-        <View style={{ flex: 1, backgroundColor: '#F6F4EF', borderRadius: r(22), padding: size * 0.1, boxShadow: '0px 3px 0px #000000', transform: [{ rotate: '-1.5deg' }] }}>
+        // 浅色底托：暖纸色 + 柔和投影，避免墨色笔触在深色底上消失
+        <View style={{ flex: 1, backgroundColor: '#F6F4EF', borderRadius: r(22), padding: size * 0.1, boxShadow: '0px 6px 16px rgba(0,0,0,0.35)' }}>
           {img}
         </View>
       ) : img}

@@ -1,5 +1,5 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Animated, Image, Pressable, View } from 'react-native';
+import React, { useCallback, useMemo, useState } from 'react';
+import { Pressable, View } from 'react-native';
 import { Text } from './text';
 import { router, useFocusEffect } from 'expo-router';
 import { Check, ChevronDown, ChevronUp, Flame } from 'lucide-react-native';
@@ -11,8 +11,7 @@ import { computeDailyGoalProgress, computeTodaySummary } from '../utils/grouping
 import { fmtNumber } from '../utils/text';
 import { haptic } from './ui';
 import { MoodIcon } from './MoodIcon';
-import { FadeIn, ND, PressableScale, SPRING, useReducedMotion } from './motion';
-import { IMAGES } from '../data/assets';
+import { FadeIn, PressableScale } from './motion';
 import { useTourTarget } from './tour';
 
 /**
@@ -20,7 +19,7 @@ import { useTourTarget } from './tour';
  * 今天写过之后自动收起为一行进度，把屏幕让给日记列表。
  */
 export function TodayCard() {
-  const { c, t, fs, dark, frameInk, r, ink } = useTheme();
+  const { c, t, fs, dark, frame, r } = useTheme();
   const entries = useStore(s => s.entries);
   const goals = useStore(s => s.goals);
   const name = useStore(s => s.profile.name);
@@ -50,19 +49,6 @@ export function TodayCard() {
       ? `草稿 ${fmtNumber(summary.words)} 字，还没发布`
       : '今天还没有记录';
 
-  // 陪伴风：小鸟贴纸探出卡片上缘，挂载时轻轻一跳
-  const reduced = useReducedMotion();
-  const hop = useRef(new Animated.Value(reduced ? 1 : 0)).current;
-  useEffect(() => {
-    if (reduced || !ink.on) {
-      hop.setValue(1);
-      return;
-    }
-    const animation = Animated.spring(hop, { toValue: 1, useNativeDriver: ND, ...SPRING.pop });
-    animation.start();
-    return () => animation.stop();
-  }, [hop, reduced, ink.on]);
-
   return (
     <View
       ref={targetRef}
@@ -71,27 +57,10 @@ export function TodayCard() {
         backgroundColor: c.card,
         borderRadius: r(18),
         padding: 16,
-        marginTop: ink.on ? 30 : 0,
         marginBottom: 14,
-        ...frameInk,
+        ...frame,
       }}
     >
-      {ink.on && (
-        <Animated.View
-          accessibilityElementsHidden
-          importantForAccessibility="no-hide-descendants"
-          pointerEvents="none"
-          style={{
-            position: 'absolute',
-            top: -30,
-            right: 14,
-            opacity: hop,
-            transform: [{ translateY: hop.interpolate({ inputRange: [0, 1], outputRange: [-8, 0] }) }],
-          }}
-        >
-          <Image source={IMAGES.companionBird} style={{ width: 72, height: 68 }} resizeMode="contain" />
-        </Animated.View>
-      )}
       {/* 问候 + 今日状态 + 连续天数：问候可换两行，日期与连续天数整行排布，绝不截断 */}
       <Pressable
         onPress={() => {
@@ -103,7 +72,7 @@ export function TodayCard() {
         accessibilityState={{ expanded }}
         aria-expanded={expanded}
       >
-        <Text style={[t.h2, { fontSize: fs(17), lineHeight: fs(24), paddingRight: ink.on ? 76 : 0 }]}>
+        <Text style={[t.h2, { fontSize: fs(17), lineHeight: fs(24) }]}>
           {greetingFor(d.getHours())}，{name}
         </Text>
         <View style={{ flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', marginTop: 4 }}>
@@ -156,7 +125,7 @@ export function TodayCard() {
           accessibilityLabel="写作目标设置"
           style={{ flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: 44, marginTop: 2, marginBottom: -8 }}
         >
-          <View style={{ flex: 1, height: 8, borderRadius: 4, backgroundColor: ink.on ? c.inputBg : c.bgDeep, borderWidth: ink.on ? 1 : 0, borderColor: ink.soft, overflow: 'hidden' }}>
+          <View style={{ flex: 1, height: 8, borderRadius: 4, backgroundColor: c.bgDeep, overflow: 'hidden' }}>
             <View style={{ width: `${goal.percent}%`, height: '100%', borderRadius: 4, backgroundColor: c.primary }} />
           </View>
           {goal.achieved ? (

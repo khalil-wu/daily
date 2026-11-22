@@ -41,7 +41,7 @@ export function shelfColumns(contentW: number) {
 
 /** 书架：日记本排列成书，点按翻开并走进这本书；从书里返回时合上放回原位 */
 export function Bookshelf() {
-  const { c, t, fs, r, ink, frameInk } = useTheme();
+  const { c, t, fs, r } = useTheme();
   const { toast, confirm, sheet } = useFeedback();
   const hydrated = useHydrated();
   const rawNotebooks = useStore(s => s.notebooks);
@@ -507,7 +507,7 @@ export function Bookshelf() {
         <Pressable accessibilityRole="button" accessibilityLabel="我的" onPress={() => router.push('/me')} hitSlop={4} style={{ width: 44, height: 44, alignItems: 'center', justifyContent: 'center' }}>
           <Image
             source={photoSource(avatarUri) ?? IMAGES.avatar}
-            style={{ width: 36, height: 36, borderRadius: 18, borderWidth: ink.on ? 1.5 : 0, borderColor: ink.line, backgroundColor: c.primarySoft }}
+            style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: c.primarySoft }}
           />
         </Pressable>
       </View>
@@ -521,8 +521,8 @@ export function Bookshelf() {
     </View>
   );
 
-  const plankColor = ink.on ? mixHex(c.bgDeep, ink.line, 0.18) : c.border;
-  const plankShadow = ink.on ? `0px 4px 0px ${ink.line}` : '0px 6px 10px rgba(0,0,0,0.08)';
+  const plankColor = c.border;
+  const plankShadow = '0px 6px 10px rgba(0,0,0,0.08)';
   const bookTilt = (i: number) => (i % 2 === 0 ? '-5deg' : '4deg');
 
   return (
@@ -732,7 +732,7 @@ const SETTLE = { damping: 18, stiffness: 220 };
 /** 书架上的一本书：「全部日记」固定不动，其余可长按拖动换位（UI 线程驱动） */
 function ShelfBook(props: ShelfBookProps) {
   const { id, slot, geo, name, color, count, photo, tilt, lastOpened, locked, lifted, reduced, ctx, lastDragEnd, coverRef, onOpen, onManage, onLift, onDrop, onMove } = props;
-  const { c, r, ink } = useTheme();
+  const { c, r } = useTheme();
   const init = slotPosition(slot, geo);
   const open = () => {
     if (locked || Date.now() - lastDragEnd.current < 400) return;
@@ -791,7 +791,7 @@ function DraggableBook({ id, init, geo, ctx, reduced, color, onLift, onDrop, chi
   onDrop?: (ids: string[], success: boolean) => void;
   children: React.ReactNode;
 }) {
-  const { r, ink } = useTheme();
+  const { r } = useTheme();
   const { order, dragId, geo: geoSV, scrollY, scrollDir, containerTop, viewportH } = ctx;
   const sx = useSharedValue(init.x);
   const sy = useSharedValue(init.y);
@@ -952,7 +952,7 @@ function DraggableBook({ id, init, geo, ctx, reduced, color, onLift, onDrop, chi
               borderBottomLeftRadius: r(6),
               borderTopRightRadius: r(12),
               borderBottomRightRadius: r(12),
-              boxShadow: ink.on ? `0px 8px 0px ${ink.line}` : '0px 14px 24px rgba(0,0,0,0.22)',
+              boxShadow: '0px 14px 24px rgba(0,0,0,0.22)',
             } as any,
             shadowStyle,
           ]}
